@@ -22,8 +22,11 @@ def main():
         # 3. Kiểm tra trạng thái kết thúc (Chiếu bí / Hết nước)
         status = check_game_status(board, legal_moves)
         if status != 0:
-            winner = "ĐỎ" if status == 1 else "ĐEN"
-            print(f"\n{'='*25}\n!!! TRẬN ĐẤU KẾT THÚC: {winner} THẮNG !!!\n{'='*25}\n")
+            if status == 3:
+                print(f"\n{'='*25}\n!!! TRẬN ĐẤU KẾT THÚC: HÒA CỜ !!!\n{'='*25}\n")
+            else:
+                winner = "ĐỎ" if status == 1 else "ĐEN"
+                print(f"\n{'='*25}\n!!! TRẬN ĐẤU KẾT THÚC: {winner} THẮNG !!!\n{'='*25}\n")
             break
             
         # 4. Cảnh báo nếu đang bị chiếu

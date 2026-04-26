@@ -137,7 +137,4 @@ class MoveGenerator:
                                 break
                 if count_block > 2: break
         
-        # Bạn sẽ bổ sung thêm logic cho Mã (H), Tượng (E), Sĩ (A), Tướng (K) tại đây
-        # Lưu ý: Mã cần check chân mã (sq + direction), Tượng không được qua sông.
-        
         return moves

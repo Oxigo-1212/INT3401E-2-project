@@ -78,4 +78,24 @@ def check_game_status(board, legal_moves):
         # thì bên đó thua, bên kia thắng.
         return 2 if board.side_to_move == Color.RED else 1
     
+    if is_draw(board):
+        return 3
+
     return 0
+
+def is_draw(board):
+    """Kiểm tra hòa cờ."""
+    # 1. Luật 60 nước (120 half-moves không có quân nào bị ăn)
+    if board.half_move_clock >= 120:
+        return True
+        
+    # 2. Luật lặp cờ 3 lần (3-fold repetition)
+    # Nếu mã zobrist hiện tại đã xuất hiện 2 lần trong lịch sử -> đây là lần thứ 3
+    repetition_count = 0
+    for key in reversed(board.zobrist_history):
+        if key == board.zobrist_key:
+            repetition_count += 1
+            if repetition_count >= 2:
+                return True
+                
+    return False
