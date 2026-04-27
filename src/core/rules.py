@@ -54,7 +54,7 @@ def get_legal_moves(board, generator):
     current_side = board.side_to_move
     for move in pseudo_moves:
         board.make_move(move)
-        
+
         # Một nước đi chỉ hợp lệ nếu:
         # 1. Không làm Tướng mình bị chiếu
         # 2. Không làm lộ mặt Tướng (Flying General)
