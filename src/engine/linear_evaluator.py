@@ -258,11 +258,59 @@ def _evaluate_mobility(board: Board) -> int:
 # Hàm lượng giá tổng hợp (Heuristic)
 # ---------------------------------------------------------------------------
 
+
 def heuristic(board: Board) -> int:
     """Hàm đánh giá trạng thái bàn cờ tổng quát."""
-    m   = _evaluate_material(board)       * WEIGHT_VECTOR["material"]
-    p   = _evaluate_pawn_structure(board)  * WEIGHT_VECTOR["pawn_structure"]
-    mob = _evaluate_mobility(board)        * WEIGHT_VECTOR["mobility"]
-    ks  = _evaluate_king_safety(board)     * WEIGHT_VECTOR["king_safety"]
+    breakdown = get_heuristic_breakdown(board)
+    return breakdown["total"]
 
-    return int(m + p + mob + ks)
+def get_heuristic_breakdown(board: Board) -> dict:
+    """
+    Trả về chi tiết các thành phần của hàm đánh giá dưới dạng dictionary.
+    Sử dụng cho mục đích logging hoặc gỡ lỗi.
+    """
+    # Tính toán các điểm số thô (raw scores)
+    raw_material = _evaluate_material(board)
+    raw_pawn_structure = _evaluate_pawn_structure(board)
+    raw_mobility = _evaluate_mobility(board)
+    raw_king_safety = _evaluate_king_safety(board)
+
+    # Lấy các trọng số từ WEIGHT_VECTOR
+    w_material = WEIGHT_VECTOR["material"]
+    w_pawn = WEIGHT_VECTOR["pawn_structure"]
+    w_mobility = WEIGHT_VECTOR["mobility"]
+    w_king = WEIGHT_VECTOR["king_safety"]
+
+    # Tính toán điểm số cuối cùng
+    total_score = int(
+        raw_material * w_material +
+        raw_pawn_structure * w_pawn +
+        raw_mobility * w_mobility +
+        raw_king_safety * w_king
+    )
+
+    return {
+        "total": total_score,
+        "components": {
+            "material": {
+                "raw": raw_material,
+                "weighted": raw_material * w_material
+            },
+            "pawn_structure": {
+                "raw": raw_pawn_structure,
+                "weighted": raw_pawn_structure * w_pawn
+            },
+            "mobility": {
+                "raw": raw_mobility,
+                "weighted": raw_mobility * w_mobility
+            },
+            "king_safety": {
+                "raw": raw_king_safety,
+                "weighted": raw_king_safety * w_king
+            }
+        },
+        "metadata": {
+            "side_to_move": "Đỏ" if board.side_to_move == Color.RED else "Đen",
+            "weights_used": WEIGHT_VECTOR
+        }
+    }
