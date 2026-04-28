@@ -2,7 +2,7 @@ import math
 from core.pieces import Color
 from core.move_generator import MoveGenerator
 from core.rules import get_legal_moves, check_game_status
-from engine.evaluator import heuristic
+from engine.linear_evaluator import heuristic
 
 def minimax(board, depth, alpha, beta, is_maximizing_player):
     """
