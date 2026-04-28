@@ -1,0 +1,4 @@
+engine/evaluator.py     def _evaluate_material(board: Board) -> int:
+engine/evaluator.py         m = _evaluate_material(board) * WEIGHT_VECTOR["material"]
+tests/test_evaluator.py     _evaluate_material, 
+tests/test_evaluator.py     m_score = _evaluate_material(board)
