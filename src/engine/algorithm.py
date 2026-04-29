@@ -9,6 +9,38 @@ from engine.linear_evaluator import heuristic
 
 type AlgorithmFunction = Callable[[Board, int, float, float, bool], float]
 
+def negmax(
+    board: Board,
+    depth: int,
+    alpha: float,
+    beta: float,
+    _is_maximizing_player: bool = True,
+) -> float:
+    generator: MoveGenerator = MoveGenerator(board)
+    # Lấy danh sách nước đi hợp lệ dựa trên luật chơi
+    legal_moves: list[int] = get_legal_moves(board, generator)
+    status: GameStatus = check_game_status(board, legal_moves)
+    if status != GameStatus.Playing:
+        if status == GameStatus.RedWin:
+            return 99999.0  # Đỏ thắng
+        if status == GameStatus.BlueWin:
+            return -99999.0  # Đen thắng
+        if status == GameStatus.Draw:
+            return 0.0  # Hòa
+
+    if depth == 0:
+        return float(heuristic(board))  # Đánh giá thế cờ hiện tại
+    max_score: float = -math.inf
+    for move in legal_moves:
+        board.make_move(move)
+        score = -negmax(board, depth - 1, -beta, -alpha)
+        board.undo_move()
+        max_score = max(max_score, score)
+        alpha = max(alpha, score)
+        if alpha >=beta:
+            break
+    return max_score
+
 def minimax(
     board: Board,
     depth: int,
@@ -26,13 +58,15 @@ def minimax(
     eval_score: float = 0
 
     # Điều kiện dừng: đạt độ sâu tối đa hoặc trận đấu kết thúc
-    if depth == 0 or status != 0:
+    if status != GameStatus.Playing:
         if status == GameStatus.RedWin:
             return 99999.0  # Đỏ thắng
         if status == GameStatus.BlueWin:
             return -99999.0  # Đen thắng
         if status == GameStatus.Draw:
             return 0.0  # Hòa
+
+    if depth == 0:
         return float(heuristic(board))  # Đánh giá thế cờ hiện tại
 
     if is_maximizing_player:
@@ -43,7 +77,7 @@ def minimax(
             board.undo_move()
             max_eval = max(max_eval, eval_score)
             alpha = max(alpha, eval_score)
-            if beta <= alpha:
+            if alpha >= beta:
                 break  # Cắt tỉa
         return max_eval
 
@@ -54,7 +88,7 @@ def minimax(
         board.undo_move()
         min_eval = min(min_eval, eval_score)
         beta = min(beta, eval_score)
-        if beta <= alpha:
+        if alpha >= beta:
             break  # Cắt tỉa
     return min_eval
 
@@ -78,7 +112,7 @@ def get_best_move(board: Board, algorithm: AlgorithmFunction, depth: int = 3 ) -
         best_val = -math.inf
         for move in legal_moves:
             board.make_move(move)
-            value = algorithm(board, depth - 1, -math.inf, math.inf, False)
+            value = algorithm(board, depth - 1, -math.inf, math.inf, True)
             board.undo_move()
             if value > best_val:
                 best_val = value
@@ -87,7 +121,7 @@ def get_best_move(board: Board, algorithm: AlgorithmFunction, depth: int = 3 ) -
         best_val = math.inf
         for move in legal_moves:
             board.make_move(move)
-            value = algorithm(board, depth - 1, -math.inf, math.inf, True)
+            value = algorithm(board, depth - 1, -math.inf, math.inf, False)
             board.undo_move()
             if value < best_val:
                 best_val = value
