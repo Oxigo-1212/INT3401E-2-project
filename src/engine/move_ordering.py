@@ -14,7 +14,7 @@ class MoveSorter:
         while len(self._killers) <= depth:
             self._killers.append([0, 0])
 
-    def store_killer_move(self, depth: int, move: int, beta: int, score: int) -> None:
+    def store_killer_move(self, depth: int, move: int, beta: float, score: float) -> None:
         """
         Append or replace the move in a depth in the killers array
         """
