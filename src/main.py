@@ -1,5 +1,4 @@
 # main.py (test bàn cờ)
-# main.py (test bàn cờ)
 from core.board import Board
 from core.board_renderer import BoardRenderer
 from core.move_generator import MoveGenerator
@@ -7,7 +6,7 @@ from core.move import uci_to_move, move_to_uci
 from core.rules import *
 from colorama import init
 init() # Tự động xử lý mã màu trên Windows
-
+    
 def main():
     board = Board()
     gen = MoveGenerator(board)
@@ -20,16 +19,16 @@ def main():
             # 1. Hiển thị bàn cờ
             renderer.print_board()
             
-            # 2. Tính toán nước đi hợp lệ (CHỈ LÀM 1 LẦN duy nhất ở đầu lượt)
+            # 2. Tính toán nước đi hợp lệ 
             legal_moves = get_legal_moves(board, gen)
             
             # 3. Kiểm tra trạng thái kết thúc (Chiếu bí / Hết nước)
             status = check_game_status(board, legal_moves)
-            if status != 0:
-                if status == 3:
+            if status != GameStatus.Playing:
+                if status == GameStatus.Draw:
                     print(f"\n{'='*25}\n!!! TRẬN ĐẤU KẾT THÚC: HÒA CỜ !!!\n{'='*25}\n")
                 else:
-                    winner = "ĐỎ" if status == 1 else "ĐEN"
+                    winner = "ĐỎ" if status == GameStatus.RedWin else "ĐEN"
                     print(f"\n{'='*25}\n!!! TRẬN ĐẤU KẾT THÚC: {winner} THẮNG !!!\n{'='*25}\n")
                 break
                 

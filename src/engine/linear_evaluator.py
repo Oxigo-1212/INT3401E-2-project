@@ -259,10 +259,20 @@ def _evaluate_mobility(board: Board) -> int:
 # ---------------------------------------------------------------------------
 
 
-def heuristic(board: Board) -> int:
-    """Hàm đánh giá trạng thái bàn cờ tổng quát."""
+def _evaluate_absolute_score(board: Board) -> int:
+    """Đỏ + Đen -. Sử dụng cho mini-max."""
     breakdown = get_heuristic_breakdown(board)
     return breakdown["total"]
+
+
+def heuristic(board: Board) -> int:
+    """Sử dụng cho negamax."""
+    absolute_score = _evaluate_absolute_score(board)
+    
+    if board.side_to_move == Color.RED:
+        return absolute_score
+    else:
+        return -absolute_score
 
 def get_heuristic_breakdown(board: Board) -> dict:
     """

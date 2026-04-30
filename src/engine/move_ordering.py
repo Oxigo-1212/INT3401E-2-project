@@ -37,11 +37,14 @@ class MoveSorter:
         t = get_to_sq(move)
         self._history[f][t] += depth * depth
 
+
     def get_killers(self, depth: int) -> list[int]:
         """Return the two killers for ply (0 if empty)."""
+        # Trả về nhiều hơn 2 nước killers.
         self._ensure_killer_slot(depth)
         return self._killers[depth]
 
+    # most valuable victim - least valuable attackers
     def _mvv_lva(self, board: Board, move: int) -> int:
         """Return capture value minus attacker value, scaled for ordering."""
         frm = get_from_sq(move)
