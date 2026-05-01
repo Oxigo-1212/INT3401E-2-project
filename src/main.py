@@ -1,68 +1,155 @@
-# main.py (test bàn cờ)
+"""
+Chế độ chơi: Con người vs Bot hoặc Bot vs Bot
+"""
+
 from core.board import Board
 from core.board_renderer import BoardRenderer
 from core.move_generator import MoveGenerator
 from core.move import uci_to_move, move_to_uci
 from core.rules import *
+from core.utils import move_to_str
+from engine.bot import BotManager
 from colorama import init
-init() # Tự động xử lý mã màu trên Windows
-    
-def main():
+
+init()
+
+def vs_bot():
+    """Con người chơi với Bot."""
     board = Board()
     gen = MoveGenerator(board)
     renderer = BoardRenderer(board)
     
-    print("--- CHINESE CHESS ENGINE CORE ---")
+    # Tạo Bot
+    print("Chọn Bot:")
+    print("1. Negamax (depth=4)")
+    print("2. Minimax (depth=3)")
+    print("3. Random")
+    print("4. Greedy")
+    
+    choice = input("Chọn Bot (1-4): ").strip()
+    bot_map = {"1": "negamax", "2": "minimax", "3": "random", "4": "greedy"}
+    bot_type = bot_map.get(choice, "negamax")
+    
+    bot = BotManager.create_bot(bot_type, depth=4)
+    print(f"\nBot được chọn: {bot.get_name()}")
+    
+    player_color = input("Bạn muốn chơi với phe nào? (1=Đỏ, 2=Đen): ").strip()
+    player_is_red = player_color == "1"
     
     try:
         while True:
-            # 1. Hiển thị bàn cờ
             renderer.print_board()
             
-            # 2. Tính toán nước đi hợp lệ 
             legal_moves = get_legal_moves(board, gen)
-            
-            # 3. Kiểm tra trạng thái kết thúc (Chiếu bí / Hết nước)
             status = check_game_status(board, legal_moves)
+            
             if status != GameStatus.Playing:
                 if status == GameStatus.Draw:
-                    print(f"\n{'='*25}\n!!! TRẬN ĐẤU KẾT THÚC: HÒA CỜ !!!\n{'='*25}\n")
+                    print(f"\n{'='*25}\nHÒA CỜ\n{'='*25}\n")
                 else:
                     winner = "ĐỎ" if status == GameStatus.RedWin else "ĐEN"
-                    print(f"\n{'='*25}\n!!! TRẬN ĐẤU KẾT THÚC: {winner} THẮNG !!!\n{'='*25}\n")
+                    print(f"\n{'='*25}\n{winner} THẮNG\n{'='*25}\n")
                 break
-                
-            # 4. Cảnh báo nếu đang bị chiếu
+            
             if is_in_check(board, board.side_to_move):
-                print("\033[93m[ CẢNH BÁO: ĐANG BỊ CHIẾU TƯỚNG! ]\033[0m")
-
-            # 5. Gợi ý nước đi (Chỉ hiện 10 nước đầu cho gọn)
-            moves_hint = [move_to_uci(m) for m in legal_moves[:10]]
-            print(f"Lượt của {'ĐỎ' if board.side_to_move == Color.RED else 'ĐEN'}")
-            print(f"Các nước hợp lệ ({len(legal_moves)}): {moves_hint}...")
+                print("\033[93m[CẢNH BÁO: ĐANG BỊ CHIẾU TƯỚNG!]\033[0m")
             
-            # 6. Nhận Input từ người dùng
-            try:
-                move_str = input("Nhập nước đi (vd: h2e2) hoặc 'q' để thoát: ").strip().lower()
-            except KeyboardInterrupt:
-                print("\nĐã thoát game.")
-                break
+            is_red_turn = board.side_to_move == Color.RED
             
-            if move_str == 'q': 
-                print("Đã thoát game.")
-                break
-
-            # 7. Xử lý nước đi
-            try:
-                user_move = uci_to_move(move_str)
-                if user_move in legal_moves:
-                    board.make_move(user_move)
+            if is_red_turn == player_is_red:
+                # Lượt của người chơi
+                moves_hint = [move_to_uci(m) for m in legal_moves[:10]]
+                print(f"Các nước hợp lệ ({len(legal_moves)}): {moves_hint}...")
+                
+                try:
+                    move_str = input("Nhập nước đi (vd: h2e2): ").strip().lower()
+                except KeyboardInterrupt:
+                    print("\nĐã thoát game.")
+                    break
+                
+                if move_str == 'q':
+                    print("Đã thoát game.")
+                    break
+                
+                try:
+                    user_move = uci_to_move(move_str)
+                    if user_move in legal_moves:
+                        board.make_move(user_move)
+                    else:
+                        print(f"\033[91m!!! Nước đi {move_str} không hợp lệ.\033[0m")
+                except:
+                    print("\033[91m!!! Định dạng sai. Vui lòng nhập kiểu 'h2e2'.\033[0m")
+            else:
+                # Lượt của Bot
+                print(f"Bot {bot.get_name()} đang suy nghĩ...")
+                move = bot.get_move(board)
+                
+                if move:
+                    board.make_move(move)
+                    print(f"Bot chơi: {move_to_str(move)}")
                 else:
-                    print(f"\033[91m!!! Nước đi {move_str} không đúng luật. Hãy thử lại.\033[0m")
-            except Exception:
-                print("\033[91m!!! Định dạng sai. Vui lòng nhập theo kiểu 'h2e2'.\033[0m")
+                    print("Bot không có nước đi hợp lệ!")
+                    break
+    
+    except KeyboardInterrupt:
+        print("\nĐã thoát game.")
+
+def bot_vs_bot():
+    """Bot chơi với Bot."""
+    board = Board()
+    gen = MoveGenerator(board)
+    renderer = BoardRenderer(board)
+    
+    bot_red = BotManager.create_bot("negamax", depth=3)
+    bot_black = BotManager.create_bot("greedy")
+    
+    print(f"Đỏ: {bot_red.get_name()}")
+    print(f"Đen: {bot_black.get_name()}\n")
+    
+    move_count = 0
+    
+    try:
+        while move_count < 200:  # Tối đa 200 nước
+            renderer.print_board()
+            
+            legal_moves = get_legal_moves(board, gen)
+            status = check_game_status(board, legal_moves)
+            
+            if status != GameStatus.Playing:
+                if status == GameStatus.Draw:
+                    print(f"\nHÒA CỜ")
+                else:
+                    winner = "ĐỎ" if status == GameStatus.RedWin else "ĐEN"
+                    print(f"\n{winner} THẮNG")
+                break
+            
+            is_red_turn = board.side_to_move == Color.RED
+            bot = bot_red if is_red_turn else bot_black
+            
+            print(f"Lượt {move_count + 1}: {bot.get_name()} đang suy nghĩ...")
+            move = bot.get_move(board)
+            
+            if move:
+                board.make_move(move)
+                print(f"→ {move_to_str(move)}\n")
+                move_count += 1
+            else:
+                print("Không có nước đi hợp lệ!")
+                break
+    
     except KeyboardInterrupt:
         print("\nĐã thoát game.")
 
 if __name__ == "__main__":
-    main()
+    print("=== CỜ TƯỚNG ENGINE ===")
+    print("1. Con người vs Bot")
+    print("2. Bot vs Bot")
+    
+    choice = input("Chọn chế độ (1-2): ").strip()
+    
+    if choice == "1":
+        vs_bot()
+    elif choice == "2":
+        bot_vs_bot()
+    else:
+        print("Lựa chọn không hợp lệ!")
