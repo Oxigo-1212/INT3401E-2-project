@@ -3,23 +3,22 @@ Bot chơi cờ tướng sử dụng Iterative Deepening Search.
 Hỗ trợ cả time control và depth limit.
 """
 
-from typing import Optional, Dict, Any
+from typing import Optional, Dict
 from core.board import Board
 from core.move_generator import MoveGenerator
-from core.pieces import Color
 from core.rules import get_legal_moves
-from core.utils import move_to_str
 from engine.algorithm import negmax
 from engine.iterative_deepening import (
     search_with_time_limit,
     search_with_depth_limit
 )
-
+import random
+from core.move import get_to_sq
+from core.pieces import PIECE_VALUES
+from engine.algorithm import minimax
 
 class Bot:
-    """
-    Lớp cơ sở cho Bot chơi cờ tướng.
-    """
+    """Lớp cơ sở cho Bot chơi cờ tướng."""
     
     def __init__(self):
         self.name = "Bot"
@@ -30,10 +29,10 @@ class Bot:
     def get_move(self, board: Board) -> Optional[int]:
         """
         Trả về nước đi tốt nhất cho bàn cờ hiện tại.
-        
+
         Args:
             board: Bàn cờ hiện tại
-        
+
         Returns:
             Nước đi (encoded integer), hoặc None nếu không có nước đi
         """
@@ -43,7 +42,7 @@ class Bot:
         """Trả về tên bot (dùng cho log tournament)."""
         return self.name
     
-    def get_config(self) -> Dict[str, Any]:
+    def get_config(self) -> Dict[str, object]:
         """Trả về cấu hình bot (depth, algorithm, ...)."""
         return {
             "name": self.name,
@@ -59,7 +58,7 @@ class NegmaxBot(Bot):
     Tìm kiếm với Iterative Deepening.
     """
     
-    def __init__(self, depth: int = 4, time_limit_ms: int = None):
+    def __init__(self, depth: int = 4, time_limit_ms: Optional[int] = None):
         super().__init__()
         self.name = f"Negamax Bot (depth={depth})"
         self.depth = depth
@@ -102,14 +101,12 @@ class RandomBot(Bot):
     
     def get_move(self, board: Board) -> Optional[int]:
         """Chọn nước đi ngẫu nhiên."""
-        import random
-        
         generator = MoveGenerator(board)
         legal_moves = get_legal_moves(board, generator)
-        
+
         if not legal_moves:
             return None
-        
+
         return random.choice(legal_moves)
 
 
@@ -125,41 +122,35 @@ class GreedyBot(Bot):
     
     def get_move(self, board: Board) -> Optional[int]:
         """Chọn nước đi ăn quân tốt nhất."""
-        from core.move import get_to_sq, get_from_sq
-        from core.pieces import PIECE_VALUES
-        
         generator = MoveGenerator(board)
         legal_moves = get_legal_moves(board, generator)
-        
+
         if not legal_moves:
             return None
-        
+
         best_move = legal_moves[0]
         best_capture_value = 0
-        
+
         for move in legal_moves:
             to_sq = get_to_sq(move)
             captured_piece = board.state[to_sq]
-            
+
             if captured_piece != '.':
                 capture_value = PIECE_VALUES.get(captured_piece, 0)
                 if capture_value > best_capture_value:
                     best_capture_value = capture_value
                     best_move = move
-        
+
         return best_move
 
 
 class MinimaxBot(Bot):
-    """
-    Bot sử dụng Minimax + Alpha-Beta Pruning.
-    """
+    """Bot sử dụng Minimax + Alpha-Beta Pruning."""
     
     def __init__(self, depth: int = 3):
         super().__init__()
         self.name = f"Minimax Bot (depth={depth})"
         self.depth = depth
-        from engine.algorithm import minimax
         self.algorithm = minimax
     
     def get_move(self, board: Board) -> Optional[int]:
@@ -192,7 +183,7 @@ class BotManager:
         """
         if bot_type.lower() == "negamax":
             depth = kwargs.get("depth", 4)
-            time_limit = kwargs.get("time_limit_ms", None)
+            time_limit = kwargs.get("time_limit_ms")
             return NegmaxBot(depth=depth, time_limit_ms=time_limit)
         
         elif bot_type.lower() == "minimax":

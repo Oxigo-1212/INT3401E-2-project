@@ -3,12 +3,13 @@ Chế độ chơi: Con người vs Bot hoặc Bot vs Bot
 """
 
 from core.board import Board
+from engine.transposition_table import init_tt, TT_TABLE
 from core.board_renderer import BoardRenderer
 from core.move_generator import MoveGenerator
 from core.move import uci_to_move, move_to_uci
 from core.rules import *
 from core.utils import move_to_str
-from engine.bot import BotManager
+from bots.bot import BotManager
 from colorama import init
 
 init()
@@ -117,7 +118,7 @@ def bot_vs_bot():
             
             if status != GameStatus.Playing:
                 if status == GameStatus.Draw:
-                    print(f"\nHÒA CỜ")
+                    print("\nHÒA CỜ")
                 else:
                     winner = "ĐỎ" if status == GameStatus.RedWin else "ĐEN"
                     print(f"\n{winner} THẮNG")
@@ -141,6 +142,7 @@ def bot_vs_bot():
         print("\nĐã thoát game.")
 
 if __name__ == "__main__":
+    init_tt(1 << 20, TT_TABLE)
     print("=== CỜ TƯỚNG ENGINE ===")
     print("1. Con người vs Bot")
     print("2. Bot vs Bot")

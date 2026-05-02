@@ -28,16 +28,19 @@ def clear_tt(TT_TABLE: list):
         TT_TABLE[i] = None
 
 def store(key: int, depth: int, score: float, flag: TT_FLAG, best_move: int, TT_TABLE: list) -> None:
-    index = key % len(TT_TABLE)
-    entry = TT_TABLE[index]
-    if entry is None:
-        TT_TABLE[index] = TT_Entry(key, depth, score, flag, best_move)
-    elif depth >= entry.depth:
-        entry.key = key
-        entry.depth = depth
-        entry.score = score
-        entry.flag = flag
-        entry.best_move = best_move
+    if len(TT_TABLE) != 0:
+        index = key % len(TT_TABLE)
+        entry = TT_TABLE[index]
+        if entry is None:
+            TT_TABLE[index] = TT_Entry(key, depth, score, flag, best_move)
+        elif depth >= entry.depth:
+            entry.key = key
+            entry.depth = depth
+            entry.score = score
+            entry.flag = flag
+            entry.best_move = best_move
+    TT_TABLE.append(TT_Entry(key, depth, score, flag, best_move))
+
 
 def probe(key: int, depth: int, alpha: float, beta: float, TT_TABLE: list) -> tuple[TTEntry, bool]:
     index = key % len(TT_TABLE)
