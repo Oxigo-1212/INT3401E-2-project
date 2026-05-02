@@ -23,9 +23,11 @@ class TT_Entry:
 
 def init_tt(size: int, TT_TABLE: list) -> None:
     TT_TABLE[:] = [ None for _ in enumerate(range(size)) ]
+
 def clear_tt(TT_TABLE: list):
     for i in range(len(TT_TABLE)):
         TT_TABLE[i] = None
+
 def store(key: int, depth: int, score: float, flag: TT_FLAG, best_move: int, age: int, TT_TABLE: list) -> None:
     index = key % len(TT_TABLE)
     entry = TT_TABLE[index]

@@ -1,7 +1,7 @@
 # board.py
 from core.pieces import Color
 from core.move import get_from_sq, get_to_sq
-from core.zobrist import ZOBRIST_TABLE, ZOBRIST_SIDE, compute_initial_hash
+from core.zobrist import compute_initial_hash, make_move_hash
 
 # Chuỗi FEN mặc định khi bắt đầu game
 # FEN: mô tả toàn bộ trạng thái ván cờ bằng 1 string
@@ -57,7 +57,6 @@ class Board:
         to = get_to_sq(move)
         
         # Lưu lại quân cờ tại ô đích (nếu có ăn quân)
-        moving_piece = self.state[frm]
         captured = self.state[to]
         
         # 1. Lưu lại trạng thái CŨ vào lịch sử để Undo
@@ -69,16 +68,18 @@ class Board:
         })
         self.zobrist_history.append(self.zobrist_key)
 
-        # 2. Cập nhật Zobrist Key 
-        # Bỏ quân cờ ở ô cũ
-        self.zobrist_key ^= ZOBRIST_TABLE[moving_piece][frm]
-        # Bỏ quân bị ăn (nếu có)
-        if captured != '.':
-            self.zobrist_key ^= ZOBRIST_TABLE[captured][to]
-        # Thêm quân cờ vào ô mới
-        self.zobrist_key ^= ZOBRIST_TABLE[moving_piece][to]
-        # Đổi lượt
-        self.zobrist_key ^= ZOBRIST_SIDE
+        self.zobrist_key = make_move_hash(self.zobrist_key, self.state, move) # Cập nhật Zobrist Key cho nước đi mới
+
+        # # 2. Cập nhật Zobrist Key 
+        # # Bỏ quân cờ ở ô cũ
+        # self.zobrist_key ^= ZOBRIST_TABLE[moving_piece][frm]
+        # # Bỏ quân bị ăn (nếu có)
+        # if captured != '.':
+        #     self.zobrist_key ^= ZOBRIST_TABLE[captured][to]
+        # # Thêm quân cờ vào ô mới
+        # self.zobrist_key ^= ZOBRIST_TABLE[moving_piece][to]
+        # # Đổi lượt
+        # self.zobrist_key ^= ZOBRIST_SIDE
 
         # Cập nhật mảng
         self.state[to] = self.state[frm]
