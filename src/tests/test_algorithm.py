@@ -22,6 +22,7 @@ class RecordingBoard(Board):
         self.side_to_move = side_to_move
         self.state = ["."] * 90
         self.moves: list[int] = []
+    zobrist_key: int = 0
 
     def make_move(self, move: int):
         self.moves.append(move)
@@ -37,6 +38,8 @@ def install_search_stubs(monkeypatch, legal_moves, status=GameStatus.Playing):
     monkeypatch.setattr(algorithm, "MoveGenerator", DummyMoveGenerator)
     monkeypatch.setattr(algorithm, "get_legal_moves", lambda board, generator: list(legal_moves))
     monkeypatch.setattr(algorithm, "check_game_status", lambda board, moves: status)
+    monkeypatch.setattr(algorithm, "probe", lambda key, depth, alpha, beta, tt: (None, False))
+    monkeypatch.setattr(algorithm, "store", lambda key, depth, score, flag, best_move, tt: None)
 
 
 @pytest.mark.parametrize(
@@ -152,13 +155,13 @@ def test_negmax_searches_one_ply_and_returns_negated_best_score(monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "side_to_move, expected_move, expected_flag",
+    "side_to_move, expected_move",
     [
-        (Color.RED, 22, True),
-        (Color.BLACK, 11, False),
+        (Color.RED, 11),
+        (Color.BLACK, 11),
     ],
 )
-def test_get_best_move_selects_best_move_for_each_side(monkeypatch, side_to_move, expected_move, expected_flag):
+def test_get_best_move_selects_best_move_for_each_side(monkeypatch, side_to_move, expected_move):
     board = RecordingBoard(side_to_move=side_to_move)
     install_search_stubs(monkeypatch, legal_moves=[11, 22], status=GameStatus.Playing)
 
@@ -168,7 +171,7 @@ def test_get_best_move_selects_best_move_for_each_side(monkeypatch, side_to_move
         (22,): 3.0,
     }
 
-    def fake_algorithm(current_board, depth, alpha, beta, is_maximizing_player):
+    def fake_algorithm(current_board, depth, alpha, beta, is_maximizing_player, move_sorter=None):
         path = tuple(current_board.moves)
         calls.append((path, depth, alpha, beta, is_maximizing_player))
         return scores[path]
@@ -177,8 +180,8 @@ def test_get_best_move_selects_best_move_for_each_side(monkeypatch, side_to_move
 
     assert best_move == expected_move
     assert calls == [
-        ((11,), 3, -math.inf, math.inf, expected_flag),
-        ((22,), 3, -math.inf, math.inf, expected_flag),
+        ((11,), 3, -math.inf, math.inf, True),
+        ((22,), 3, -math.inf, math.inf, True),
     ]
     assert board.moves == []
     assert board.side_to_move == side_to_move

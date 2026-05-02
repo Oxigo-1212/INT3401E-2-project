@@ -11,15 +11,14 @@ class TT_FLAG(IntEnum):
 TT_TABLE: list[TTEntry] = []
 
 class TT_Entry:
-    __slots__ = ['key', 'depth', 'score', 'flag', 'best_move', 'age']
+    __slots__ = ['key', 'depth', 'score', 'flag', 'best_move']
 
-    def __init__(self, key, depth, score, flag, best_move, age):
+    def __init__(self, key, depth, score, flag, best_move):
         self.key = key
         self.depth = depth
         self.score = score
         self.flag = flag
         self.best_move = best_move
-        self.age = age
 
 def init_tt(size: int, TT_TABLE: list) -> None:
     TT_TABLE[:] = [ None for _ in enumerate(range(size)) ]
@@ -28,20 +27,19 @@ def clear_tt(TT_TABLE: list):
     for i in range(len(TT_TABLE)):
         TT_TABLE[i] = None
 
-def store(key: int, depth: int, score: float, flag: TT_FLAG, best_move: int, age: int, TT_TABLE: list) -> None:
+def store(key: int, depth: int, score: float, flag: TT_FLAG, best_move: int, TT_TABLE: list) -> None:
     index = key % len(TT_TABLE)
     entry = TT_TABLE[index]
     if entry is None:
-        TT_TABLE[index] = TT_Entry(key, depth, score, flag, best_move, age)
+        TT_TABLE[index] = TT_Entry(key, depth, score, flag, best_move)
     elif depth >= entry.depth:
         entry.key = key
         entry.depth = depth
         entry.score = score
         entry.flag = flag
         entry.best_move = best_move
-        entry.age = age
 
-def probe(key: int, depth: int, alpha: float, beta: float, TT_TABLE: list) -> None:
+def probe(key: int, depth: int, alpha: float, beta: float, TT_TABLE: list) -> tuple[TTEntry, bool]:
     index = key % len(TT_TABLE)
     entry = TT_TABLE[index]
 
@@ -53,14 +51,9 @@ def probe(key: int, depth: int, alpha: float, beta: float, TT_TABLE: list) -> No
         (entry.flag == TT_FLAG.LOWERBOUND and entry.score >= beta) or
         (entry.flag == TT_FLAG.UPPERBOUND and entry.score <= alpha)
     )
-        if is_useful:
-            return entry.score
-        
-        # If depth is too low for a cutoff, we still return the entry
-        # so the search can use 'entry.best_move' for move ordering.
-        return entry
+        return entry, is_useful
 
-    return None # Cache Miss
+    return None, False # Cache Miss
 
 
 def save(path: str = "data/tt") -> None:

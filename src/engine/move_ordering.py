@@ -53,12 +53,14 @@ class MoveSorter:
         captured = board.state[to]
         return PIECE_VALUES[captured] * 1000 - PIECE_VALUES[attacker]
 
-    def move_sort(self, moves: list[int], board: Board, depth: int) -> list[int]:
+    def move_sort(self, moves: list[int], board: Board, depth: int, tt_move: int = 0) -> list[int]:
         killers = self.get_killers(depth)
         state = board.state
         history = self._history
 
         def score(move: int) -> tuple[int, int]:
+            if move == tt_move:
+                return 4, 0
             frm = get_from_sq(move)
             to = get_to_sq(move)
             if state[to] != '.':
