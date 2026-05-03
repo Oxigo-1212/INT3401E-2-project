@@ -6,7 +6,7 @@ from core.board import Board
 from core.move_generator import MoveGenerator
 from core.rules import get_legal_moves
 from core.utils import move_to_str
-from engine.move_ordering import MoveSorter
+from bots.engine.move_ordering import MoveSorter
 
 
 def search_with_time_limit(

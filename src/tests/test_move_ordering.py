@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from core.board import Board
 from core.move import uci_to_move, uci_to_sq
-from engine.move_ordering import MoveSorter
+from bots.engine.move_ordering import MoveSorter
 
 
 def sq(uci: str) -> int:

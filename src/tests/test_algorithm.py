@@ -6,7 +6,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-import engine.algorithm as algorithm
+import bots.engine.algorithm as algorithm
 from core.board import Board
 from core.pieces import Color
 from core.rules import GameStatus

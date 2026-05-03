@@ -2,11 +2,13 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from core.board import Board
-from engine.algorithm import get_best_move, negmax
+from bots.engine.transposition_table import init_tt, TT_TABLE
+from bots.engine.algorithm import get_best_move, negmax
 from core.utils import print_board, move_to_str, load_fen
 
 # test move sorted
 def test_move_quality():
+    init_tt(1 << 16, TT_TABLE)
     board = Board()
     # Thế cờ: Xe Đỏ có thể chiếu Tướng Đen
     mate_fen = "5k3/9/9/9/9/9/9/9/4R4/4K4 w"
