@@ -4,10 +4,10 @@ from typing import Callable, Optional
 from core.board import Board
 from core.move_generator import MoveGenerator
 from core.rules import check_game_status, get_legal_moves, GameStatus
-from engine.linear_evaluator import heuristic
-from engine.move_ordering import MoveSorter
+from bots.engine.linear_evaluator import heuristic
+from bots.engine.move_ordering import MoveSorter
 from core.utils import move_to_str
-from engine.transposition_table import TT_TABLE, store, probe, TT_FLAG
+from bots.engine.transposition_table import TT_TABLE, store, probe, TT_FLAG
 
 type AlgorithmFunction = Callable[[Board, int, float, float, bool, Optional[MoveSorter]], float]
 

@@ -4,7 +4,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from core.board import Board
-from engine.linear_evaluator import (
+from bots.engine.linear_evaluator import (
     heuristic,
     _evaluate_material,
     _evaluate_pawn_structure,

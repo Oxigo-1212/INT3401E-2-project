@@ -7,15 +7,15 @@ from typing import Optional, Dict
 from core.board import Board
 from core.move_generator import MoveGenerator
 from core.rules import get_legal_moves
-from engine.algorithm import negmax
-from engine.iterative_deepening import (
+from bots.engine.algorithm import negmax
+from bots.engine.iterative_deepening import (
     search_with_time_limit,
     search_with_depth_limit
 )
 import random
 from core.move import get_to_sq
 from core.pieces import PIECE_VALUES
-from engine.algorithm import minimax
+from bots.engine.algorithm import minimax
 
 class Bot:
     """Lớp cơ sở cho Bot chơi cờ tướng."""
