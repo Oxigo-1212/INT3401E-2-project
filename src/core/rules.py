@@ -1,13 +1,23 @@
 # rules.py
 from core.pieces import Color
+from enum import Enum
+
+
+class GameStatus(Enum):
+    Playing = 0
+    RedWin = 1
+    BlueWin = 2
+    Draw = 3
 
 def flying_general_check(board):
     """Trả về True nếu hai Tướng đang 'nhìn mặt' nhau (Lỗi luật)."""
     k_pos = -1
     K_pos = -1
     for sq, p in enumerate(board.state):
-        if p == 'k': k_pos = sq
-        if p == 'K': K_pos = sq
+        if p == 'k':
+            k_pos = sq
+        if p == 'K':
+            K_pos = sq
     
     rk, ck = divmod(k_pos, 9)
     rK, cK = divmod(K_pos, 9)
@@ -54,7 +64,7 @@ def get_legal_moves(board, generator):
     current_side = board.side_to_move
     for move in pseudo_moves:
         board.make_move(move)
-        
+
         # Một nước đi chỉ hợp lệ nếu:
         # 1. Không làm Tướng mình bị chiếu
         # 2. Không làm lộ mặt Tướng (Flying General)
@@ -66,7 +76,7 @@ def get_legal_moves(board, generator):
 
 # rules.py
 
-def check_game_status(board, legal_moves):
+def check_game_status(board, legal_moves) -> GameStatus:
     """
     Trả về: 
     - 0: Đang chơi
@@ -76,12 +86,12 @@ def check_game_status(board, legal_moves):
     if len(legal_moves) == 0:
         # Nếu bên đến lượt (side_to_move) không còn nước đi
         # thì bên đó thua, bên kia thắng.
-        return 2 if board.side_to_move == Color.RED else 1
+        return GameStatus.RedWin if board.side_to_move == Color.RED else GameStatus.BlueWin
     
     if is_draw(board):
-        return 3
+        return GameStatus.Draw
 
-    return 0
+    return GameStatus.Playing
 
 def is_draw(board):
     """Kiểm tra hòa cờ."""

@@ -13,7 +13,8 @@ class MoveGenerator:
     def get_pseudo_legal_moves(self):
         moves = []
         for sq, piece in enumerate(self.board.state):
-            if piece == '.': continue
+            if piece == '.':
+                continue
             
             # Chỉ sinh nước đi cho phe đang đến lượt
             if self.board.side_to_move == Color.RED and is_red(piece):
@@ -116,7 +117,8 @@ class MoveGenerator:
                 for step in range(1, 10):
                     target_sq = sq + direction * step
                     tr, tc = divmod(target_sq, 9)
-                    if not (0 <= target_sq < 90) or (direction in [-1, 1] and tr != r): break
+                    if not (0 <= target_sq < 90) or (direction in [-1, 1] and tr != r):
+                        break
                     
                     target_piece = self.board.state[target_sq]
                     if target_piece == '.':
@@ -135,6 +137,7 @@ class MoveGenerator:
                                 if (is_red(piece) and is_black(target_piece)) or (is_black(piece) and is_red(target_piece)):
                                     moves.append(encode_move(sq, target_sq))
                                 break
-                if count_block > 2: break
+                if count_block > 2:
+                    break
         
         return moves

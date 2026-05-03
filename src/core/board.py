@@ -1,16 +1,11 @@
 # board.py
-from core.pieces import Color, CHINESE_PIECES
+from core.pieces import Color
 from core.move import get_from_sq, get_to_sq
-from core.zobrist import ZOBRIST_TABLE, ZOBRIST_SIDE, compute_initial_hash
+from core.zobrist import compute_initial_hash, make_move_hash
 
 # Chuỗi FEN mặc định khi bắt đầu game
 # FEN: mô tả toàn bộ trạng thái ván cờ bằng 1 string
 START_FEN = "rheakaehr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RHEAKAEHR w - - 0 1"
-# ANSI Color Codes
-RED_COLOR = "\033[91m"     # Đỏ sáng
-BLACK_COLOR = "\033[94m"   # Xanh dương sáng (dễ nhìn hơn màu đen trên nền tối)
-RESET_COLOR = "\033[0m"    # Reset về màu mặc định
-BOARD_COLOR = "\033[90m"   # Màu xám cho tọa độ và ô trống
 
 class Board:
     def __init__(self):
@@ -62,7 +57,6 @@ class Board:
         to = get_to_sq(move)
         
         # Lưu lại quân cờ tại ô đích (nếu có ăn quân)
-        moving_piece = self.state[frm]
         captured = self.state[to]
         
         # 1. Lưu lại trạng thái CŨ vào lịch sử để Undo
@@ -74,16 +68,18 @@ class Board:
         })
         self.zobrist_history.append(self.zobrist_key)
 
-        # 2. Cập nhật Zobrist Key 
-        # Bỏ quân cờ ở ô cũ
-        self.zobrist_key ^= ZOBRIST_TABLE[moving_piece][frm]
-        # Bỏ quân bị ăn (nếu có)
-        if captured != '.':
-            self.zobrist_key ^= ZOBRIST_TABLE[captured][to]
-        # Thêm quân cờ vào ô mới
-        self.zobrist_key ^= ZOBRIST_TABLE[moving_piece][to]
-        # Đổi lượt
-        self.zobrist_key ^= ZOBRIST_SIDE
+        self.zobrist_key = make_move_hash(self.zobrist_key, self.state, move) # Cập nhật Zobrist Key cho nước đi mới
+
+        # # 2. Cập nhật Zobrist Key 
+        # # Bỏ quân cờ ở ô cũ
+        # self.zobrist_key ^= ZOBRIST_TABLE[moving_piece][frm]
+        # # Bỏ quân bị ăn (nếu có)
+        # if captured != '.':
+        #     self.zobrist_key ^= ZOBRIST_TABLE[captured][to]
+        # # Thêm quân cờ vào ô mới
+        # self.zobrist_key ^= ZOBRIST_TABLE[moving_piece][to]
+        # # Đổi lượt
+        # self.zobrist_key ^= ZOBRIST_SIDE
 
         # Cập nhật mảng
         self.state[to] = self.state[frm]
@@ -124,48 +120,3 @@ class Board:
         if self.zobrist_history:
             self.zobrist_history.pop()
 
-    # def print_board(self):
-    #     """Hàm Debug: Vẽ bàn cờ ra màn hình Terminal."""
-    #     print(f"\nLượt`` đi: {'ĐỎ' if self.side_to_move == Color.RED else 'ĐEN'}")
-    #     print("  " + "  ".join(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']))
-    #     for row in range(10):
-    #         row_str = [str(row)]
-    #         for col in range(9):
-    #             piece = self.state[row * 9 + col]
-    #             row_str.append(CHINESE_PIECES[piece])
-    #         print(" ".join(row_str) + f" {row}")
-    #     print("  " + "  ".join(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']) + "\n")
-
-    def print_board(self):
-        """Hàm Debug: Vẽ bàn cờ có màu sắc ra Terminal."""
-        # Khai báo lại hoặc import các mã màu
-        RED = "\033[91m"
-        BLUE = "\033[94m" 
-        RESET = "\033[0m"
-        GRAY = "\033[90m"
-
-        print(f"\nLượt đi: {RED + 'ĐỎ' if self.side_to_move == Color.RED else BLUE + 'ĐEN'}{RESET}")
-        
-        # In hàng tọa độ cột (a b c...)
-        header = "   " + "  ".join(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'])
-        print(GRAY + header + RESET)
-
-        for row in range(10):
-            # In tọa độ hàng (0...9)
-            row_str = [GRAY + str(row) + RESET] 
-            
-            for col in range(9):
-                piece = self.state[row * 9 + col]
-                char = CHINESE_PIECES[piece]
-                
-                # Kiểm tra và tô màu
-                if piece == '.':
-                    row_str.append(GRAY + char + RESET)
-                elif piece.isupper(): # Quân Đỏ
-                    row_str.append(RED + char + RESET)
-                else: # Quân Đen
-                    row_str.append(BLUE + char + RESET)
-            
-            print(" ".join(row_str) + GRAY + f" {row}" + RESET)
-        
-        print(GRAY + header + RESET + "\n")
