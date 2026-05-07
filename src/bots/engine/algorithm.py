@@ -8,6 +8,7 @@ from bots.engine.linear_evaluator import heuristic
 from bots.engine.move_ordering import MoveSorter
 from core.utils import move_to_str
 from bots.engine.transposition_table import TT_TABLE, store, probe, TT_FLAG
+from bots.engine.quiescene_search import quiescene_search
 
 type AlgorithmFunction = Callable[[Board, int, float, float, bool, Optional[MoveSorter]], float]
 
@@ -51,7 +52,7 @@ def negmax(
             return 0.0  # Hòa
 
     if depth == 0:
-        return float(heuristic(board))  # Đánh giá thế cờ hiện tại
+        return quiescene_search(board, alpha, beta, move_sorter)
     
     # Sắp xếp nước đi
     original_alpha = alpha
