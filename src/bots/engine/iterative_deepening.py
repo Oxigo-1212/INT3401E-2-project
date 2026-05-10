@@ -7,6 +7,7 @@ from core.move_generator import MoveGenerator
 from core.rules import get_legal_moves
 from core.utils import move_to_str
 from bots.engine.move_ordering import MoveSorter
+from bots.engine.transposition_table import probe, TT_TABLE
 
 
 def search_with_time_limit(
@@ -66,7 +67,9 @@ def search_with_time_limit(
         moves_evaluated = 0
         
         # Sắp xếp nước đi bằng kết quả lần trước
-        sorted_moves = move_sorter.move_sort(legal_moves[:], board, 0)
+        entry, _ = probe(board.zobrist_key, depth, -math.inf, math.inf, TT_TABLE)
+        tt_move = entry.best_move if entry is not None else 0
+        sorted_moves = move_sorter.move_sort(legal_moves[:], board, depth, tt_move)
         
         for move_idx, move in enumerate(sorted_moves):
             # Kiểm tra timeout sau mỗi nước đi
@@ -159,7 +162,9 @@ def search_with_depth_limit(
         if debug:
             print(f"\n[IDS] Depth {depth}")
         
-        sorted_moves = move_sorter.move_sort(legal_moves[:], board, 0)
+        entry, _ = probe(board.zobrist_key, depth, -math.inf, math.inf, TT_TABLE)
+        tt_move = entry.best_move if entry is not None else 0
+        sorted_moves = move_sorter.move_sort(legal_moves[:], board, depth, tt_move)
         
         for move_idx, move in enumerate(sorted_moves):
             board.make_move(move)
