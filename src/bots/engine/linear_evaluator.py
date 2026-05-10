@@ -79,10 +79,7 @@ def _find_king(board: Board, color: Color) -> int:
 
 
 def _count_defenders(board: Board, color: Color) -> int:
-    """Đếm số Sĩ và Tượng còn lại trên bàn cờ cho phe *color* (Lá chắn Tướng).
-
-    Trong Cờ Tướng, Sĩ (A/a) và Tượng (E/e) đóng vai trò lá chắn bảo vệ Tướng
-    bên trong hoặc gần cung, tương tự như lá chắn tốt trong cờ vua.
+    """Đếm số Sĩ và Tượng còn lại trên bàn cờ cho phe *color*.
     """
     if color == Color.RED:
         return sum(1 for p in board.state if p in ('A', 'E'))
@@ -153,7 +150,7 @@ def _evaluate_king_safety(board: Board) -> int:
 
 
 def _king_safety_for_side(board: Board, color: Color, king_sq: int) -> int:
-    """Tính toán điểm nguy hiểm cho Tướng phe *color* (càng cao càng nguy hiểm).
+    """Tính toán điểm nguy hiểm cho Tướng phe *color*.
 
     Mối đe dọa được tính dựa trên khả năng tấn công của đối thủ lên vùng Tướng
     và các yếu tố phòng thủ hiện có của phe *color*.
@@ -215,7 +212,7 @@ def _king_safety_for_side(board: Board, color: Color, king_sq: int) -> int:
 # ---------------------------------------------------------------------------
 
 def _evaluate_material(board: Board) -> int:
-    """Tính toán chênh lệch giá trị quân cờ (Vật chất)."""
+    """Tính toán chênh lệch giá trị quân cờ."""
     score = 0
     for piece in board.state:
         if piece == '.':

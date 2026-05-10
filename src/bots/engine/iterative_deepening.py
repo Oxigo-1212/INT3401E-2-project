@@ -7,7 +7,8 @@ from core.move_generator import MoveGenerator
 from core.rules import get_legal_moves
 from core.utils import move_to_str
 from bots.engine.move_ordering import MoveSorter
-
+from bots.engine.transposition_table import probe, TT_TABLE
+import math
 
 def search_with_time_limit(
     board: Board,
@@ -66,6 +67,8 @@ def search_with_time_limit(
         moves_evaluated = 0
         
         # Sắp xếp nước đi bằng kết quả lần trước
+        entry, _ = probe(board.zobrist_key, depth, -math.inf, math.inf, TT_TABLE)
+        tt_move = entry.best_move if entry is not None else 0
         sorted_moves = move_sorter.move_sort(legal_moves[:], board, 0)
         
         for move_idx, move in enumerate(sorted_moves):
@@ -105,6 +108,7 @@ def search_with_time_limit(
         if current_best_move is not None and current_best_value > best_value:
             best_move = current_best_move
             best_value = current_best_value
+            
             if debug:
                 print(f"[IDS] Nước đi tốt nhất ở depth {depth}: {move_to_str(best_move)} ({best_value})")
         
