@@ -10,7 +10,7 @@ def is_capture(board: Board, move: int) -> bool:
     target_sq = get_to_sq(move)
     return board.state[target_sq] != '.'
 
-def quiescene_search(board: Board, alpha: float, beta: float, move_sorter: Optional[MoveSorter] = None) -> float:
+def quiescence_search(board: Board, alpha: float, beta: float, move_sorter: Optional[MoveSorter] = None) -> float:
     stand_pat = float(heuristic(board)) # suppose that we don't do anything
 
     if stand_pat >= beta:
@@ -30,7 +30,7 @@ def quiescene_search(board: Board, alpha: float, beta: float, move_sorter: Optio
 
     for move in capture_moves: # this is the stopping condition
         board.make_move(move)
-        score = -quiescene_search(board, -beta, -alpha, move_sorter)
+        score = -quiescence_search(board, -beta, -alpha, move_sorter)
         board.undo_move()
 
         if score >= beta:

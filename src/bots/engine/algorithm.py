@@ -8,7 +8,7 @@ from bots.engine.linear_evaluator import heuristic
 from bots.engine.move_ordering import MoveSorter
 from core.utils import move_to_str
 from bots.engine.transposition_table import TT_TABLE, store, probe, TT_FLAG
-from bots.engine.quiesence_search import quiescene_search
+from bots.engine.quiesence_search import quiescence_search
 
 type AlgorithmFunction = Callable[[Board, int, float, float, bool, Optional[MoveSorter]], float]
 
@@ -26,7 +26,6 @@ def negmax(
     if entry is not None and useful:
         if entry.flag == TT_FLAG.EXACT : # EXACT
             return entry.score
-        
         elif entry.flag == TT_FLAG.LOWERBOUND:
             alpha = max(alpha, entry.score)
         elif entry.flag == TT_FLAG.UPPERBOUND:
@@ -58,7 +57,7 @@ def negmax(
             return 0.0  # Hòa
 
     if depth == 0:
-        return quiescene_search(board, alpha, beta, move_sorter)
+        return quiescence_search(board, alpha, beta, move_sorter)
     
     # Sắp xếp nước đi
     original_alpha = alpha
