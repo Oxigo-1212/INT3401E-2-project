@@ -102,10 +102,10 @@ def bot_vs_bot():
     renderer = BoardRenderer(board)
     
     bot_red = BotManager.create_bot("negamax", depth=3)
-    bot_black = BotManager.create_bot("greedy")
+    bot_black = BotManager.create_bot("negamax", depth=3)
     
-    print(f"Đỏ: {bot_red.get_name()}")
-    print(f"Đen: {bot_black.get_name()}\n")
+    print(f"Đen: {bot_red.get_name()}")
+    print(f"Đỏ: {bot_black.get_name()}\n")
     
     move_count = 0
     
