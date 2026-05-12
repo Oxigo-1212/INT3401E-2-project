@@ -8,7 +8,7 @@ from bots.engine.linear_evaluator import heuristic
 from bots.engine.move_ordering import MoveSorter
 from core.utils import move_to_str
 from bots.engine.transposition_table import TT_TABLE, store, probe, TT_FLAG
-from bots.engine.quiesence_search import quiescence_search
+from bots.engine.quiescence_search import quiescence_search
 
 type AlgorithmFunction = Callable[[Board, int, float, float, bool, Optional[MoveSorter]], float]
 
