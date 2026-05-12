@@ -91,12 +91,14 @@ def minimax(
     alpha: float,
     beta: float,
     is_maximizing_player: bool,
+    move_sorter: Optional[MoveSorter] = None
 ) -> float:
     """
     Thuật toán Minimax kết hợp cắt tỉa Alpha-Beta.
     """
     generator: MoveGenerator = MoveGenerator(board)
-    move_sorter: MoveSorter = MoveSorter()
+    if move_sorter is None:
+        move_sorter = MoveSorter()
     # Lấy danh sách nước đi hợp lệ dựa trên luật chơi
     legal_moves: list[int] = get_legal_moves(board, generator)
     legal_moves = move_sorter.move_sort(legal_moves, board, depth)
@@ -119,7 +121,7 @@ def minimax(
         max_eval: float = -math.inf
         for move in legal_moves:
             board.make_move(move)
-            eval_score = minimax(board, depth - 1, alpha, beta, False)
+            eval_score = minimax(board, depth - 1, alpha, beta, False, move_sorter)
             board.undo_move()
             max_eval = max(max_eval, eval_score)
             alpha = max(alpha, eval_score)
@@ -132,7 +134,7 @@ def minimax(
     min_eval: float = math.inf
     for move in legal_moves:
         board.make_move(move)
-        eval_score = minimax(board, depth - 1, alpha, beta, True)
+        eval_score = minimax(board, depth - 1, alpha, beta, True, move_sorter)
         board.undo_move()
         min_eval = min(min_eval, eval_score)
         beta = min(beta, eval_score)
