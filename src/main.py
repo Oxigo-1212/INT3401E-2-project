@@ -120,6 +120,10 @@ def bot_vs_bot():
     
     bot_red = BotManager.create_bot("negamax", depth=3)
     bot_black = BotManager.create_bot("negamax", depth=3)
+
+    # bot_red = BotManager.create_bot("greedy")
+    # bot_black = BotManager.create_bot("greedy")
+
     
     print(f"Đen: {bot_red.get_name()}")
     print(f"Đỏ: {bot_black.get_name()}\n")

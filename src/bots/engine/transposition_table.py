@@ -45,15 +45,6 @@ def store(key, depth, score, flag, best_move, TT_TABLE):
         entry.flag = flag
         entry.best_move = best_move
 
-    # Ghi đè nếu ô trống hoặc kết quả mới tính toán sâu hơn kết quả cũ
-    if entry is None:
-        TT_TABLE[index] = TT_Entry(key, depth, score, flag, best_move)
-    elif depth >= entry.depth:
-        entry.key = key
-        entry.depth = depth
-        entry.score = score
-        entry.flag = flag
-        entry.best_move = best_move
 
 def probe(key: int, depth: int, alpha: float, beta: float, TT_TABLE: list) -> tuple[TTEntry, bool]:
     if not TT_TABLE:

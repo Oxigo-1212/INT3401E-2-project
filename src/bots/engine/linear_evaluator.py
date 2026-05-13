@@ -20,7 +20,7 @@ _RED_P_TABLE = [
 WEIGHT_VECTOR = {
     "material": 1.0,
     "pawn_structure": 0.5,
-    "mobility": 0.1,
+    "mobility": 0.0,
     "king_safety": 1.0,
 }
 
@@ -179,12 +179,12 @@ def _king_safety_for_side(board: Board, color: Color, king_sq: int) -> int:
                 tropism_score += weight * 10 // dist
 
     # 4. Áp lực tấn công vùng Tướng (bỏ qua nếu chỉ có 1 quân tấn công).
-    num_attackers, attack_pressure = _pieces_attacking_zone(board, zone, opp_color)
-    if num_attackers < 2:
-        zone_attack_score = 0
-    else:
-        idx = min(num_attackers, len(_ATTACKER_WEIGHT_TABLE) - 1)
-        zone_attack_score = attack_pressure * _ATTACKER_WEIGHT_TABLE[idx] // 100
+    # num_attackers, attack_pressure = _pieces_attacking_zone(board, zone, opp_color)
+    # if num_attackers < 2:
+    #     zone_attack_score = 0
+    # else:
+    #     idx = min(num_attackers, len(_ATTACKER_WEIGHT_TABLE) - 1)
+    #     zone_attack_score = attack_pressure * _ATTACKER_WEIGHT_TABLE[idx] // 100
 
     # 5. Tỉ lệ nguy hiểm theo vật chất còn lại của đối phương.
     #    Tổng giá trị phi-tướng: 2R + 2H + 2E + 2A + 2C + 5P = 2940
@@ -202,7 +202,6 @@ def _king_safety_for_side(board: Board, color: Color, king_sq: int) -> int:
         shield_penalty
         + open_file_penalty
         + tropism_score
-        + int(zone_attack_score * material_scale)
     )
     return danger
 
