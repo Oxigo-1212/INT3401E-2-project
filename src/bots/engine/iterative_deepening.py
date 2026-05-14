@@ -118,12 +118,10 @@ def search_with_depth_limit(
         depth_best_move = best_move
         depth_best_value = -math.inf
 
-        # ------------------------------------------------------------------
         # Aspiration Windows
         # Dùng cửa sổ hẹp [prev - delta, prev + delta] thay vì [-inf, +inf].
         # Nếu kết quả nằm ngoài cửa sổ (fail-low hoặc fail-high),
         # mở rộng và search lại ngay trong cùng depth.
-        # ------------------------------------------------------------------
         if depth >= _ASPIRATION_MIN_DEPTH:
             alpha = prev_score - _ASPIRATION_DELTA
             beta  = prev_score + _ASPIRATION_DELTA
