@@ -16,6 +16,7 @@ import random
 from core.move import get_to_sq
 from core.pieces import PIECE_VALUES
 from bots.engine.algorithm import minimax
+from bots.engine.opening_book import OPENING_BOOK
 
 class Bot:
     """Lớp cơ sở cho Bot chơi cờ tướng."""
@@ -73,6 +74,13 @@ class NegmaxBot(Bot):
     def get_move(self, board: Board) -> Optional[int]:
         """Tìm nước đi tốt nhất bằng Negamax với IDS."""
         
+        # 1. Kiểm tra Sổ Khai Cuộc
+        if board.zobrist_key in OPENING_BOOK:
+            moves = OPENING_BOOK[board.zobrist_key]
+            if moves:
+                return random.choice(moves)
+        
+        # 2. Nếu không có trong sổ, tự tính toán
         if self.use_time_limit:
             return search_with_time_limit(
                 board,
@@ -155,6 +163,14 @@ class MinimaxBot(Bot):
     
     def get_move(self, board: Board) -> Optional[int]:
         """Tìm nước đi tốt nhất bằng Minimax."""
+        
+        # 1. Kiểm tra Sổ Khai Cuộc
+        if board.zobrist_key in OPENING_BOOK:
+            moves = OPENING_BOOK[board.zobrist_key]
+            if moves:
+                return random.choice(moves)
+                
+        # 2. Nếu không có trong sổ, tự tính toán
         return search_with_depth_limit(
             board,
             self.algorithm,

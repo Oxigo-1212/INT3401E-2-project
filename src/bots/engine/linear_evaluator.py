@@ -1,221 +1,182 @@
-# evaluator.py
 from core.board import Board
 from core.move_generator import MoveGenerator
 from core.pieces import Color, PIECE_VALUES, is_black, is_red
 
-# Trọng số vị trí (bảng 90 ô rút gọn cho bên đỏ)
-_RED_P_TABLE = [
-    0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0,
-    2, 0, 2, 0, 2, 0, 2, 0, 2,
-    4, 0, 4, 0, 4, 0, 4, 0, 4,
-    5, 5, 5, 5, 5, 5, 5, 5, 5,
-    5, 5, 5, 5, 5, 5, 5, 5, 5,
-    2, 0, 2, 0, 2, 0, 2, 0, 2,
-    0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0,
+# ===========================================================================
+# PIECE-SQUARE TABLES  —  góc nhìn phe ĐỎ, hàng 9 = sân Đỏ
+# Phe Đen dùng bảng lật (89 - sq).
+# ===========================================================================
+
+# --- Xe (R) ---
+# Nguyên tắc:
+#   + Thưởng hàng 7 (hàng trống sau tốt, chuẩn bị tấn công)
+#   + Thưởng cột trung tâm d-f ở PHÍA ĐỊCh (hàng 0-4)
+#   + PHẠT nặng khi vào cung mình (hàng 7-9 cột d-f = sq 66-68,75-77,84-86)
+#   + Vị trí góc ban đầu (a9=81, i9=89) để nguyên, đừng phạt (chờ khai cuộc)
+_PST_R = [
+#   a    b    c    d    e    f    g    h    i
+   206, 208, 207, 210, 208, 210, 207, 208, 206,  # row 0 (địch)
+   208, 212, 209, 212, 212, 212, 209, 212, 208,  # row 1
+   206, 208, 207, 210, 210, 210, 207, 208, 206,  # row 2
+   206, 210, 210, 212, 212, 212, 210, 210, 206,  # row 3
+   208, 211, 211, 213, 214, 213, 211, 211, 208,  # row 4 (giữa bàn)
+   210, 212, 212, 214, 215, 214, 212, 212, 210,  # row 5 (giữa bàn)
+   212, 214, 214, 216, 218, 216, 214, 214, 212,  # row 6 (hàng tốt Đỏ)
+   214, 216, 214, 214, 214, 214, 214, 216, 214,  # row 7 (hàng trống — vị trí tốt nhất)
+   206, 208, 207, 198, 196, 198, 207, 208, 206,  # row 8 (phạt cột d-f = gần cung)
+   206, 208, 207, 196, 194, 196, 207, 208, 206,  # row 9 (phạt cột d-f = trong cung)
 ]
 
+# --- Mã (H) ---
+# Triển khai lên hàng 7 (g7/c7), sau đó tiến sang sông
+_PST_H = [
+#   a    b    c    d    e    f    g    h    i
+    84,  87,  90,  93,  87,  93,  90,  87,  84,  # row 0
+    87,  93, 100,  95,  91,  95, 100,  93,  87,  # row 1
+    89,  96,  97, 101,  96, 101,  97,  96,  89,  # row 2
+    90, 106,  98, 105,  98, 105,  98, 106,  90,  # row 3
+    87,  98,  97, 101, 102, 101,  97,  98,  87,  # row 4
+    87,  96,  99, 100, 101, 100,  99,  96,  87,  # row 5
+    89,  96,  97, 101,  96, 101,  97,  96,  89,  # row 6
+    92, 108,  99, 106,  99, 106,  99, 108,  92,  # row 7 (vị trí triển khai tốt nhất)
+    84,  93, 100,  93,  88,  93, 100,  93,  84,  # row 8
+    80,  83,  83,  88,  83,  88,  83,  83,  80,  # row 9 (ban đầu, nên di chuyển)
+]
+
+# --- Pháo (C) ---
+# Nguyên tắc:
+#   + Nên ở hàng 7 ban đầu (b7/h7) — đây là vị trí khai cuộc chuẩn
+#   + Tiến lên hàng 4-5 để tấn công (thưởng cột e)
+#   + PHẠT khi lùi về hàng 9 a/i (mất tác dụng tấn công)
+#   + Không thưởng hàng 9 góc nữa
+_PST_C = [
+#   a    b    c    d    e    f    g    h    i
+   100, 100,  97,  91,  92,  91,  97, 100, 100,  # row 0 (địch)
+    99,  99,  97,  93,  90,  93,  97,  99,  99,  # row 1
+    98,  98,  97,  92,  93,  92,  97,  98,  98,  # row 2
+    97, 100, 100,  99, 101,  99, 100, 100,  97,  # row 3
+    97,  97,  97,  97, 102,  97,  97,  97,  97,  # row 4
+    96,  97, 100,  97, 102,  97, 100,  97,  96,  # row 5 (giữa bàn)
+    97,  97,  97,  97, 100,  97,  97,  97,  97,  # row 6
+    99,  99,  98,  92,  93,  92,  98,  99,  99,  # row 7 (vị trí khai cuộc)
+    95,  95,  94,  90,  88,  90,  94,  95,  95,  # row 8
+    93,  91,  93,  89,  88,  89,  93,  91,  93,  # row 9 (phạt góc a9/i9)
+]
+
+# --- Tốt (P) ---
+# Hàng 6 của Đỏ = chưa qua sông → 0 điểm vị trí, chỉ tiến
+# Hàng 0-4 (đã qua sông) → thưởng mạnh, đặc biệt cột giữa
+_PST_P = [
+#   a    b    c    d    e    f    g    h    i
+     9,   9,   9,  11,  13,  11,   9,   9,   9,  # row 0 (sát sân địch)
+    13,  13,  13,  15,  15,  15,  13,  13,  13,  # row 1
+    14,  14,  14,  16,  17,  16,  14,  14,  14,  # row 2
+    14,  16,  16,  20,  22,  20,  16,  16,  14,  # row 3
+    14,  16,  16,  20,  22,  20,  16,  16,  14,  # row 4
+     0,   0,   5,   0,   5,   0,   5,   0,   0,  # row 5 (chưa qua sông)
+     0,   0,   5,   0,   5,   0,   5,   0,   0,  # row 6 (vị trí ban đầu tốt Đỏ)
+     0,   0,   0,   0,   0,   0,   0,   0,   0,  # row 7
+     0,   0,   0,   0,   0,   0,   0,   0,   0,  # row 8
+     0,   0,   0,   0,   0,   0,   0,   0,   0,  # row 9
+]
+
+# --- Sĩ (A) ---
+_PST_A = [
+    0, 0, 0,  0,  0,  0,  0, 0, 0,
+    0, 0, 0,  0,  0,  0,  0, 0, 0,
+    0, 0, 0,  0,  0,  0,  0, 0, 0,
+    0, 0, 0, 20,  0, 20,  0, 0, 0,
+    0, 0, 0,  0, 23,  0,  0, 0, 0,
+    0, 0, 0, 20,  0, 20,  0, 0, 0,
+    0, 0, 0,  0,  0,  0,  0, 0, 0,
+    0, 0, 0, 20,  0, 20,  0, 0, 0,
+    0, 0, 0,  0, 23,  0,  0, 0, 0,
+    0, 0, 0, 20,  0, 20,  0, 0, 0,
+]
+
+# --- Tượng (E) ---
+_PST_E = [
+    0,  0, 20,  0,  0,  0, 20,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,
+   18,  0,  0,  0, 23,  0,  0,  0, 18,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0, 20,  0,  0,  0, 20,  0,  0,
+    0,  0, 20,  0,  0,  0, 20,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,
+   18,  0,  0,  0, 23,  0,  0,  0, 18,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0, 20,  0,  0,  0, 20,  0,  0,
+]
+
+# --- Tướng (K): ở giữa cung, tránh sát biên ---
+_PST_K = [
+    0, 0, 0,  1,  1,  1,  0, 0, 0,
+    0, 0, 0,  2,  2,  2,  0, 0, 0,
+    0, 0, 0,  3,  3,  3,  0, 0, 0,
+    0, 0, 0,  0,  0,  0,  0, 0, 0,
+    0, 0, 0,  0,  0,  0,  0, 0, 0,
+    0, 0, 0,  0,  0,  0,  0, 0, 0,
+    0, 0, 0,  0,  0,  0,  0, 0, 0,
+    0, 0, 0,  3,  3,  3,  0, 0, 0,
+    0, 0, 0,  2,  2,  2,  0, 0, 0,
+    0, 0, 0,  1,  1,  1,  0, 0, 0,
+]
+
+_PST_MAP = {
+    'R': _PST_R, 'H': _PST_H, 'C': _PST_C,
+    'P': _PST_P, 'A': _PST_A, 'E': _PST_E, 'K': _PST_K,
+}
+
+# Trọng số — giảm king_safety để bot bớt thụ động
 WEIGHT_VECTOR = {
-    "material": 1.0,
-    "pawn_structure": 0.5,
-    "mobility": 0.1,
-    "king_safety": 1.0,
+    "material":   1.0,
+    "position":   1.2,  
+    "king_safety": 0.5,  
+    "mobility":   0.1,
+    "rook_open":  0.6,
 }
 
-# ---------------------------------------------------------------------------
-# Các hằng số An toàn Tướng (dựa trên CPW / Stockfish / Glaurung cho Cờ Tướng)
-# ---------------------------------------------------------------------------
-
-# Các ô trong cung
-_RED_PALACE = {66, 67, 68, 75, 76, 77, 84, 85, 86}
-_BLACK_PALACE = {3, 4, 5, 12, 13, 14, 21, 22, 23}
-
-# Vùng Tướng: các ô trong cung + một hàng tiến về phía đối phương.
-# Đây là những ô mà quân tấn công gây đe dọa nguy hiểm nhất.
-_RED_KING_ZONE = _RED_PALACE | {57, 58, 59}      # hàng 6 các cột trung tâm
-_BLACK_KING_ZONE = _BLACK_PALACE | {30, 31, 32}   # hàng 3 các cột trung tâm
-
-# Áp lực của quân cờ lên các ô vùng Tướng.
-_ZONE_ATTACK_VALUE = {
-    'H': 20, 'h': 20,
-    'C': 25, 'c': 25,
-    'R': 40, 'r': 40,
-    'P': 10, 'p': 10,
-}
-
-# Tỉ lệ áp lực tấn công theo số lượng quân tấn công riêng biệt (bảng mẫu CPW).
-_ATTACKER_WEIGHT_TABLE = [0, 0, 50, 75, 88, 94, 97, 99, 100]
-
-# Số hàng phía trước Tướng được tính là lá chắn bảo vệ tại chỗ.
-_SHELTER_DEPTH = 4
-
-# Hướng Tướng (Tropism): trọng số khoảng cách Chebyshev mỗi quân cờ để tính điểm khoảng cách tới Tướng.
-# Trọng số càng cao = quân cờ ở gần Tướng đối phương càng quan trọng.
-_TROPISM_WEIGHT = {
-    'R': 3, 'r': 3,
-    'C': 2, 'c': 2,
-    'H': 3, 'h': 3,
-    'P': 1, 'p': 1,
-}
+# ===========================================================================
+# GAME PHASE
+# ===========================================================================
+_PHASE_OPENING = 2400
+_PHASE_ENDGAME = 1200
 
 
-# ---------------------------------------------------------------------------
-# Hàm bổ trợ
-# ---------------------------------------------------------------------------
-
-def _chebyshev(sq1: int, sq2: int) -> int:
-    """Khoảng cách Chebyshev (vua) trên bàn cờ 9x10."""
-    r1, c1 = divmod(sq1, 9)
-    r2, c2 = divmod(sq2, 9)
-    return max(abs(r1 - r2), abs(c1 - c2))
-
-
-def _find_king(board: Board, color: Color) -> int:
-    """Trả về chỉ số ô của Tướng cho phe *color*."""
-    target = 'K' if color == Color.RED else 'k'
-    return board.state.index(target)
+def _game_phase(board: Board) -> float:
+    """0.0 = endgame, 1.0 = opening."""
+    total = sum(
+        PIECE_VALUES.get(p, 0)
+        for p in board.state
+        if p != '.' and p.upper() != 'K'
+    )
+    return min(1.0, max(0.0, (total - _PHASE_ENDGAME) / (_PHASE_OPENING - _PHASE_ENDGAME)))
 
 
-def _count_defenders(board: Board, color: Color) -> int:
-    """Đếm số Sĩ và Tượng còn lại trên bàn cờ cho phe *color* (Lá chắn Tướng).
+# ===========================================================================
+# PST evaluation
+# ===========================================================================
 
-    Trong Cờ Tướng, Sĩ (A/a) và Tượng (E/e) đóng vai trò lá chắn bảo vệ Tướng
-    bên trong hoặc gần cung, tương tự như lá chắn tốt trong cờ vua.
-    """
-    if color == Color.RED:
-        return sum(1 for p in board.state if p in ('A', 'E'))
-    return sum(1 for p in board.state if p in ('a', 'e'))
-
-
-def _pieces_attacking_zone(board: Board, zone: set[int], attacker_color: Color) -> tuple[int, int]:
-    """Trả về (số_quân_tấn_công, áp_lực_tấn_công) vào vùng Tướng đối phương."""
-    from core.move import get_from_sq, get_to_sq
-
-    gen = MoveGenerator(board)
-    original_side = board.side_to_move
-    board.side_to_move = attacker_color
-    try:
-        moves = gen.get_pseudo_legal_moves()
-    finally:
-        board.side_to_move = original_side
-
-    attackers: set[int] = set()
-    pressure = 0
-
-    for mv in moves:
-        to_sq = get_to_sq(mv)
-        if to_sq not in zone:
-            continue
-        frm = get_from_sq(mv)
-        piece = board.state[frm]
-        if piece.upper() in ('A', 'E', 'K'):
-            continue
-        attackers.add(frm)
-        pressure += _ZONE_ATTACK_VALUE.get(piece, 0)
-
-    return len(attackers), pressure
-
-
-def _open_file_near_king(board: Board, king_sq: int, defender_color: Color) -> int:
-    """Hình phạt cho các cột không có quân tốt che chắn tại vùng Tướng."""
-    king_row, king_col = divmod(king_sq, 9)
-    pawn_char = 'P' if defender_color == Color.RED else 'p'
-    penalty = 0
-
-    if defender_color == Color.RED:
-        shelter_rows = range(max(0, king_row - _SHELTER_DEPTH), king_row + 1)
-    else:
-        shelter_rows = range(king_row, min(10, king_row + _SHELTER_DEPTH + 1))
-
-    for col in range(max(0, king_col - 1), min(9, king_col + 2)):
-        has_shield = any(board.state[row * 9 + col] == pawn_char for row in shelter_rows)
-        if not has_shield:
-            penalty += 15
-
-    return penalty
-
-
-# ---------------------------------------------------------------------------
-# Đánh giá An toàn Tướng
-# ---------------------------------------------------------------------------
-
-def _evaluate_king_safety(board: Board) -> int:
-    """Điểm an toàn Tướng từ góc nhìn phe Đỏ (dương = Đỏ an toàn hơn)."""
-    red_king_sq = _find_king(board, Color.RED)
-    black_king_sq = _find_king(board, Color.BLACK)
-
-    red_danger = _king_safety_for_side(board, Color.RED, red_king_sq)
-    black_danger = _king_safety_for_side(board, Color.BLACK, black_king_sq)
-
-    return black_danger - red_danger
-
-
-def _king_safety_for_side(board: Board, color: Color, king_sq: int) -> int:
-    """Tính toán điểm nguy hiểm cho Tướng phe *color* (càng cao càng nguy hiểm).
-
-    Mối đe dọa được tính dựa trên khả năng tấn công của đối thủ lên vùng Tướng
-    và các yếu tố phòng thủ hiện có của phe *color*.
-    """
-    opp_color = Color.BLACK if color == Color.RED else Color.RED
-    zone = _RED_KING_ZONE if color == Color.RED else _BLACK_KING_ZONE
-
-    # 1. Lá chắn phòng thủ (Sĩ + Tượng) — tối đa 4 quân.
-    defenders = _count_defenders(board, color)
-    # Phạt cho mỗi quân phòng thủ bị mất.
-    shield_penalty = (4 - defenders) * 15
-
-    # 2. Cột mở gần Tướng (thiếu tốt che chắn).
-    open_file_penalty = _open_file_near_king(board, king_sq, color)
-
-    # 3. Hướng Tướng (Tropism) — khoảng cách quân tấn công đối phương tới Tướng.
-    tropism_score = 0
+def _evaluate_pst(board: Board) -> int:
+    score = 0
     for sq, piece in enumerate(board.state):
         if piece == '.':
             continue
-        if (color == Color.RED and is_black(piece)) or \
-           (color == Color.BLACK and is_red(piece)):
-            weight = _TROPISM_WEIGHT.get(piece, 0)
-            if weight:
-                dist = max(_chebyshev(sq, king_sq), 1)
-                tropism_score += weight * 10 // dist
-
-    # 4. Áp lực tấn công vùng Tướng (bỏ qua nếu chỉ có 1 quân tấn công).
-    num_attackers, attack_pressure = _pieces_attacking_zone(board, zone, opp_color)
-    if num_attackers < 2:
-        zone_attack_score = 0
-    else:
-        idx = min(num_attackers, len(_ATTACKER_WEIGHT_TABLE) - 1)
-        zone_attack_score = attack_pressure * _ATTACKER_WEIGHT_TABLE[idx] // 100
-
-    # 5. Tỉ lệ nguy hiểm theo vật chất còn lại của đối phương.
-    #    Tổng giá trị phi-tướng: 2R + 2H + 2E + 2A + 2C + 5P = 2940
-    opp_material = 0
-    for piece in board.state:
-        if piece == '.' or piece.upper() == 'K':
+        table = _PST_MAP.get(piece.upper())
+        if table is None:
             continue
-        if (opp_color == Color.RED and is_red(piece)) or \
-           (opp_color == Color.BLACK and is_black(piece)):
-            opp_material += PIECE_VALUES.get(piece, 0)
-    material_scale = min(opp_material, 2940) / 2940
-
-    # Kết hợp các yếu tố nguy hiểm.
-    danger = (
-        shield_penalty
-        + open_file_penalty
-        + tropism_score
-        + int(zone_attack_score * material_scale)
-    )
-    return danger
+        if is_red(piece):
+            score += table[sq]
+        else:
+            score -= table[89 - sq]
+    return score
 
 
-# ---------------------------------------------------------------------------
-# Các thành phần đánh giá cơ bản
-# ---------------------------------------------------------------------------
+# ===========================================================================
+# Material
+# ===========================================================================
 
 def _evaluate_material(board: Board) -> int:
-    """Tính toán chênh lệch giá trị quân cờ (Vật chất)."""
     score = 0
     for piece in board.state:
         if piece == '.':
@@ -228,99 +189,159 @@ def _evaluate_material(board: Board) -> int:
     return score
 
 
-def _evaluate_pawn_structure(board: Board) -> int:
-    """Tính toán điểm thưởng vị trí cho quân Tốt."""
-    score = 0
-    for sq, piece in enumerate(board.state):
-        if piece == 'P':
-            score += _RED_P_TABLE[sq]
-        elif piece == 'p':
-            score -= _RED_P_TABLE[89 - sq]
-    return score
-
+# ===========================================================================
+# Mobility (pseudo-legal — nhanh)
+# ===========================================================================
 
 def _evaluate_mobility(board: Board) -> int:
-    """Tính toán chênh lệch số lượng nước đi khả thi (Tính cơ động)."""
     gen = MoveGenerator(board)
     orig = board.side_to_move
-
     board.side_to_move = Color.RED
     red_moves = len(gen.get_pseudo_legal_moves())
-
     board.side_to_move = Color.BLACK
     black_moves = len(gen.get_pseudo_legal_moves())
-
     board.side_to_move = orig
     return red_moves - black_moves
 
 
-# ---------------------------------------------------------------------------
-# Hàm lượng giá tổng hợp (Heuristic)
-# ---------------------------------------------------------------------------
+# ===========================================================================
+# Rook open file/rank bonus
+# ===========================================================================
 
+def _evaluate_rook_open(board: Board) -> int:
+    score = 0
+    for sq, piece in enumerate(board.state):
+        if piece not in ('R', 'r'):
+            continue
+        row, col = divmod(sq, 9)
+        red = piece == 'R'
+
+        # Cột mở: không có quân cùng phe trên cùng cột
+        col_open = all(
+            board.state[r * 9 + col] == '.' or
+            (red and is_black(board.state[r * 9 + col])) or
+            (not red and is_red(board.state[r * 9 + col]))
+            for r in range(10) if r != row
+        )
+        if col_open:
+            score += 15 if red else -15
+
+        # Hàng mở
+        row_open = all(
+            board.state[row * 9 + c] == '.' or
+            (red and is_black(board.state[row * 9 + c])) or
+            (not red and is_red(board.state[row * 9 + c]))
+            for c in range(9) if c != col
+        )
+        if row_open:
+            score += 10 if red else -10
+
+    return score
+
+
+# ===========================================================================
+# King Safety
+# ===========================================================================
+
+_TROPISM_WEIGHT = {'R': 4, 'r': 4, 'C': 3, 'c': 3, 'H': 3, 'h': 3, 'P': 1, 'p': 1}
+
+
+def _chebyshev(sq1: int, sq2: int) -> int:
+    r1, c1 = divmod(sq1, 9)
+    r2, c2 = divmod(sq2, 9)
+    return max(abs(r1 - r2), abs(c1 - c2))
+
+
+def _find_king(board: Board, color: Color) -> int:
+    target = 'K' if color == Color.RED else 'k'
+    return board.state.index(target)
+
+
+def _count_defenders(board: Board, color: Color) -> int:
+    if color == Color.RED:
+        return sum(1 for p in board.state if p in ('A', 'E'))
+    return sum(1 for p in board.state if p in ('a', 'e'))
+
+
+def _king_danger(board: Board, color: Color, king_sq: int, phase: float) -> int:
+    defenders = _count_defenders(board, color)
+    shield_penalty = (4 - defenders) * 20
+
+    tropism = 0
+    for sq, piece in enumerate(board.state):
+        if piece == '.':
+            continue
+        if (color == Color.RED and is_black(piece)) or \
+           (color == Color.BLACK and is_red(piece)):
+            w = _TROPISM_WEIGHT.get(piece, 0)
+            if w:
+                dist = max(_chebyshev(sq, king_sq), 1)
+                tropism += w * 10 // dist
+
+    # Tropism mạnh hơn trong opening, yếu hơn endgame
+    tropism = int(tropism * (0.4 + 0.6 * phase))
+    return shield_penalty + tropism
+
+
+def _evaluate_king_safety(board: Board, phase: float) -> int:
+    red_king_sq   = _find_king(board, Color.RED)
+    black_king_sq = _find_king(board, Color.BLACK)
+    red_danger    = _king_danger(board, Color.RED,   red_king_sq,   phase)
+    black_danger  = _king_danger(board, Color.BLACK, black_king_sq, phase)
+    return black_danger - red_danger
+
+
+# ===========================================================================
+# Tổng hợp
+# ===========================================================================
 
 def _evaluate_absolute_score(board: Board) -> int:
-    """Đỏ + Đen -. Sử dụng cho mini-max."""
-    breakdown = get_heuristic_breakdown(board)
-    return breakdown["total"]
+    phase = _game_phase(board)
+    mat      = _evaluate_material(board)
+    pst      = _evaluate_pst(board)
+    ksafety  = _evaluate_king_safety(board, phase)
+    mob      = _evaluate_mobility(board)
+    rook_op  = _evaluate_rook_open(board)
+    return int(
+        mat     * WEIGHT_VECTOR["material"]    +
+        pst     * WEIGHT_VECTOR["position"]    +
+        ksafety * WEIGHT_VECTOR["king_safety"] +
+        mob     * WEIGHT_VECTOR["mobility"]    +
+        rook_op * WEIGHT_VECTOR["rook_open"]
+    )
 
 
 def heuristic(board: Board) -> int:
-    """Sử dụng cho negamax."""
-    absolute_score = _evaluate_absolute_score(board)
-    
-    if board.side_to_move == Color.RED:
-        return absolute_score
-    else:
-        return -absolute_score
+    s = _evaluate_absolute_score(board)
+    return s if board.side_to_move == Color.RED else -s
+
 
 def get_heuristic_breakdown(board: Board) -> dict:
-    """
-    Trả về chi tiết các thành phần của hàm đánh giá dưới dạng dictionary.
-    Sử dụng cho mục đích logging hoặc gỡ lỗi.
-    """
-    # Tính toán các điểm số thô (raw scores)
-    raw_material = _evaluate_material(board)
-    raw_pawn_structure = _evaluate_pawn_structure(board)
-    raw_mobility = _evaluate_mobility(board)
-    raw_king_safety = _evaluate_king_safety(board)
-
-    # Lấy các trọng số từ WEIGHT_VECTOR
-    w_material = WEIGHT_VECTOR["material"]
-    w_pawn = WEIGHT_VECTOR["pawn_structure"]
-    w_mobility = WEIGHT_VECTOR["mobility"]
-    w_king = WEIGHT_VECTOR["king_safety"]
-
-    # Tính toán điểm số cuối cùng
-    total_score = int(
-        raw_material * w_material +
-        raw_pawn_structure * w_pawn +
-        raw_mobility * w_mobility +
-        raw_king_safety * w_king
+    phase    = _game_phase(board)
+    mat      = _evaluate_material(board)
+    pst      = _evaluate_pst(board)
+    ksafety  = _evaluate_king_safety(board, phase)
+    mob      = _evaluate_mobility(board)
+    rook_op  = _evaluate_rook_open(board)
+    total    = int(
+        mat     * WEIGHT_VECTOR["material"]    +
+        pst     * WEIGHT_VECTOR["position"]    +
+        ksafety * WEIGHT_VECTOR["king_safety"] +
+        mob     * WEIGHT_VECTOR["mobility"]    +
+        rook_op * WEIGHT_VECTOR["rook_open"]
     )
-
     return {
-        "total": total_score,
+        "total": total,
+        "phase": f"{'opening' if phase > 0.7 else 'middlegame' if phase > 0.3 else 'endgame'} ({phase:.2f})",
         "components": {
-            "material": {
-                "raw": raw_material,
-                "weighted": raw_material * w_material
-            },
-            "pawn_structure": {
-                "raw": raw_pawn_structure,
-                "weighted": raw_pawn_structure * w_pawn
-            },
-            "mobility": {
-                "raw": raw_mobility,
-                "weighted": raw_mobility * w_mobility
-            },
-            "king_safety": {
-                "raw": raw_king_safety,
-                "weighted": raw_king_safety * w_king
-            }
+            "material":    {"raw": mat,     "weighted": mat     * WEIGHT_VECTOR["material"]},
+            "position":    {"raw": pst,     "weighted": pst     * WEIGHT_VECTOR["position"]},
+            "king_safety": {"raw": ksafety, "weighted": ksafety * WEIGHT_VECTOR["king_safety"]},
+            "mobility":    {"raw": mob,     "weighted": mob     * WEIGHT_VECTOR["mobility"]},
+            "rook_open":   {"raw": rook_op, "weighted": rook_op * WEIGHT_VECTOR["rook_open"]},
         },
         "metadata": {
             "side_to_move": "Đỏ" if board.side_to_move == Color.RED else "Đen",
-            "weights_used": WEIGHT_VECTOR
+            "weights_used": WEIGHT_VECTOR,
         }
     }
