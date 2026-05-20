@@ -2,12 +2,13 @@
 Chế độ chơi: Con người vs Bot hoặc Bot vs Bot
 """
 
+from typing import Optional
 from core.board import Board
 from bots.engine.transposition_table import init_tt, TT_TABLE
 from core.board_renderer import BoardRenderer
 from core.move_generator import MoveGenerator
 from core.move import uci_to_move, move_to_uci
-from core.rules import *
+from core.rules import check_game_status, get_legal_moves, is_in_check, GameStatus, Color
 from core.utils import move_to_str
 from bots.bot import BotManager
 from colorama import init
@@ -18,6 +19,13 @@ def log_time(player_name: str, time_taken: float):
     # Mở (hoặc tạo nếu chưa có) file time_log.txt và ghi thêm vào cuối file  
     with open("time_log.txt", "a", encoding="utf-8") as f:
         f.write(f"[{player_name}] Thời gian suy nghĩ: {time_taken:.2f}s\n")
+
+def safe_input(prompt: str) -> Optional[str]:
+    try:
+        string = input(prompt).strip()
+        return string
+    except KeyboardInterrupt:
+        return None
 
 def vs_bot():
     """Con người chơi với Bot."""
@@ -90,7 +98,7 @@ def vs_bot():
                         log_time("Người chơi", end_time - start_time) # ghi thời gian ra file time_log.txt
                     else:
                         print(f"\033[91m!!! Nước đi {move_str} không hợp lệ.\033[0m")
-                except:
+                except ValueError:
                     print("\033[91m!!! Định dạng sai. Vui lòng nhập kiểu 'h2e2'.\033[0m")
             else:
                 # Lượt của Bot
@@ -162,22 +170,24 @@ def bot_vs_bot():
     
     except KeyboardInterrupt:
         print("\nĐã thoát game.")
-
-if __name__ == "__main__":
+def main() -> None:
     # Xóa file log cũ trước khi bắt đầu trận mới
     with open("time_log.txt", "w", encoding="utf-8") as f:
         f.write("")
-        
+
     init_tt(1 << 20, TT_TABLE)
     print("=== CỜ TƯỚNG ENGINE ===")
     print("1. Con người vs Bot")
     print("2. Bot vs Bot")
-    
-    choice = input("Chọn chế độ (1-2): ").strip()
-    
+
+    choice = safe_input("Chọn chế độ (1-2): ")
+
     if choice == "1":
         vs_bot()
     elif choice == "2":
         bot_vs_bot()
     else:
         print("Lựa chọn không hợp lệ!")
+
+if __name__ == "__main__":
+    main()

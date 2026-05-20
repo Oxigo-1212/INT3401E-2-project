@@ -11,7 +11,7 @@ from core.board import Board
 from core.move_generator import MoveGenerator
 from core.rules import (
     is_in_check, flying_general_check, get_legal_moves,
-    check_game_status, is_draw
+    check_game_status, is_draw, GameStatus
 )
 from core.pieces import Color
 from core.move import uci_to_move, move_to_uci
@@ -193,7 +193,7 @@ class TestGetLegalMoves:
 
 class TestCheckmate:
     def test_checkmate_red_loses(self):
-        """Tướng Đỏ bị chiếu bí → Đen thắng (status = 2)."""
+        """Tướng Đỏ bị chiếu bí → Đen thắng (status = BlueWin)."""
         # Tướng Đỏ e9 bị hai Xe Đen chiếu bí
         b, gen = setup("4k4/9/9/9/9/9/9/9/r8/r3K4 w - - 0 1")
         # Thêm Xe Đen b9 để chắn di chuyển
@@ -202,32 +202,30 @@ class TestCheckmate:
         gen2 = MoveGenerator(b2)
         legal = get_legal_moves(b2, gen2)
         status = check_game_status(b2, legal)
-        # Kiểm tra: nếu legal rỗng → chiếu bí
-        if len(legal) == 0:
-            assert status == 2  # Đen thắng
+        assert legal == []
+        assert status == GameStatus.BlueWin
 
     def test_checkmate_simple(self):
         """Test chiếu bí đơn giản: Tướng không còn đường thoát."""
         b = Board()
-        # Tướng Đỏ bị dồn vào góc và bị chiếu bí
-        b.set_fen("4k4/9/9/9/9/9/9/9/8r/3rK4 w - - 0 1")
+        # Trạng thái đơn giản: Red không còn nước hợp lệ
+        b.set_fen("4K4/9/9/9/9/9/9/9/9/3rkr3 w - - 0 1")
         gen = MoveGenerator(b)
         legal = get_legal_moves(b, gen)
-        if len(legal) == 0:
-            status = check_game_status(b, legal)
-            assert status == 2
+        assert legal == []
+        status = check_game_status(b, legal)
+        assert status == GameStatus.BlueWin
 
     def test_stalemate_black_loses(self):
-        """Tướng Đen hết nước nhưng không bị chiếu (stalemate) → status != 0."""
+        """Tướng Đen hết nước nhưng không bị chiếu (stalemate) → Red thắng."""
         # Trong cờ tướng, hết nước = thua (không có hòa stalemate)
         b = Board()
-        b.set_fen("3rk4/4r4/9/9/9/9/9/9/9/4K4 b - - 0 1")
+        b.set_fen("3rkr3/9/9/9/9/9/9/9/9/4K4 b - - 0 1")
         gen = MoveGenerator(b)
         legal = get_legal_moves(b, gen)
-        # Nếu Đen không có nước → Đỏ thắng
-        if len(legal) == 0:
-            status = check_game_status(b, legal)
-            assert status == 1
+        assert legal == []
+        status = check_game_status(b, legal)
+        assert status == GameStatus.RedWin
 
 
 # ==============================================================================
@@ -279,21 +277,21 @@ class TestDrawConditions:
         assert not is_draw(b)
 
     def test_check_game_status_returns_draw(self):
-        """check_game_status trả về 3 khi hòa."""
+        """check_game_status trả về GameStatus.Draw khi hòa."""
         b = Board()
         b.half_move_clock = 120
         gen = MoveGenerator(b)
         legal = get_legal_moves(b, gen)
         status = check_game_status(b, legal)
-        assert status == 3
+        assert status == GameStatus.Draw
 
     def test_check_game_status_ongoing(self):
-        """check_game_status trả về 0 khi ván đang chơi."""
+        """check_game_status trả về GameStatus.Playing khi ván đang chơi."""
         b = Board()
         gen = MoveGenerator(b)
         legal = get_legal_moves(b, gen)
         status = check_game_status(b, legal)
-        assert status == 0
+        assert status == GameStatus.Playing
 
 
 # ==============================================================================

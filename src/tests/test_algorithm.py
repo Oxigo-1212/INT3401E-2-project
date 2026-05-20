@@ -40,7 +40,11 @@ def install_search_stubs(monkeypatch, legal_moves, status=GameStatus.Playing):
     monkeypatch.setattr(algorithm, "check_game_status", lambda board, moves: status)
     monkeypatch.setattr(algorithm, "probe", lambda key, depth, alpha, beta, tt: (None, False))
     monkeypatch.setattr(algorithm, "store", lambda key, depth, score, flag, best_move, tt: None)
-
+    monkeypatch.setattr(
+        algorithm,
+        "quiescence_search",
+        lambda board, alpha, beta, move_sorter=None: float(algorithm.heuristic(board)),
+    )
 
 @pytest.mark.parametrize(
     "status, expected",
