@@ -1,0 +1,58 @@
+[Event "AI Arena Game"]
+[Date "2026-05-20"]
+[Player1 "Negamax Bot (depth=3)_Red"]
+[Player2 "Minimax Bot (depth=3)_Black"]
+[Result "1/2-1/2"]
+[GameID "20260520181332114531"]
+[Termination "draw"]
+[Moves "92"]
+[Winner "Draw"]
+
+1. h7e7 b0c2
+2. e7g7 b2b6
+3. g7g3 h2h7
+4. i9i7 h7h6
+5. b9c7 h0g2
+6. h9g7 c3c4
+7. i7h7 i0h0
+8. g3g0 f0e1
+9. a6a5 b6b1
+10. a9a6 c2b4
+11. a6a7 b4c6
+12. a7a6 c6b4
+13. a6a7 b4c6
+14. a7a6 c6b4
+15. a6a7 b1b7
+16. a7b7 b4a6
+17. b7b6 c4c5
+18. c7a6 c5c6
+19. b6c6 a0b0
+20. a6c7 b0b7
+21. c6c0 h0g0
+22. h7h6 g2f4
+23. a5a4 a3a4
+24. h6h4 f4g6
+25. h4a4 g0g2
+26. a4d4 g2h2
+27. d4d1 e3e4
+28. d9e8 i3i4
+29. d1d4 h2h4
+30. c0c3 h4f4
+31. g9e7 i4i5
+32. i6i5 g6i5
+33. e6e5 f4g4
+34. g7h5 g4h4
+35. h5f6 h4f4
+36. c3c6 i5g6
+37. e5e4 f4f3
+38. d4d1 e0f0
+39. f6d5 g6e5
+40. c6e6 f3f5
+41. e6b6 e5d7
+42. e8d7 f5f9
+43. e9e8 f9f8
+44. e8e9 f8f9
+45. e9e8 f9f8
+46. e8e9 f8f9
+
+1/2-1/2

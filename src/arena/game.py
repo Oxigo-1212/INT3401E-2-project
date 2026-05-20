@@ -3,7 +3,6 @@
 import datetime
 import os
 import sys
-import logging
 from enum import Enum
 from typing import Optional, List, Tuple
 
@@ -14,6 +13,7 @@ try:
     from ..core.rules import check_game_status, GameStatus, get_legal_moves
     from ..core.move import move_to_uci
     from ..core.pieces import Color
+    from .logger import Logger  # Import Logger từ module hiện tại (arena/logger.py)
 except ImportError:
     # Fallback for direct execution
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -22,6 +22,7 @@ except ImportError:
     from core.rules import check_game_status, GameStatus, get_legal_moves
     from core.move import move_to_uci
     from core.pieces import Color
+    from arena.logger import Logger  # Import Logger theo fallback
 
 
 class Winner(Enum):
@@ -58,8 +59,8 @@ class Game:
         winner: Người thắng (Winner.RED, Winner.BLACK, Winner.DRAW)
         pgn: Ngoại lệ cờ (PGN format)
         game_id: ID duy nhất của ván cờ
-        logger: Logger instance cho game này
-        game_result_status: Trạng thái chi tiết (GameResultStatus enum: playing, checkmate, timeout, resign, draw, illegal_move, error)
+        logger: Thư ký ghi chép (Logger instance)
+        game_result_status: Trạng thái chi tiết (GameResultStatus enum)
     """
     
     def __init__(
@@ -91,8 +92,8 @@ class Game:
         self.game_id = game_id or datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
         self.log_path = log_path or "logs"
         
-        # Khởi tạo logger
-        self.logger = self._init_logger()
+        # SỬ DỤNG LOGGER.PY: Khởi tạo Logger chuẩn của project
+        self.logger = Logger(log_dir=self.log_path, game_id=self.game_id, console=True)
 
     def play(self) -> str:
         """
@@ -107,7 +108,8 @@ class Game:
         move_count = 0
         max_moves = 1000  # Giới hạn nước đi tối đa để tránh vòng lặp vô hạn
 
-        self.logger.info(f"Game started: {self.player1.name} (RED) vs {self.player2.name} (BLACK)")
+        # Ghi log bắt đầu
+        self.logger.log_game_start(self.game_id, self.player1.name, self.player2.name)
 
         while self.game_status == GameStatus.Playing and move_count < max_moves:
             # Sinh nước đi hợp lệ
@@ -132,16 +134,16 @@ class Game:
             try:
                 move = current_player.get_move(self.board)
             except Exception as e:
-                self.logger.error(f"Error getting move from {current_player.name}: {e}")
-                # Nếu bot gặp lỗi, coi như nó thua
+                # Ghi log lỗi ngoại lệ của bot
+                self.logger.log_error(self.game_id, current_player.name, f"Exception runtime: {e}")
                 self._set_winner(Winner.BLACK if current_color == Color.RED else Winner.RED)
                 self.game_result_status = GameResultStatus.ERROR
                 break
 
             # Kiểm tra nước đi có hợp lệ không
             if move not in legal_moves:
-                self.logger.error(f"Illegal move from {current_player.name}: {move}")
-                # Nước đi không hợp lệ = thua
+                # Ghi log lỗi nước đi không hợp lệ
+                self.logger.log_error(self.game_id, current_player.name, f"Illegal move: {move}")
                 self._set_winner(Winner.BLACK if current_color == Color.RED else Winner.RED)
                 self.game_result_status = GameResultStatus.ILLEGAL_MOVE
                 break
@@ -150,22 +152,26 @@ class Game:
             move_uci = move_to_uci(move)
             self.board.make_move(move)
             self.moves.append((current_player.name, move, move_uci))
-            self.logger.info(f"Move {move_count + 1}: {current_player.name} ({current_color.name}) -> {move_uci}")
+            
+            # Ghi log nước đi
+            self.logger.log_move(self.game_id, move_count + 1, current_player.name, move_uci)
 
             # Đổi lượt
             current_player, other_player = other_player, current_player
             current_color = Color.BLACK if current_color == Color.RED else Color.RED
             move_count += 1
 
-        # Nếu chưa có người thắng (e.g., hòa cờ)
+        # Nếu chưa có người thắng (e.g., kịch trần nước đi)
         if self.winner is None:
             self._set_winner(Winner.DRAW)
             self.game_result_status = GameResultStatus.DRAW
 
-        if self.winner == Winner.DRAW:
-            self.logger.info(f"Game ended: Draw. Status: {self.game_result_status.value}")
-        else:
-            self.logger.info(f"Game ended: {self.winner.value} wins. Status: {self.game_result_status.value}")
+        # Ghi log tổng kết kết thúc trận
+        self.logger.log_game_end(
+            self.game_id, 
+            winner=self.winner.value if self.winner else "None", 
+            reason=self.game_result_status.value
+        )
 
         # Xuất PGN
         self.pgn = self.export_pgn()
@@ -197,7 +203,8 @@ class Game:
         """
         self._set_winner(Winner.BLACK if player_name == self.player1.name else Winner.RED)
         self.game_result_status = GameResultStatus.RESIGN
-        self.logger.info(f"{player_name} resigned. {self.winner.value} wins.")
+        # Ghi log khi bỏ cuộc
+        self.logger.log_game_end(self.game_id, winner=self.winner.value, reason=f"{player_name} resigned")
 
     def timeout(self, player_name: str) -> None:
         """
@@ -208,41 +215,8 @@ class Game:
         """
         self._set_winner(Winner.BLACK if player_name == self.player1.name else Winner.RED)
         self.game_result_status = GameResultStatus.TIMEOUT
-        self.logger.info(f"{player_name} timeout. {self.winner.value} wins.")
-
-    def _init_logger(self) -> logging.Logger:
-        """
-        Khởi tạo logger cho game này.
-        
-        Returns:
-            Logger instance
-        """
-        # Tạo thư mục logs nếu chưa tồn tại
-        os.makedirs(self.log_path, exist_ok=True)
-        
-        logger = logging.getLogger(f"Game_{self.game_id}")
-        logger.setLevel(logging.DEBUG)
-        
-        # Handler cho file log
-        log_file = os.path.join(self.log_path, f"{self.game_id}.log")
-        fh = logging.FileHandler(log_file, encoding='utf-8')
-        fh.setLevel(logging.DEBUG)
-        
-        # Handler cho console
-        ch = logging.StreamHandler()
-        ch.setLevel(logging.INFO)
-        
-        # Format
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        fh.setFormatter(formatter)
-        ch.setFormatter(formatter)
-        
-        # Thêm handlers
-        if not logger.handlers:  # Tránh thêm duplicate handlers
-            logger.addHandler(fh)
-            logger.addHandler(ch)
-        
-        return logger
+        # Ghi log khi hết giờ
+        self.logger.log_game_end(self.game_id, winner=self.winner.value, reason=f"{player_name} timeout")
 
     def export_pgn(self) -> str:
         """
@@ -319,28 +293,15 @@ class Game:
 
 # Demo test
 if __name__ == "__main__":
-    # Note: Khi chạy trực tiếp file này, hãy chạy bằng:
-    # python -m arena.game  (từ thư mục src)
-    # Hoặc thêm đường dẫn project vào PYTHONPATH
-    
     from bots.bot import NegmaxBot, RandomBot
     from core.board import Board
 
-    # Tạo hai bot
     bot1 = NegmaxBot(depth=3)
     bot2 = RandomBot()
     
-    # Tùy chọn: Đặt tên tùy chỉnh cho bot
-    # bot1.name = "NegmaxBot-D3"
-    # bot2.name = "RandomBot"
-    
-    # Khởi tạo bàn cờ
     board = Board()
-    
-    # Tạo ván cờ với custom log path
     game = Game(bot1, bot2, board, log_path="logs")
     
-    # Chạy ván cờ
     game_id = game.play()
     print(f"\n{'='*50}")
     print(f"Game {game_id} finished!")
