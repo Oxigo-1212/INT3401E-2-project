@@ -4,18 +4,23 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from core.board import Board
+from core.pieces import Color
 from bots.engine.linear_evaluator import (
     heuristic,
     _evaluate_material,
-    _evaluate_pawn_structure,
+    _evaluate_pst,
     _evaluate_mobility,
     _evaluate_king_safety,
-    _king_safety_for_side,
     _count_defenders,
     _find_king,
-    _open_file_near_king,
+    _evaluate_rook_open,
+    _game_phase,
 )
-from core.pieces import Color
+
+def _king_safety_for_side(board: Board, color: Color, king_sq: int) -> int:
+    """Helper to simulate the old _king_safety_for_side function using the new _king_danger function."""
+    from bots.engine.linear_evaluator import _king_danger
+    return _king_danger(board, color, king_sq, _game_phase(board))
 
 
 # ── Các bài kiểm tra hiện có (đã sửa import _evaluate_position → _evaluate_pawn_structure) ──
@@ -46,7 +51,7 @@ def test_pawn_position_bonus():
     board.state[63] = '.'
     board.state[36] = 'P'
 
-    p_score = _evaluate_pawn_structure(board)
+    p_score = _evaluate_pst(board)
     assert p_score > 0
 
 
@@ -66,7 +71,7 @@ def test_mobility():
 def test_king_safety_symmetric_at_start():
     """Vị trí bắt đầu: an toàn tướng nên đối xứng (điểm == 0)."""
     board = Board()
-    ks = _evaluate_king_safety(board)
+    ks = _evaluate_king_safety(board, _game_phase(board))
     assert ks == 0, f"Mong đợi 0 lúc bắt đầu, nhưng nhận được {ks}"
 
 
@@ -103,21 +108,17 @@ def test_shield_penalty_missing_defenders():
     assert exposed_red > base_red
 
 
-def test_open_file_penalty():
-    """Loại bỏ cột tốt trung tâm sẽ tạo ra hình phạt cột mở."""
+def test_rook_open_file_bonus():
+    """Quân xe trên cột/hàng mở nhận điểm thưởng."""
     board = Board()
-    king_sq = _find_king(board, Color.RED)
+    base = _evaluate_rook_open(board)
 
-    base = _open_file_near_king(board, king_sq, Color.RED)
+    # Xóa các quân cản đường cột của quân xe đỏ ở ô 81 (hàng 9, cột 0)
+    for r in range(9):
+        board.state[r * 9 + 0] = '.'
 
-    # Loại bỏ các tốt đỏ ở cột 3, 4, 5 (gần tướng)
-    for sq in range(90):
-        _, c = divmod(sq, 9)
-        if board.state[sq] == 'P' and 3 <= c <= 5:
-            board.state[sq] = '.'
-
-    after = _open_file_near_king(board, king_sq, Color.RED)
-    assert after > base, "Hình phạt cột mở sẽ tăng lên"
+    after = _evaluate_rook_open(board)
+    assert after > base, "Điểm số cột mở của Xe đỏ sẽ tăng lên"
 
 
 def test_tropism_closer_piece_more_danger():
@@ -177,7 +178,7 @@ def test_king_safety_favors_side_with_stronger_shield():
         if board.state[i] in ('A', 'E'):
             board.state[i] = '.'
     # Đen vẫn còn sĩ và tượng
-    ks = _evaluate_king_safety(board)
+    ks = _evaluate_king_safety(board, _game_phase(board))
     # Dương = nguy hiểm của đen − nguy hiểm của đỏ. Đỏ mất quân phòng thủ → nguy hiểm của đỏ > nguy hiểm của đen.
     assert ks < 0, f"Đỏ mất quân phòng thủ, điểm số nên là âm (nhận được {ks})"
 
