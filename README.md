@@ -118,7 +118,8 @@ Mặc định, các tệp log và PGN của ván đấu sẽ được tự độ
 
 ## Tài Liệu
 
-Kiến trúc hệ thống và API reference được mô tả chi tiết tại **[docs/index.md](docs/index.md)**.
+Kiến trúc hệ thống và API reference được mô tả chi tiết tại **[Documentation](docs/index.md)**.
+Báo cáo chi tiết về phương pháp giải quyết và kết quả của dự án có sẵn tại **[Report](docs/REPORT.md)**.
 
 ## Bản Quyền (License)
 
