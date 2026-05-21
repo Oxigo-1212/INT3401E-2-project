@@ -86,8 +86,7 @@ def check_game_status(board, legal_moves) -> GameStatus:
     if len(legal_moves) == 0:
         # Nếu bên đến lượt (side_to_move) không còn nước đi
         # thì bên đó thua, bên kia thắng.
-        return GameStatus.RedWin if board.side_to_move == Color.RED else GameStatus.BlueWin
-    
+        return GameStatus.RedWin if board.side_to_move == Color.BLACK else GameStatus.BlueWin
     if is_draw(board):
         return GameStatus.Draw
 

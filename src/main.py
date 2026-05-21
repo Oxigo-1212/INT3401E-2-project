@@ -2,21 +2,25 @@
 Chế độ chơi: Con người vs Bot hoặc Bot vs Bot (Tích hợp Arena Game)
 """
 
+from typing import Optional
 from core.board import Board
 from bots.engine.transposition_table import init_tt, TT_TABLE
 from core.board_renderer import BoardRenderer
 from core.move_generator import MoveGenerator
 from core.move import uci_to_move, move_to_uci
-from core.rules import *
+from core.rules import check_game_status, get_legal_moves, is_in_check, GameStatus, Color
 from core.utils import move_to_str
 from bots.bot import BotManager
 from colorama import init
 import time 
+from core.logger import init_logging, get_logger
 
 # Import thêm Game và các Enum liên quan từ arena.game
 from arena.game import Game, Winner, GameResultStatus
 
 init()
+
+_log = get_logger("main")
 
 class HumanPlayer:
     """Class bọc cho người chơi để tương thích với thuộc tính 'name' của Game"""
@@ -27,6 +31,13 @@ def log_time(player_name: str, time_taken: float):
     # Mở (hoặc tạo nếu chưa có) file time_log.txt và ghi thêm vào cuối file  
     with open("time_log.txt", "a", encoding="utf-8") as f:
         f.write(f"[{player_name}] Thời gian suy nghĩ: {time_taken:.2f}s\n")
+
+def safe_input(prompt: str) -> Optional[str]:
+    try:
+        string = input(prompt).strip()
+        return string
+    except KeyboardInterrupt:
+        return None
 
 def vs_bot():
     """Con người chơi với Bot."""
@@ -123,11 +134,11 @@ def vs_bot():
                         game.logger.info(f"Move {len(game.moves)}: {human.name} ({current_color_name}) -> {move_str}")
                     else:
                         print(f"\033[91m!!! Nước đi {move_str} không hợp lệ.\033[0m")
-                except:
+                except ValueError:
                     print("\033[91m!!! Định dạng sai. Vui lòng nhập kiểu 'h2e2'.\033[0m")
             else:
                 # Lượt của Bot
-                print(f"Bot {bot.name} đang suy nghĩ...")
+                _log.info("Bot %s đang suy nghĩ...", bot.name)
                 start_time = time.time()
                 move = bot.get_move(board)
                 end_time = time.time()
@@ -142,24 +153,24 @@ def vs_bot():
                     game.moves.append((bot.name, move, move_uci))
                     game.logger.info(f"Move {len(game.moves)}: {bot.name} ({current_color_name}) -> {move_uci}")
                 else:
-                    print("Bot không có nước đi hợp lệ!")
-                    game.logger.error(f"{bot.name} has no valid moves!")
+                    _log.warning("Bot không có nước đi hợp lệ!")
+                    _log.error("%s has no valid moves!", bot.name)
                     game.resign(bot.name)
                     break
                     
     except KeyboardInterrupt:
-        print("\nĐã thoát game đột ngột.")
+        _log.info("Đã thoát game đột ngột.")
         game.resign(human.name)
         
     finally:
         # Xuất PNG và thông báo tổng kết ở cuối ván
         game.pgn = game.export_pgn()
         game._save_pgn()
-        print(f"\n--- TỔNG KẾT VÁN CỜ ({game.game_id}) ---")
-        print(f"Tổng số nước đi: {len(game.moves)}")
-        print(f"Người chiến thắng được ghi nhận: {game.winner.value if game.winner else 'Chưa rõ'}")
-        print("PGN:")
-        print(game.pgn)
+        _log.info("--- TỔNG KẾT VÁN CỜ (%s) ---", game.game_id)
+        _log.info("Tổng số nước đi: %d", len(game.moves))
+        _log.info("Người chiến thắng được ghi nhận: %s", game.winner.value if game.winner else 'Chưa rõ')
+        _log.info("PGN:")
+        _log.info("%s", game.pgn)
 
 
 def bot_vs_bot():
@@ -246,7 +257,7 @@ def bot_vs_bot():
             bot = bot_red if is_red_turn else bot_black
             current_color_name = "RED" if is_red_turn else "BLACK"
             
-            print(f"Lượt {move_count + 1}: {bot.name} đang suy nghĩ...")
+            _log.info("Lượt %d: %s đang suy nghĩ...", move_count + 1, bot.name)
             
             start_time = time.time()
             move = bot.get_move(board)
@@ -264,28 +275,28 @@ def bot_vs_bot():
                 
                 move_count += 1
             else:
-                print(f"{bot.name} không có nước đi hợp lệ!")
+                _log.warning("%s không có nước đi hợp lệ!", bot.name)
                 game.resign(bot.name)
                 break
                 
         if move_count >= 200:
-            print("Đạt giới hạn 200 nước đi. Xử hòa.")
+            _log.info("Đạt giới hạn 200 nước đi. Xử hòa.")
             game._set_winner(Winner.DRAW)
             game.game_result_status = GameResultStatus.DRAW
             
     except KeyboardInterrupt:
-        print("\nĐã can thiệp dừng game.")
+        _log.info("Đã can thiệp dừng game.")
         game.game_result_status = GameResultStatus.ERROR
         
     finally:
         # Xuất PNG và thông báo tổng kết ở cuối ván
         game.pgn = game.export_pgn()
         game._save_pgn()
-        print(f"\n--- TỔNG KẾT VÁN CỜ ({game.game_id}) ---")
-        print(f"Tổng số nước đi: {len(game.moves)}")
-        print(f"Người chiến thắng được ghi nhận: {game.winner.value if game.winner else 'Chưa rõ'}")
-        print("PGN:")
-        print(game.pgn)
+        _log.info("--- TỔNG KẾT VÁN CỜ (%s) ---", game.game_id)
+        _log.info("Tổng số nước đi: %d", len(game.moves))
+        _log.info("Người chiến thắng được ghi nhận: %s", game.winner.value if game.winner else 'Chưa rõ')
+        _log.info("PGN:")
+        _log.info("%s", game.pgn)
 
 
 if __name__ == "__main__":
@@ -293,13 +304,14 @@ if __name__ == "__main__":
     with open("time_log.txt", "w", encoding="utf-8") as f:
         f.write("")
         
+    init_logging()
     init_tt(1 << 20, TT_TABLE)
     print("=== CỜ TƯỚNG ENGINE ===")
     print("1. Con người vs Bot")
     print("2. Bot vs Bot")
-    
-    choice = input("Chọn chế độ (1-2): ").strip()
-    
+
+    choice = safe_input("Chọn chế độ (1-2): ")
+
     if choice == "1":
         vs_bot()
     elif choice == "2":
