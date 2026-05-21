@@ -1,5 +1,0 @@
-2026-05-20 17:32:28 - Game_20260520173228754160 - INFO - Mode selected: Bot vs Bot
-2026-05-20 17:32:28 - Game_20260520173228754160 - INFO - Game started: Negamax Bot (depth=3) (RED) vs Negamax Bot (depth=3) (BLACK)
-2026-05-20 17:32:28 - Game_20260520173228754160 - INFO - Move 1: Negamax Bot (depth=3) (RED) -> h7e7
-2026-05-20 17:32:28 - Game_20260520173228754160 - INFO - Move 2: Negamax Bot (depth=3) (BLACK) -> b0c2
-2026-05-20 17:32:35 - Game_20260520173228754160 - INFO - Move 3: Negamax Bot (depth=3) (RED) -> e7g7

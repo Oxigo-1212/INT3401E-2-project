@@ -1,8 +1,0 @@
-2026-05-20 18:25:01 - INFO - Game started: Negamax Bot (depth=3)_Red (RED) vs Minimax Bot (depth=3)_Black (BLACK)
-2026-05-20 18:25:01 - INFO - Move 1: Negamax Bot (depth=3)_Red (RED) -> h7e7
-2026-05-20 18:25:01 - INFO - Move 2: Minimax Bot (depth=3)_Black (BLACK) -> b0c2
-2026-05-20 18:25:08 - INFO - Move 3: Negamax Bot (depth=3)_Red (RED) -> e7g7
-2026-05-20 18:25:15 - INFO - Move 4: Minimax Bot (depth=3)_Black (BLACK) -> b2b6
-2026-05-20 18:25:21 - INFO - Move 5: Negamax Bot (depth=3)_Red (RED) -> g7g3
-2026-05-20 18:25:34 - INFO - Move 6: Minimax Bot (depth=3)_Black (BLACK) -> h2h7
-2026-05-20 18:25:38 - INFO - Move 7: Negamax Bot (depth=3)_Red (RED) -> i9i7
