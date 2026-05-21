@@ -5,7 +5,7 @@ Một engine Cờ Tướng viết bằng Python, tích hợp nhiều bot AI vớ
 ## Các Tính Năng Nổi Bật
 
 - **Đầy đủ luật Cờ Tướng** — Sinh nước đi hợp lệ, phát hiện chiếu/chiếu bí, các điều kiện hòa cờ (lặp nước, luật thế sát/hết nước đi), và luật Lộ mặt Tướng (flying general).
-- **Đa dạng Bot AI** — Các chiến thuật Negamax, Minimax, Random, và Greedy.
+- **Đa dạng Bot AI** — Các chiến thuật Negamax, Random, và Greedy.
 - **Tối ưu hóa tìm kiếm** — Cắt tỉa Alpha-Beta (Alpha-Beta pruning), Tìm kiếm sâu dần (Iterative Deepening Search - IDS), Tìm kiếm tĩnh (Quiescence Search), Bảng chuyển vị (Transposition Table), Sắp xếp nước đi (Move Ordering), và Sách khai cuộc (Opening Book).
 - **Hàm đánh giá Heuristic chi tiết** — Giá trị quân cờ (material balance), bảng vị trí quân cờ (piece-square tables), độ cơ động (mobility), cấu trúc Tốt (pawn structure), và an toàn Tướng (áp lực tấn công, lá chắn bảo vệ, khoảng cách tới Tướng - tropism).
 - **Hệ thống Đấu trường (Arena)** — Tự động chạy trận đấu, hỗ trợ xuất biên bản PGN và ghi log chi tiết.
@@ -27,9 +27,9 @@ src/
 │   ├── board_renderer.py        # Hiển thị bàn cờ màu sắc trên console
 │   └── utils.py                 # Hàm hỗ trợ tải FEN, tọa độ bàn cờ
 ├── bots/
-│   ├── bot.py                   # Lớp cơ sở Bot, NegmaxBot, MinimaxBot, RandomBot, GreedyBot, BotManager
+│   ├── bot.py                   # Lớp cơ sở Bot, NegmaxBot, RandomBot, GreedyBot, BotManager
 │   └── engine/
-│       ├── algorithm.py         # Thuật toán tìm kiếm Negamax và Minimax với cắt tỉa alpha-beta
+│       ├── algorithm.py         # Thuật toán tìm kiếm Negamax với cắt tỉa alpha-beta
 │       ├── iterative_deepening.py  # IDS hỗ trợ giới hạn thời gian (time limit) và giới hạn độ sâu (depth limit)
 │       ├── linear_evaluator.py  # Đánh giá Heuristic (lực lượng, vị trí, cơ động, an toàn Tướng)
 │       ├── quiescence_search.py # Tìm kiếm tĩnh giúp giảm hiệu ứng chân trời (horizon effect)
@@ -102,7 +102,7 @@ python main.py
 
 Bạn sẽ được lựa chọn:
 
-1. **Con người vs Bot** — Chọn loại bot (Negamax, Minimax, Random, Greedy), chọn bên đi trước (Đỏ/Đen), và nhập nước đi theo định dạng UCI (Ví dụ: `h2e2`).
+1. **Con người vs Bot** — Chọn loại bot (Negamax, Random, Greedy), chọn bên đi trước (Đỏ/Đen), và nhập nước đi theo định dạng UCI (Ví dụ: `h2e2`).
 2. **Bot vs Bot** — Xem hai bot Negamax tự đấu với nhau trên màn hình console theo từng nước đi.
 
 Mặc định, các tệp log và PGN của ván đấu sẽ được tự động lưu vào thư mục `logs/`.
@@ -112,13 +112,11 @@ Mặc định, các tệp log và PGN của ván đấu sẽ được tự độ
 | Tên Bot | Thuật Toán | Mô Tả |
 |---|---|---|
 | `negamax` | Negamax + Alpha-Beta + IDS | Bot mạnh nhất. Hỗ trợ tham số độ sâu `depth` và giới hạn thời gian `time_limit_ms`. |
-| `minimax` | Minimax + Alpha-Beta + IDS | Thuật toán Minimax truyền thống kết hợp cắt tỉa. Hỗ trợ tham số độ sâu `depth`. |
 | `greedy` | Ăn quân tham lam (1-ply) | Ưu tiên chọn các nước đi ăn quân có giá trị lớn nhất ngay lập tức; nếu không có nước ăn quân thì đi nước đầu tiên. |
 | `random` | Ngẫu nhiên | Chọn ngẫu nhiên một nước đi hợp lệ. Dùng chủ yếu để kiểm thử. |
 
 ## Tài Liệu
 
-Kiến trúc hệ thống và API reference được mô tả chi tiết tại **[Documentation](docs/index.md)**.
 Báo cáo chi tiết về phương pháp giải quyết và kết quả của dự án có sẵn tại **[Report](docs/REPORT.md)**.
 
 ## Bản Quyền (License)

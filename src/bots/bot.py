@@ -15,7 +15,7 @@ from bots.engine.iterative_deepening import (
 import random
 from core.move import get_to_sq
 from core.pieces import PIECE_VALUES
-from bots.engine.algorithm import minimax
+
 from bots.engine.opening_book import OPENING_BOOK
 
 class Bot:
@@ -150,31 +150,6 @@ class GreedyBot(Bot):
         return best_move
 
 
-class MinimaxBot(Bot):
-    """Bot sử dụng Minimax + Alpha-Beta Pruning."""
-    
-    def __init__(self, depth: int = 3):
-        super().__init__()
-        self.name = f"Minimax Bot (depth={depth})"
-        self.depth = depth
-        self.algorithm = minimax
-    
-    def get_move(self, board: Board) -> Optional[int]:
-        """Tìm nước đi tốt nhất bằng Minimax."""
-        
-        # 1. Kiểm tra Sổ Khai Cuộc
-        if board.zobrist_key in OPENING_BOOK:
-            moves = OPENING_BOOK[board.zobrist_key]
-            if moves:
-                return random.choice(moves)
-                
-        # 2. Nếu không có trong sổ, tự tính toán
-        return search_with_depth_limit(
-            board,
-            self.algorithm,
-            max_depth=self.depth,
-        )
-
 
 class BotManager:
     """
@@ -188,7 +163,7 @@ class BotManager:
         Tạo Bot theo loại.
         
         Args:
-            bot_type: "negamax", "random", "greedy", "minimax"
+            bot_type: "negamax", "random", "greedy"
             **kwargs: Các tham số cấu hình
         
         Returns:
@@ -198,10 +173,6 @@ class BotManager:
             depth = kwargs.get("depth", 4)
             time_limit = kwargs.get("time_limit_ms")
             return NegmaxBot(depth=depth, time_limit_ms=time_limit)
-        
-        elif bot_type.lower() == "minimax":
-            depth = kwargs.get("depth", 3)
-            return MinimaxBot(depth=depth)
         
         elif bot_type.lower() == "random":
             return RandomBot()
@@ -215,4 +186,4 @@ class BotManager:
     @staticmethod
     def list_bots() -> list:
         """Danh sách các loại Bot có sẵn."""
-        return ["negamax", "minimax", "random", "greedy"]
+        return ["negamax", "random", "greedy"]

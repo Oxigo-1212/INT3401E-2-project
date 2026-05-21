@@ -13,7 +13,7 @@ from core.move import get_to_sq
 from core.zobrist import ZOBRIST_SIDE
 from core.logger import get_logger
 
-type AlgorithmFunction = Callable[[Board, int, float, float, bool, Optional[MoveSorter]], float]
+type AlgorithmFunction = Callable[[Board, int, float, float, Optional[MoveSorter]], float]
 
 _log = get_logger("algorithm")
 
@@ -84,7 +84,6 @@ def negmax(
     depth: int,
     alpha: float,
     beta: float,
-    _is_maximizing_player: bool = True,
     move_sorter: Optional[MoveSorter] = None,
     is_null_move: bool = False,   # True nếu nước trước là null move → không null-null
 ) -> float:
@@ -143,7 +142,7 @@ def negmax(
             board,
             depth - 1 - _NULL_MOVE_R,
             -beta, -beta + 1,           # null window
-            True, move_sorter,
+            move_sorter,
             is_null_move=True
         )
         _undo_null_move(board)
@@ -205,13 +204,13 @@ def negmax(
             score = -negmax(
                 board, depth - 1 - reduction,
                 -alpha - 1, -alpha,
-                True, move_sorter
+                move_sorter
             )
             # Nếu có triển vọng (vượt alpha), re-search full
             if score > alpha:
-                score = -negmax(board, depth - 1, -beta, -alpha, True, move_sorter)
+                score = -negmax(board, depth - 1, -beta, -alpha, move_sorter)
         else:
-            score = -negmax(board, depth - 1, -beta, -alpha, True, move_sorter)
+            score = -negmax(board, depth - 1, -beta, -alpha, move_sorter)
 
         board.undo_move()
 
@@ -238,62 +237,7 @@ def negmax(
     return max_score
 
 
-# ---------------------------------------------------------------------------
-# Minimax (giữ nguyên cho tương thích với MinimaxBot)
-# ---------------------------------------------------------------------------
 
-def minimax(
-    board: Board,
-    depth: int,
-    alpha: float,
-    beta: float,
-    is_maximizing_player: bool,
-    move_sorter: Optional[MoveSorter] = None
-) -> float:
-    generator = MoveGenerator(board)
-    if move_sorter is None:
-        move_sorter = MoveSorter()
-
-    legal_moves = get_legal_moves(board, generator)
-    legal_moves = move_sorter.move_sort(legal_moves, board, depth)
-    status = check_game_status(board, legal_moves)
-
-    if status != GameStatus.Playing:
-        if status == GameStatus.RedWin:
-            return 99999.0
-        if status == GameStatus.BlueWin:
-            return -99999.0
-        return 0.0
-
-    if depth == 0:
-        return float(heuristic(board))
-
-    if is_maximizing_player:
-        max_eval = -math.inf
-        for move in legal_moves:
-            board.make_move(move)
-            eval_score = minimax(board, depth - 1, alpha, beta, False, move_sorter)
-            board.undo_move()
-            max_eval = max(max_eval, eval_score)
-            alpha = max(alpha, eval_score)
-            if alpha >= beta:
-                move_sorter.store_killer_move(depth, move, beta, eval_score)
-                move_sorter.store_history(move, depth)
-                break
-        return max_eval
-
-    min_eval = math.inf
-    for move in legal_moves:
-        board.make_move(move)
-        eval_score = minimax(board, depth - 1, alpha, beta, True, move_sorter)
-        board.undo_move()
-        min_eval = min(min_eval, eval_score)
-        beta = min(beta, eval_score)
-        if alpha >= beta:
-            move_sorter.store_killer_move(depth, move, beta, eval_score)
-            move_sorter.store_history(move, depth)
-            break
-    return min_eval
 
 
 # ---------------------------------------------------------------------------
@@ -315,7 +259,7 @@ def get_best_move(board: Board, algorithm: AlgorithmFunction, depth: int = 3) ->
     best_val = -math.inf
     for move in legal_moves:
         board.make_move(move)
-        value = -algorithm(board, depth - 1, -math.inf, math.inf, True, move_sorter)
+        value = -algorithm(board, depth - 1, -math.inf, math.inf, move_sorter)
         board.undo_move()
         _log.debug("Nước %s có điểm: %s", move_to_str(move), value)
         if value > best_val:
