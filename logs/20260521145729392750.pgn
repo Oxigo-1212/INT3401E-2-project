@@ -1,0 +1,45 @@
+[Event "AI Arena Game"]
+[Date "2026-05-21"]
+[Player1 "Random Bot_Red"]
+[Player2 "Greedy Bot_Black"]
+[Result "1/2-1/2"]
+[GameID "20260521145729392750"]
+[Termination "draw"]
+[Moves "65"]
+[Winner "Draw"]
+
+1. g6g5 b2b9
+2. h7h0 i0h0
+3. e6e5 b9d9
+4. a9b9 d9b9
+5. e9e8 b9f9
+6. b7a7 f9h9
+7. e8e7 h9c9
+8. a7b7 c9i9
+9. g5g4 g3g4
+10. b7b6 a0a1
+11. e7f7 b0a2
+12. f7e7 c0e2
+13. g9i7 i9i6
+14. i7g5 i6b6
+15. e7e8 g4g5
+16. a6a5 d0e1
+17. c6c5 e0d0
+18. e5e4 e3e4
+19. e8e7 d0d1
+20. e7f7 g0i2
+21. f7e7 h0g0
+22. e7e8 g0h0
+23. e8f8 h0g0
+24. a5a4 a3a4
+25. f8f9 g0h0
+26. c5c4 e2c4
+27. f9e9 h0g0
+28. e9e8 g0h0
+29. e8f8 h0g0
+30. f8e8 g0h0
+31. e8e9 h0g0
+32. e9f9 g0h0
+33. f9e9
+
+1/2-1/2

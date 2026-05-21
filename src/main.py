@@ -167,14 +167,51 @@ def bot_vs_bot():
     board = Board()
     gen = MoveGenerator(board)
     renderer = BoardRenderer(board)
-    
-    bot_red = BotManager.create_bot("negamax", depth=3)
-    bot_black = BotManager.create_bot("minimax", depth=3)
+    # Cho phép người dùng chọn bot cho cả hai phe trước khi vào trận
+    available = BotManager.list_bots()
+    print("Các loại Bot khả dụng:")
+    for i, b in enumerate(available, start=1):
+        print(f"{i}. {b}")
+
+    def choose_bot(prompt: str, default: str) -> str:
+        # Lặp cho tới khi người dùng nhập hợp lệ. Enter chấp nhận giá trị mặc định.
+        while True:
+            choice = input(prompt).strip()
+            if choice == "":
+                return default
+            if choice.isdigit():
+                idx = int(choice) - 1
+                if 0 <= idx < len(available):
+                    return available[idx]
+                else:
+                    print("Lựa chọn không hợp lệ: không có bot với số này. Vui lòng thử lại.")
+                    continue
+            # allow typing name directly
+            if choice.lower() in available:
+                return choice.lower()
+            print("Lựa chọn không tồn tại. Vui lòng nhập số (1-4) hoặc tên bot hợp lệ.")
+
+    red_type = choose_bot("Chọn Bot cho Đỏ (số hoặc tên, enter=negamax): ", "negamax")
+    black_type = choose_bot("Chọn Bot cho Đen (số hoặc tên, enter=minimax): ", "minimax")
+
+    # Tùy chọn độ sâu mặc định cho các bot tìm kiếm
+    def ask_depth(bot_type: str, default_depth: int) -> int:
+        if bot_type in ("negamax", "minimax"):
+            d = input(f"Đặt depth cho {bot_type} (enter={default_depth}): ").strip()
+            if d.isdigit() and int(d) > 0:
+                return int(d)
+        return default_depth
+
+    red_depth = ask_depth(red_type, 3)
+    black_depth = ask_depth(black_type, 3)
+
+    bot_red = BotManager.create_bot(red_type, depth=red_depth)
+    bot_black = BotManager.create_bot(black_type, depth=black_depth)
 
     bot_red.name = bot_red.get_name() + "_Red"
     bot_black.name = bot_black.get_name() + "_Black"
-    
-    print(f"Đỏ: {bot_red.name}")
+
+    print(f"\nĐỏ: {bot_red.name}")
     print(f"Đen: {bot_black.name}\n")
     
     # Khởi tạo Arena Game
