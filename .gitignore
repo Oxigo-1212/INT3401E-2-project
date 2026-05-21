@@ -12,3 +12,4 @@ venv
 
 # Logs
 time_log.txt
+src/arena/logs/
