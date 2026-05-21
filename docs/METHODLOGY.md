@@ -39,18 +39,44 @@ Mặc dù các biến thể trò chơi thường được mô hình hóa dưới
 ### Thành phần Zobrist Hashing
 Để thực hiện tra cứu bộ nhớ đệm trong thời gian hằng số $O(1)$, mỗi cấu hình bàn cờ riêng biệt cần được ánh xạ thành một định danh có tính phân bố đồng đều cao. Engine sử dụng *Zobrist Hashing* (Zobrist, 1970).
 
-Tại thời điểm khởi tạo, một ma trận các số nguyên giả ngẫu nhiên 64-bit được sinh ra cho mọi tổ hợp loại quân, màu sắc và ô trên bàn cờ:
+Tại thời điểm khởi tạo, một ma trận các số nguyên giả ngẫu nhiên 64-bit được sinh ra cho mọi tổ hợp quân cờ và ô trên bàn cờ:
 
-$$Z_{p, c, s} \quad \text{trong đó } p \in \text{Quân cờ}, \, c \in \text{Màu}, \, s \in [0, 89]$$
+$$Z_{p, s} \quad \text{trong đó } p \in \{\text{K, A, E, H, R, C, P, k, a, e, h, r, c, p}\}, \; s \in [0, 89]$$
 
-Khóa băm tổng hợp $\mathcal{H}$ cho bất kỳ trạng thái nào được tính toán và cập nhật gia tăng (incremental) trong quá trình tìm kiếm bằng phép toán XOR theo bit ($\oplus$):
+và một khóa riêng cho lượt đi:
 
-$$\mathcal{H}_{\text{mới}} = \mathcal{H}_{\text{cũ}} \oplus Z_{p, c, s_{\text{gốc}}} \oplus Z_{p, c, s_{\text{đích}}}$$
+$$Z_{\text{side}} \in \{0, 1\}^{64}$$
+
+Khóa băm tổng hợp $\mathcal{H}$ cho bất kỳ trạng thái nào được tính toán và cập nhật gia tăng (incremental) trong quá trình tìm kiếm bằng phép toán XOR theo bit ($\oplus$). Với quân cờ $p$ di chuyển từ ô $a$ sang ô $b$:
+
+$$\mathcal{H}_{\text{mới}} = \mathcal{H}_{\text{cũ}} \oplus Z_{p, a} \oplus Z_{\pi(b), b} \cdot \mathbf{1}_{\pi(b) \neq \epsilon} \oplus Z_{p, b} \oplus Z_{\text{side}}$$
+
+trong đó $\pi(b)$ là quân cờ tại ô đích (nếu có), $\mathbf{1}$ là hàm chỉ báo (indicator), $\epsilon$ ký hiệu ô trống.
 
 Chiến lược cập nhật gia tăng này loại bỏ hoàn toàn nhu cầu quét lại toàn bộ bàn cờ $9 \times 10$ tại mỗi node, duy trì thông lượng vượt trội tính bằng số node trên giây (NPS).
 
 ### Ánh xạ bộ nhớ và lưu trữ node
-Khi một node được đánh giá, dữ liệu của nó được nén vào một slot bộ nhớ đệm nhỏ gọn chứa: khóa Zobrist 64-bit, độ sâu tìm kiếm tuyệt đối, nước đi tốt nhất đã tính được, và cờ điểm số (Chính xác - Exact, Cận dưới/Fail-High - Lower Bound, hoặc Cận trên/Fail-Low - Upper Bound). Trong các vòng lặp tìm kiếm tiếp theo, nếu một trạng thái khớp với khóa Zobrist đã lưu ở độ sâu bằng hoặc lớn hơn, engine lập tức cắt tỉa toàn bộ cây con bằng cách trả về giá trị đã lưu, trực tiếp triệt tiêu độ phức tạp không gian trạng thái dư thừa.
+Khi một node được đánh giá, dữ liệu của nó được lưu vào bảng chuyển vị dưới dạng `TT_Entry` gồm 5 trường:
+- **key** ($k$): khóa Zobrist 64-bit dùng để xác thực thế cờ
+- **depth** ($d_e$): độ sâu tìm kiếm khi lưu
+- **score** ($s_e$): điểm số minimax tính được
+- **flag** ($f_e$): cờ hiệu phân loại — EXACT (0), LOWERBOUND (1), UPPERBOUND (2)
+- **best_move** ($m_e$): nước đi tốt nhất tìm được
+
+Trong các vòng lặp tìm kiếm tiếp theo, khi truy xuất entry tại chỉ mục $\text{index} = k \bmod N$, engine kiểm tra hai điều kiện:
+
+1. **Xác thực khóa:** $k_e = k$ (entry có cùng khóa Zobrist với thế cờ hiện tại)
+2. **Tính hữu dụng:** $d_e \ge d$ và một trong ba trường hợp:
+   - $f_e = \text{EXACT}$: luôn hữu dụng
+   - $f_e = \text{LOWERBOUND} \land s_e \ge \beta$: cận dưới đủ cao để gây cắt
+   - $f_e = \text{UPPERBOUND} \land s_e \le \alpha$: cận trên đủ thấp để gây cắt
+
+Nếu entry hữu dụng, engine áp dụng vào cửa sổ tìm kiếm:
+- **EXACT:** trả về $s_e$ ngay lập tức, cắt toàn bộ cây con
+- **LOWERBOUND:** $\alpha \gets \max(\alpha, s_e)$ — thu hẹp cận dưới
+- **UPPERBOUND:** $\beta \gets \min(\beta, s_e)$ — thu hẹp cận trên
+
+Nếu $\alpha \ge \beta$ sau khi điều chỉnh, cửa sổ đóng lại và engine trả về $s_e$, cắt tỉa cây con. Cơ chế này giúp triệt tiêu độ phức tạp không gian trạng thái dư thừa khi nhiều đường đi khác nhau hội tụ về cùng một thế cờ.
 
 ---
 
