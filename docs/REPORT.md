@@ -1,9 +1,9 @@
 # BÁO CÁO KIẾN TRÚC VÀ TÍNH NĂNG: CỜ TƯỚNG ENGINE (XIANGQI ENGINE)
 
-## 1. Giới thiệu chung
-Dự án "Xiangqi Engine" là một hệ thống phần mềm trí tuệ nhân tạo toàn diện được thiết kế để mô phỏng, phân tích và thi đấu Cờ Tướng. Điểm mạnh của dự án nằm ở kiến trúc phần mềm được module hóa (modular architecture) với mức độ phân tách cao. Hệ thống phân định rõ ràng các thành phần chức năng: biểu diễn luật chơi, thuật toán trí tuệ nhân tạo, giám sát thi đấu và giao diện người dùng.
+## 1. Mô tả bài toán
+Dự án "Xiangqi Engine" hướng đến việc giải quyết bài toán cốt lõi trong lĩnh vực Trí tuệ Nhân tạo đối với các trò chơi chiến thuật có tổng bằng không (Zero-sum games): xây dựng một hệ thống có khả năng tự động tính toán, đánh giá và lựa chọn nước đi tối ưu trong không gian trạng thái khổng lồ của Cờ Tướng. 
 
-Mục tiêu cốt lõi của dự án là xây dựng một Engine Cờ Tướng có khả năng mở rộng, kiểm thử độc lập và tích hợp dễ dàng, phục vụ các nhu cầu từ giải trí đến nghiên cứu và đánh giá thuật toán.
+Bài toán đặt ra yêu cầu hệ thống không chỉ phải mô phỏng chính xác tuyệt đối bộ quy tắc phức tạp của Cờ Tướng (như luật cản chân Mã, chặn mắt Tượng, không được lộ mặt Tướng), mà còn phải xử lý bài toán tối ưu hóa tài nguyên phần cứng. Hệ thống cần có năng lực duyệt qua hàng chục ngàn đến hàng trăm ngàn thế cờ tiềm năng trong một khoảng thời gian giới hạn nghiêm ngặt (Time Limit), từ đó ra quyết định chiến thuật để đối đầu trực tiếp với con người hoặc thi đấu độc lập với các hệ thống AI khác.
 
 ## 2. Bố cục dự án (Project Structure)
 Mã nguồn của hệ thống được chia thành 4 phân hệ (module) chính, hoạt động độc lập và giao tiếp thông qua các interface rõ ràng:
@@ -80,7 +80,10 @@ Tính gắn kết và độc lập của kiến trúc được thể hiện rõ 
 - Sở hữu 118 bộ test (test cases) chạy tự động, tập trung vào tính nguyên vẹn của từng phân hệ.
 - **Mô phỏng biệt lập (Isolated Component Testing):** Phân hệ `core/` được đánh giá bằng công cụ đếm nút đồ thị đệ quy (Perft tests), đối chiếu trực tiếp với kết quả chuẩn của các hệ thống cờ tướng quốc tế để khẳng định không có sai sót trong sinh nước đi. Phân hệ `bots/` được kiểm tra thông qua việc giả lập các thế cờ đặc biệt, đòi hỏi AI phải bắt buộc tìm ra các trình tự chiếu bí cục bộ (forced mate).
 
-## 5. Kết luận
-Dự án "Xiangqi Engine" đáp ứng hoàn chỉnh bộ yêu cầu về xây dựng ứng dụng trí tuệ nhân tạo thi đấu. Ở cấp độ Kỹ thuật Phần mềm (Software Engineering), việc phân rã hệ thống thành 4 tầng riêng biệt (Core, Bots, Arena, Main UI) đã giúp cho thiết kế trở nên dễ dàng bảo trì, mở rộng và kiểm định. 
+## 5. Kết quả đạt được
+Dự án "Xiangqi Engine" đã hoàn thiện và đáp ứng xuất sắc các tiêu chí về cả mặt thuật toán lẫn Kỹ thuật Phần mềm (Software Engineering). Cụ thể, các kết quả nổi bật bao gồm:
 
-Cấu trúc này tạo tiền đề vững chắc cho các bản cập nhật quy mô lớn trong tương lai, chẳng hạn như nâng cấp giao thức liên lạc độc lập (UCI Protocol) để gắn vào Giao diện Đồ họa người dùng (GUI) hoặc tích hợp các mạng học sâu (Deep Neural Networks) thay thế hàm đánh giá tuyến tính.
+1. **Xây dựng thành công Động cơ Luật (Rules Engine) độc lập:** Xử lý chính xác 100% các tình huống phức tạp của Cờ Tướng mà không phụ thuộc vào bất kỳ thư viện bên thứ ba nào.
+2. **Triển khai AI thi đấu mạnh mẽ:** Hoàn thiện Bot Negamax với tốc độ tìm kiếm ổn định nhờ sự kết hợp tối ưu giữa Cắt tỉa Alpha-Beta, Tìm kiếm lặp sâu dần (IDS), và Bảng băm bộ nhớ (Transposition Table). AI đã chứng minh được khả năng ngăn chặn sai lầm nhờ tích hợp Tìm kiếm tĩnh (Quiescence Search).
+3. **Phát triển môi trường thi đấu (Arena) tiêu chuẩn:** Hệ thống có khả năng tự động giám sát ván cờ, bắt lỗi ngoại lệ, xử lý quá giờ và xuất biên bản thi đấu chuẩn quốc tế PGN, sẵn sàng để tích hợp với các phần mềm đồ họa bên ngoài.
+4. **Đạt độ tin cậy cao:** Vượt qua toàn bộ 118 bộ kiểm thử (test cases), đặc biệt là các bài kiểm tra đếm nút (Perft tests) nghiêm ngặt để đảm bảo tính toàn vẹn của hệ thống.
