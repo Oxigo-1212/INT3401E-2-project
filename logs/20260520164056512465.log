@@ -1,0 +1,5 @@
+2026-05-20 16:40:56,513 - Game_20260520164056512465 - INFO - Game started: Negamax Bot (depth=3) (RED) vs Người chơi (BLACK)
+2026-05-20 16:40:56,516 - Game_20260520164056512465 - INFO - Move 1: Negamax Bot (depth=3) (RED) -> h7e7
+2026-05-20 16:41:01,406 - Game_20260520164056512465 - ERROR - Error getting move from Người chơi: Người chơi thoát trận.
+2026-05-20 16:41:01,406 - Game_20260520164056512465 - INFO - Game ended: Red wins. Status: error
+2026-05-20 16:41:01,407 - Game_20260520164056512465 - INFO - PGN saved to logs\20260520164056512465.pgn

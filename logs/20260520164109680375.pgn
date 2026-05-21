@@ -1,0 +1,45 @@
+[Event "AI Arena Game"]
+[Date "2026-05-20"]
+[Player1 "Minimax Bot (depth=3)"]
+[Player2 "Minimax Bot (depth=3)"]
+[Result "0-1"]
+[GameID "20260520164109680375"]
+[Termination "checkmate"]
+[Moves "65"]
+[Winner "Black"]
+
+1. h7e7 b0c2
+2. h9g7 b2b6
+3. i9h9 i0i2
+4. b9c7 h0g2
+5. h9h5 a0a2
+6. a9a7 c0e2
+7. d9e8 d0e1
+8. h5h4 g3g4
+9. h4h3 g2f4
+10. e7f7 f4d5
+11. f7f1 d5c7
+12. b7b8 c7e6
+13. f1f6 a3a4
+14. a7d7 a4a5
+15. a6a5 a2a5
+16. d7d1 a5a8
+17. b8b7 a8d8
+18. d1d8 e6d8
+19. f6b6 d8b7
+20. b6b2 b7c9
+21. g9e7 c9b7
+22. g6g5 b7d6
+23. e9d9 g4g5
+24. b2b6 d6c8
+25. b6b2 c8e7
+26. b2a2 e7c6
+27. d9e9 i3i4
+28. h3h6 c6d8
+29. e9d9 e0d0
+30. h6d6 d0e0
+31. d6d8 g5g6
+32. a2a0 g6g7
+33. d8d0
+
+0-1

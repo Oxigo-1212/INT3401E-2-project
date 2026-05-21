@@ -1,0 +1,30 @@
+2026-05-15 23:24:29 - INFO - === Game 202605152301 start === | Red: BotA | Black: BotB
+2026-05-15 23:24:29 - INFO - [GAME 202605152301] Move 1: BotA -> e2e4
+2026-05-15 23:24:29 - INFO - [GAME 202605152301] Move 2: BotB -> e7e5
+2026-05-15 23:24:29 - ERROR - [GAME 202605152301] BotB: Timeout
+2026-05-15 23:24:29 - INFO - === Game 202605152301 end === | Winner: BotA | Reason: Opponent timeout
+2026-05-15 23:24:29 - INFO - [STAT] Total games: 10, Win rate: 60% BotA / 40% BotB
+2026-05-15 23:28:03 - INFO - === Game 202605152301 start === | Red: BotA | Black: BotB
+2026-05-15 23:28:03 - INFO - [GAME 202605152301] Move 1: BotA -> e2e4
+2026-05-15 23:28:03 - INFO - [GAME 202605152301] Move 2: BotB -> e7e5
+2026-05-15 23:28:03 - ERROR - [GAME 202605152301] BotB: Timeout
+2026-05-15 23:28:03 - INFO - === Game 202605152301 end === | Winner: BotA | Reason: Opponent timeout
+2026-05-15 23:28:03 - INFO - [STAT] Total games: 10, Win rate: 60% BotA / 40% BotB
+2026-05-15 23:33:01 - INFO - === Game 202605152301 start === | Red: BotA | Black: BotB
+2026-05-15 23:33:01 - INFO - [GAME 202605152301] Move 1: BotA -> e2e4
+2026-05-15 23:33:01 - INFO - [GAME 202605152301] Move 2: BotB -> e7e5
+2026-05-15 23:33:01 - ERROR - [GAME 202605152301] BotB: Timeout
+2026-05-15 23:33:01 - INFO - === Game 202605152301 end === | Winner: BotA | Reason: Opponent timeout
+2026-05-15 23:33:01 - INFO - [STAT] Total games: 10, Win rate: 60% BotA / 40% BotB
+2026-05-15 23:33:04 - INFO - === Game 202605152301 start === | Red: BotA | Black: BotB
+2026-05-15 23:33:04 - INFO - [GAME 202605152301] Move 1: BotA -> e2e4
+2026-05-15 23:33:04 - INFO - [GAME 202605152301] Move 2: BotB -> e7e5
+2026-05-15 23:33:04 - ERROR - [GAME 202605152301] BotB: Timeout
+2026-05-15 23:33:04 - INFO - === Game 202605152301 end === | Winner: BotA | Reason: Opponent timeout
+2026-05-15 23:33:04 - INFO - [STAT] Total games: 10, Win rate: 60% BotA / 40% BotB
+2026-05-15 23:34:47 - INFO - === Game 202605152301 start === | Red: BotA | Black: BotB
+2026-05-15 23:34:47 - INFO - [GAME 202605152301] Move 1: BotA -> e2e4
+2026-05-15 23:34:47 - INFO - [GAME 202605152301] Move 2: BotB -> e7e5
+2026-05-15 23:34:47 - ERROR - [GAME 202605152301] BotB: Timeout
+2026-05-15 23:34:47 - INFO - === Game 202605152301 end === | Winner: BotA | Reason: Opponent timeout
+2026-05-15 23:34:47 - INFO - [STAT] Total games: 10, Win rate: 60% BotA / 40% BotB

@@ -1,0 +1,46 @@
+2026-05-21 14:58:21 - INFO - Game started: Negamax Bot (depth=1)_Red (RED) vs Minimax Bot (depth=1)_Black (BLACK)
+2026-05-21 14:58:21 - INFO - Move 1: Negamax Bot (depth=1)_Red (RED) -> h7e7
+2026-05-21 14:58:21 - INFO - Move 2: Minimax Bot (depth=1)_Black (BLACK) -> b0c2
+2026-05-21 14:58:21 - INFO - Move 3: Negamax Bot (depth=1)_Red (RED) -> b9c7
+2026-05-21 14:58:21 - INFO - Move 4: Minimax Bot (depth=1)_Black (BLACK) -> h0g2
+2026-05-21 14:58:21 - INFO - Move 5: Negamax Bot (depth=1)_Red (RED) -> h9g7
+2026-05-21 14:58:21 - INFO - Move 6: Minimax Bot (depth=1)_Black (BLACK) -> a0a2
+2026-05-21 14:58:21 - INFO - Move 7: Negamax Bot (depth=1)_Red (RED) -> i9h9
+2026-05-21 14:58:21 - INFO - Move 8: Minimax Bot (depth=1)_Black (BLACK) -> i0i2
+2026-05-21 14:58:21 - INFO - Move 9: Negamax Bot (depth=1)_Red (RED) -> h9h5
+2026-05-21 14:58:21 - INFO - Move 10: Minimax Bot (depth=1)_Black (BLACK) -> b2b6
+2026-05-21 14:58:22 - INFO - Move 11: Negamax Bot (depth=1)_Red (RED) -> a9a7
+2026-05-21 14:58:22 - INFO - Move 12: Minimax Bot (depth=1)_Black (BLACK) -> b6e6
+2026-05-21 14:58:22 - INFO - Move 13: Negamax Bot (depth=1)_Red (RED) -> c7e6
+2026-05-21 14:58:22 - INFO - Move 14: Minimax Bot (depth=1)_Black (BLACK) -> a2b2
+2026-05-21 14:58:22 - INFO - Move 15: Negamax Bot (depth=1)_Red (RED) -> e6d4
+2026-05-21 14:58:22 - INFO - Move 16: Minimax Bot (depth=1)_Black (BLACK) -> c0e2
+2026-05-21 14:58:22 - INFO - Move 17: Negamax Bot (depth=1)_Red (RED) -> e7e6
+2026-05-21 14:58:22 - INFO - Move 18: Minimax Bot (depth=1)_Black (BLACK) -> b2b7
+2026-05-21 14:58:22 - INFO - Move 19: Negamax Bot (depth=1)_Red (RED) -> a7b7
+2026-05-21 14:58:22 - INFO - Move 20: Minimax Bot (depth=1)_Black (BLACK) -> d0e1
+2026-05-21 14:58:22 - INFO - Move 21: Negamax Bot (depth=1)_Red (RED) -> d4c2
+2026-05-21 14:58:22 - INFO - Move 22: Minimax Bot (depth=1)_Black (BLACK) -> a3a4
+2026-05-21 14:58:22 - INFO - Move 23: Negamax Bot (depth=1)_Red (RED) -> b7b1
+2026-05-21 14:58:22 - INFO - Move 24: Minimax Bot (depth=1)_Black (BLACK) -> a4a5
+2026-05-21 14:58:23 - INFO - Move 25: Negamax Bot (depth=1)_Red (RED) -> a6a5
+2026-05-21 14:58:23 - INFO - Move 26: Minimax Bot (depth=1)_Black (BLACK) -> e3e4
+2026-05-21 14:58:23 - INFO - Move 27: Negamax Bot (depth=1)_Red (RED) -> a5a4
+2026-05-21 14:58:23 - INFO - Move 28: Minimax Bot (depth=1)_Black (BLACK) -> e4e5
+2026-05-21 14:58:23 - INFO - Move 29: Negamax Bot (depth=1)_Red (RED) -> h5e5
+2026-05-21 14:58:23 - INFO - Move 30: Minimax Bot (depth=1)_Black (BLACK) -> h2h9
+2026-05-21 14:58:23 - INFO - Move 31: Negamax Bot (depth=1)_Red (RED) -> g7h9
+2026-05-21 14:58:23 - INFO - Move 32: Minimax Bot (depth=1)_Black (BLACK) -> i2h2
+2026-05-21 14:58:23 - INFO - Move 33: Negamax Bot (depth=1)_Red (RED) -> h9g7
+2026-05-21 14:58:23 - INFO - Move 34: Minimax Bot (depth=1)_Black (BLACK) -> h2h8
+2026-05-21 14:58:23 - INFO - Move 35: Negamax Bot (depth=1)_Red (RED) -> b1d1
+2026-05-21 14:58:23 - INFO - Move 36: Minimax Bot (depth=1)_Black (BLACK) -> h8d8
+2026-05-21 14:58:23 - INFO - Move 37: Negamax Bot (depth=1)_Red (RED) -> d1d8
+2026-05-21 14:58:23 - INFO - Move 38: Minimax Bot (depth=1)_Black (BLACK) -> c3c4
+2026-05-21 14:58:23 - INFO - Move 39: Negamax Bot (depth=1)_Red (RED) -> d8d1
+2026-05-21 14:58:24 - INFO - Move 40: Minimax Bot (depth=1)_Black (BLACK) -> c4c5
+2026-05-21 14:58:24 - INFO - Move 41: Negamax Bot (depth=1)_Red (RED) -> e5c5
+2026-05-21 14:58:24 - INFO - Move 42: Minimax Bot (depth=1)_Black (BLACK) -> g3g4
+2026-05-21 14:58:24 - INFO - Move 43: Negamax Bot (depth=1)_Red (RED) -> d1d0
+2026-05-21 14:58:24 - INFO - Game ended. Status: checkmate
+2026-05-21 14:58:24 - INFO - PGN saved to logs\20260521145821307388.pgn
