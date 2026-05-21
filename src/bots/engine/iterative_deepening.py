@@ -5,6 +5,7 @@ from core.board import Board
 from core.move_generator import MoveGenerator
 from core.rules import get_legal_moves
 from core.utils import move_to_str
+from core.logger import get_logger
 from bots.engine.move_ordering import MoveSorter
 from bots.engine.transposition_table import probe, TT_TABLE
 
@@ -13,12 +14,13 @@ from bots.engine.transposition_table import probe, TT_TABLE
 _ASPIRATION_DELTA    = 50    # Cửa sổ ban đầu: [prev - 50, prev + 50]
 _ASPIRATION_MIN_DEPTH = 4   # Chỉ bật Aspiration từ depth này trở lên
 
+_log = get_logger("IDS")
+
 
 def search_with_time_limit(
     board: Board,
     algorithm: Callable,
     time_limit_ms: int = 1000,
-    debug: bool = False
 ) -> Optional[int]:
     start_time = time.time()
     time_limit_sec = time_limit_ms / 1000.0
@@ -33,19 +35,16 @@ def search_with_time_limit(
     prev_score = 0.0          # score từ iteration trước, dùng cho Aspiration
     move_sorter = MoveSorter()
 
-    if debug:
-        print(f"[IDS] Bắt đầu tìm kiếm: {time_limit_ms}ms | {len(legal_moves)} nước hợp lệ")
+    _log.debug("Bắt đầu tìm kiếm: %dms | %d nước hợp lệ", time_limit_ms, len(legal_moves))
 
     while True:
         depth += 1
         elapsed = time.time() - start_time
         if elapsed > time_limit_sec * 0.9:
-            if debug:
-                print(f"[IDS] Dừng tại depth {depth - 1} ({elapsed*1000:.0f}ms)")
+            _log.debug("Dừng tại depth %d (%.0fms)", depth - 1, elapsed * 1000)
             break
 
-        if debug:
-            print(f"\n[IDS] Depth {depth} | {elapsed*1000:.0f}ms")
+        _log.debug("Depth %d | %.0fms", depth, elapsed * 1000)
 
         current_best_move = best_move
         current_best_value = -math.inf
@@ -57,8 +56,7 @@ def search_with_time_limit(
 
         for move_idx, move in enumerate(sorted_moves):
             if time.time() - start_time > time_limit_sec:
-                if debug:
-                    print(f"[IDS] Timeout tại nước {moves_evaluated}/{len(sorted_moves)}")
+                _log.debug("Timeout tại nước %d/%d", moves_evaluated, len(sorted_moves))
                 break
 
             board.make_move(move)
@@ -76,16 +74,13 @@ def search_with_time_limit(
         if moves_evaluated == len(sorted_moves):
             best_move = current_best_move
             prev_score = current_best_value
-            if debug:
-                print(f"[IDS] depth {depth}: {move_to_str(best_move)} ({current_best_value:.0f})")
+            _log.debug("depth %d: %s (%.0f)", depth, move_to_str(best_move), current_best_value)
         else:
-            if debug:
-                print(f"[IDS] Timeout — giữ kết quả depth {depth - 1}")
+            _log.debug("Timeout — giữ kết quả depth %d", depth - 1)
             break
 
-    if debug:
-        elapsed_total = (time.time() - start_time) * 1000
-        print(f"[IDS] Kết thúc: {move_to_str(best_move)} | {elapsed_total:.0f}ms")
+    elapsed_total = (time.time() - start_time) * 1000
+    _log.debug("Kết thúc: %s | %.0fms", move_to_str(best_move), elapsed_total)
     return best_move
 
 
@@ -93,7 +88,6 @@ def search_with_depth_limit(
     board: Board,
     algorithm: Callable,
     max_depth: int = 4,
-    debug: bool = False
 ) -> Optional[int]:
     generator = MoveGenerator(board)
     legal_moves = get_legal_moves(board, generator)
@@ -104,12 +98,10 @@ def search_with_depth_limit(
     move_sorter = MoveSorter()
     prev_score = 0.0
 
-    if debug:
-        print(f"[IDS] Độ sâu tối đa: {max_depth}")
+    _log.debug("Độ sâu tối đa: %d", max_depth)
 
     for depth in range(1, max_depth + 1):
-        if debug:
-            print(f"\n[IDS] Depth {depth}")
+        _log.debug("Depth %d", depth)
 
         entry, _ = probe(board.zobrist_key, depth, -math.inf, math.inf, TT_TABLE)
         tt_move = entry.best_move if entry is not None else 0
@@ -153,14 +145,12 @@ def search_with_depth_limit(
                 # Fail-low: mở rộng xuống
                 alpha = -math.inf
                 beta = iter_best_value + 1
-                if debug:
-                    print(f"  Fail-low ({iter_best_value:.0f}), mở rộng cửa sổ xuống")
+                _log.debug("  Fail-low (%.0f), mở rộng cửa sổ xuống", iter_best_value)
             elif iter_best_value >= prev_score + _ASPIRATION_DELTA and depth >= _ASPIRATION_MIN_DEPTH:
                 # Fail-high: mở rộng lên
                 alpha = iter_best_value - 1
                 beta = math.inf
-                if debug:
-                    print(f"  Fail-high ({iter_best_value:.0f}), mở rộng cửa sổ lên")
+                _log.debug("  Fail-high (%.0f), mở rộng cửa sổ lên", iter_best_value)
             else:
                 aspiration_done = True
 
@@ -170,7 +160,6 @@ def search_with_depth_limit(
         best_move = depth_best_move
         prev_score = depth_best_value
 
-        if debug:
-            print(f"  → {move_to_str(best_move)} ({depth_best_value:.0f})")
+        _log.debug("  → %s (%.0f)", move_to_str(best_move), depth_best_value)
 
     return best_move

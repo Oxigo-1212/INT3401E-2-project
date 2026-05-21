@@ -11,8 +11,11 @@ from bots.engine.transposition_table import TT_TABLE, store, probe, TT_FLAG
 from bots.engine.quiescence_search import quiescence_search
 from core.move import get_to_sq
 from core.zobrist import ZOBRIST_SIDE
+from core.logger import get_logger
 
 type AlgorithmFunction = Callable[[Board, int, float, float, bool, Optional[MoveSorter]], float]
+
+_log = get_logger("algorithm")
 
 # ---------------------------------------------------------------------------
 # Hằng số tuning
@@ -314,7 +317,7 @@ def get_best_move(board: Board, algorithm: AlgorithmFunction, depth: int = 3) ->
         board.make_move(move)
         value = -algorithm(board, depth - 1, -math.inf, math.inf, True, move_sorter)
         board.undo_move()
-        print(f"Nước {move_to_str(move)} có điểm: {value}")
+        _log.debug("Nước %s có điểm: %s", move_to_str(move), value)
         if value > best_val:
             best_val = value
             best_move = move
