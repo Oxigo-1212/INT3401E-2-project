@@ -48,12 +48,11 @@ def vs_bot():
     # Tạo Bot
     print("Chọn Bot:")
     print("1. Negamax (depth=4)")
-    print("2. Minimax (depth=3)")
-    print("3. Random")
-    print("4. Greedy")
+    print("2. Random")
+    print("3. Greedy")
     
-    choice = input("Chọn Bot (1-4): ").strip()
-    bot_map = {"1": "negamax", "2": "minimax", "3": "random", "4": "greedy"}
+    choice = input("Chọn Bot (1-3): ").strip()
+    bot_map = {"1": "negamax", "2": "random", "3": "greedy"}
     bot_type = bot_map.get(choice, "negamax")
     
     bot = BotManager.create_bot(bot_type, depth=3)
@@ -180,7 +179,7 @@ def bot_vs_bot():
     renderer = BoardRenderer(board)
     
     bot_red = BotManager.create_bot("negamax", depth=3)
-    bot_black = BotManager.create_bot("minimax", depth=3)
+    bot_black = BotManager.create_bot("greedy")
 
     bot_red.name = bot_red.get_name() + "_Red"
     bot_black.name = bot_black.get_name() + "_Black"

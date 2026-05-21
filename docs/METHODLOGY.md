@@ -12,7 +12,7 @@ Với vấn đề như vậy, mục tiêu cốt lõi của chúng ta là làm th
 
 ## Nâng cao Alpha-Beta thông qua sắp xếp nước đi tối ưu
 
-Khung tìm kiếm lõi được xây dựng trên nền thuật toán cắt tỉa Alpha-Beta. Về mặt thống kê, một phép tìm kiếm minimax tiêu chuẩn có độ phức tạp thời gian $O(b^d)$, trong đó $b \approx 40$ là hệ số phân nhánh của Cờ Tướng và $d$ là độ sâu tính theo nửa lượt (ply). Trong điều kiện không tối ưu, sự tăng trưởng hàm mũ này giới hạn khả năng tính toán thời gian thực ở một tầm nhìn rất nông.
+Khung tìm kiếm lõi được xây dựng trên nền thuật toán cắt tỉa Alpha-Beta. Về mặt thống kê, một phép tìm kiếm negamax tiêu chuẩn có độ phức tạp thời gian $O(b^d)$, trong đó $b \approx 40$ là hệ số phân nhánh của Cờ Tướng và $d$ là độ sâu tính theo nửa lượt (ply). Trong điều kiện không tối ưu, sự tăng trưởng hàm mũ này giới hạn khả năng tính toán thời gian thực ở một tầm nhìn rất nông.
 
 Như đã được chứng minh toán học bởi Knuth và Moore (1975), hiệu quả của cắt tỉa Alpha-Beta phụ thuộc nghiêm ngặt vào thứ tự đánh giá các nhánh. Nếu engine đánh giá nước đi tối ưu đầu tiên tại mọi node, không gian tìm kiếm sụp đổ về cận dưới lý thuyết:
 
