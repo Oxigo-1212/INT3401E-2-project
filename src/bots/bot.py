@@ -86,14 +86,12 @@ class NegmaxBot(Bot):
                 board,
                 negmax,
                 time_limit_ms=self.time_limit_ms,
-                debug=False
             )
         else:
             return search_with_depth_limit(
                 board,
                 negmax,
                 max_depth=self.depth,
-                debug=False
             )
 
 
@@ -175,7 +173,6 @@ class MinimaxBot(Bot):
             board,
             self.algorithm,
             max_depth=self.depth,
-            debug=False
         )
 
 

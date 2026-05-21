@@ -1,0 +1,13 @@
+[Event "AI Arena Game"]
+[Date "2026-05-20"]
+[Player1 "Negamax Bot (depth=3)"]
+[Player2 "Người chơi"]
+[Result "1-0"]
+[GameID "20260520164056512465"]
+[Termination "error"]
+[Moves "1"]
+[Winner "Red"]
+
+1. h7e7
+
+1-0

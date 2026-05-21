@@ -1,0 +1,25 @@
+[Event "AI Arena Game"]
+[Date "2026-05-15"]
+[Player1 "Negamax Bot (depth=3)"]
+[Player2 "Random Bot"]
+[Result "0-1"]
+[GameID "20260515233450577975"]
+[Termination "checkmate"]
+[Moves "25"]
+[Winner "Black"]
+
+1. h7e7 h2f2
+2. e7e3 g0i2
+3. e3i3 b2b9
+4. i3i0 i2g0
+5. i0g0 e0e1
+6. a9b9 f2g2
+7. g0d0 g2g1
+8. b7e7 c0e2
+9. d0a0 b0c2
+10. a0h0 g1h1
+11. b9b5 c2a1
+12. b5b2 h1h8
+13. b2b1
+
+0-1
