@@ -33,7 +33,7 @@ def test_move_quality():
 
     for move in legal_moves:
         board.make_move(move)
-        score = -negmax(board, 2, -100000, 100000, True)
+        score = -negmax(board, 2, -100000, 100000)
         board.undo_move()
         scored_moves.append((score, move_to_str(move)))
 

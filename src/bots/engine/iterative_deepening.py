@@ -12,7 +12,7 @@ from bots.engine.transposition_table import probe, TT_TABLE
 # Aspiration Window: cửa sổ alpha/beta hẹp ban đầu quanh score lần trước.
 # Nếu fail-low hoặc fail-high thì mở rộng ra và search lại.
 _ASPIRATION_DELTA    = 50    # Cửa sổ ban đầu: [prev - 50, prev + 50]
-_ASPIRATION_MIN_DEPTH = 4   # Chỉ bật Aspiration từ depth này trở lên
+_ASPIRATION_MIN_DEPTH = 4    # Chỉ bật Aspiration từ depth này trở lên
 
 _log = get_logger("IDS")
 
@@ -61,7 +61,7 @@ def search_with_time_limit(
 
             board.make_move(move)
             try:
-                value = -algorithm(board, depth - 1, -math.inf, math.inf, True, move_sorter)
+                value = -algorithm(board, depth - 1, -math.inf, math.inf, move_sorter)
             except Exception:
                 value = -math.inf
             board.undo_move()
@@ -128,7 +128,7 @@ def search_with_depth_limit(
 
             for move_idx, move in enumerate(sorted_moves):
                 board.make_move(move)
-                value = -algorithm(board, depth - 1, -beta, -alpha, True, move_sorter)
+                value = -algorithm(board, depth - 1, -beta, -alpha, move_sorter)
                 board.undo_move()
 
                 if value > iter_best_value:
