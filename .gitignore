@@ -7,4 +7,10 @@ wheels/
 *.egg-info
 
 # Virtual environments
-.venv
+.venv/
+venv
+
+# Logs
+time_log.txt
+src/arena/logs/
+src/logs/

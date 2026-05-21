@@ -3,5 +3,22 @@ name = "btl"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
-dependencies = []
+requires-python = ">=3.12"
+dependencies = [
+	"numpy>=2.0.1",
+	"scipy>=1.15.0",
+	"networkx>=3.3",
+	"pygame>=2.6.0",
+  	"pytest>=8.2.0",
+  	"black>=24.4.2",
+	"colorama>=0.4.6",
+]
+
+[tool.setuptools]
+py-modules = ["main"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.scripts]
+btl = "main:main"
