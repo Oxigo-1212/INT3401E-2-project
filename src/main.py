@@ -298,8 +298,7 @@ def bot_vs_bot():
         _log.info("PGN:")
         _log.info("%s", game.pgn)
 
-
-if __name__ == "__main__":
+def main() -> None:
     # Xóa file log cũ trước khi bắt đầu trận mới
     with open("time_log.txt", "w", encoding="utf-8") as f:
         f.write("")
@@ -318,3 +317,5 @@ if __name__ == "__main__":
         bot_vs_bot()
     else:
         print("Lựa chọn không hợp lệ!")
+if __name__ == "__main__":
+    main()

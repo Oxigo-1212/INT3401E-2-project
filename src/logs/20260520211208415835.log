@@ -1,7 +1,0 @@
-2026-05-20 21:12:08 - INFO - Game started: Negamax Bot (depth=3)_Red (RED) vs Minimax Bot (depth=3)_Black (BLACK)
-2026-05-20 21:12:08 - INFO - Move 1: Negamax Bot (depth=3)_Red (RED) -> h7e7
-2026-05-20 21:12:08 - INFO - Move 2: Minimax Bot (depth=3)_Black (BLACK) -> b0c2
-2026-05-20 21:12:21 - INFO - Move 3: Negamax Bot (depth=3)_Red (RED) -> e7g7
-2026-05-20 21:12:30 - INFO - Move 4: Minimax Bot (depth=3)_Black (BLACK) -> b2b6
-2026-05-20 21:12:35 - INFO - Move 5: Negamax Bot (depth=3)_Red (RED) -> g7g3
-2026-05-20 21:12:36 - INFO - PGN saved to logs/20260520211208415835.pgn
