@@ -47,13 +47,12 @@ def vs_bot():
     
     # Tạo Bot
     print("Chọn Bot:")
-    print("1. Negamax (depth=4)")
-    print("2. Minimax (depth=3)")
-    print("3. Random")
-    print("4. Greedy")
+    print("1. Negamax (depth=3)")
+    print("2. Random")
+    print("3. Greedy")
     
-    choice = input("Chọn Bot (1-4): ").strip()
-    bot_map = {"1": "negamax", "2": "minimax", "3": "random", "4": "greedy"}
+    choice = input("Chọn Bot (1-3): ").strip()
+    bot_map = {"1": "negamax", "2": "random", "3": "greedy"}
     bot_type = bot_map.get(choice, "negamax")
     
     bot = BotManager.create_bot(bot_type, depth=3)
@@ -200,14 +199,14 @@ def bot_vs_bot():
             # allow typing name directly
             if choice.lower() in available:
                 return choice.lower()
-            print("Lựa chọn không tồn tại. Vui lòng nhập số (1-4) hoặc tên bot hợp lệ.")
+            print("Lựa chọn không tồn tại. Vui lòng nhập số (1-3) hoặc tên bot hợp lệ.")
 
     red_type = choose_bot("Chọn Bot cho Đỏ (số hoặc tên, enter=negamax): ", "negamax")
-    black_type = choose_bot("Chọn Bot cho Đen (số hoặc tên, enter=minimax): ", "minimax")
+    black_type = choose_bot("Chọn Bot cho Đen (số hoặc tên, enter=greedy): ", "greedy")
 
     # Tùy chọn độ sâu mặc định cho các bot tìm kiếm
     def ask_depth(bot_type: str, default_depth: int) -> int:
-        if bot_type in ("negamax", "minimax"):
+        if bot_type in ("negamax",):
             d = input(f"Đặt depth cho {bot_type} (enter={default_depth}): ").strip()
             if d.isdigit() and int(d) > 0:
                 return int(d)

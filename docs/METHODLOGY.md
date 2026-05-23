@@ -60,7 +60,7 @@ Chiến lược cập nhật gia tăng này loại bỏ hoàn toàn nhu cầu qu
 Khi một node được đánh giá, dữ liệu của nó được lưu vào bảng chuyển vị dưới dạng `TT_Entry` gồm 5 trường:
 - **key** ($k$): khóa Zobrist 64-bit dùng để xác thực thế cờ
 - **depth** ($d_e$): độ sâu tìm kiếm khi lưu
-- **score** ($s_e$): điểm số minimax tính được
+- **score** ($s_e$): điểm số tính được
 - **flag** ($f_e$): cờ hiệu phân loại — EXACT (0), LOWERBOUND (1), UPPERBOUND (2)
 - `best_move` ($m_e$): nước đi tốt nhất tìm được
 
