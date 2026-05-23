@@ -23,13 +23,7 @@ _log = get_logger("algorithm")
 _NULL_MOVE_R         = 2    # Null Move: giảm depth đi R tầng
 _NULL_MOVE_MIN_DEPTH = 3    # Chỉ thử Null Move khi depth >= N
 
-_LMR_MIN_MOVE_INDEX  = 3    # LMR bắt đầu từ nước thứ N trong danh sách (0-indexed)
-_LMR_MIN_DEPTH       = 3    # Chỉ áp dụng LMR khi depth >= N
-_LMR_REDUCTION       = 1    # Giảm depth đi bao nhiêu tầng
 
-# Futility margin theo depth (index = depth còn lại)
-# depth 1 ≈ margin 1 quân Tốt, depth 2 ≈ margin 1 Mã
-_FUTILITY_MARGIN = [0, 200, 450]
 
 
 # ---------------------------------------------------------------------------
@@ -76,7 +70,7 @@ def _undo_null_move(board: Board) -> None:
 
 
 # ---------------------------------------------------------------------------
-# negmax với Null Move Pruning + LMR + Futility Pruning
+# negmax với Null Move Pruning
 # ---------------------------------------------------------------------------
 
 def negmax(
@@ -152,65 +146,15 @@ def negmax(
             return beta
 
     # ------------------------------------------------------------------
-    # 4. Futility Pruning setup (depth 1–2)
-    # Nếu static eval + margin <= alpha → hầu hết nước non-capture vô ích.
-    # ------------------------------------------------------------------
-    futility_pruning = (
-        not in_check
-        and depth < len(_FUTILITY_MARGIN)
-        and depth >= 1
-    )
-    futility_threshold = -math.inf
-    if futility_pruning:
-        static_eval = float(heuristic(board))
-        futility_threshold = static_eval + _FUTILITY_MARGIN[depth]
-
-    # ------------------------------------------------------------------
-    # 5. Main search loop
+    # 4. Main search loop
     # ------------------------------------------------------------------
     original_alpha = alpha
     best_move: int = 0
     max_score: float = -math.inf
 
-    for move_idx, move in enumerate(legal_moves):
-        to_sq = get_to_sq(move)
-        is_capture = board.state[to_sq] != '.'
-
-        # --- Futility Pruning: bỏ qua non-capture không thể vượt alpha ---
-        if (
-            futility_pruning
-            and not is_capture
-            and move_idx > 0            # luôn search ít nhất nước đầu tiên
-            and futility_threshold <= alpha
-        ):
-            continue
-
-        # --- Late Move Reduction (LMR) ---
-        # Nước đi cuối danh sách (sau sort tốt) thường kém hơn → search depth thấp hơn.
-        # Nếu kết quả vượt alpha thì re-search full depth.
-        reduction = 0
-        if (
-            depth >= _LMR_MIN_DEPTH
-            and move_idx >= _LMR_MIN_MOVE_INDEX
-            and not is_capture
-            and not in_check
-        ):
-            reduction = _LMR_REDUCTION
-
+    for move in legal_moves:
         board.make_move(move)
-
-        if reduction > 0:
-            # Search thử với depth thấp hơn, null window
-            score = -negmax(
-                board, depth - 1 - reduction,
-                -alpha - 1, -alpha,
-                move_sorter
-            )
-            # Nếu có triển vọng (vượt alpha), re-search full
-            if score > alpha:
-                score = -negmax(board, depth - 1, -beta, -alpha, move_sorter)
-        else:
-            score = -negmax(board, depth - 1, -beta, -alpha, move_sorter)
+        score = -negmax(board, depth - 1, -beta, -alpha, move_sorter)
 
         board.undo_move()
 

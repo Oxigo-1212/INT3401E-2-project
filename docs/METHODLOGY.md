@@ -6,7 +6,7 @@ Với vấn đề như vậy, mục tiêu cốt lõi của chúng ta là làm th
 
 # Phương pháp luận
 
-Để điều hướng trong không gian tìm kiếm khổng lồ của Cờ Tướng — với độ phức tạp cây trò chơi xấp xỉ $10^{150}$ — engine chuyển đổi từ cách tiếp cận vét cạn thô sơ sang một đồ thị tìm kiếm được tối ưu hóa cao độ. Kiến trúc này tích hợp chặt chẽ nhiều kỹ thuật thuật toán: sắp xếp nước đi động bốn tầng (hash move, MVV-LVA, killer heuristic, history heuristic), bộ nhớ đệm hoán vị trạng thái qua Zobrist hashing, tìm kiếm chọn lọc quiescence để ổn định chân trời, ba kỹ thuật cắt tỉa (Null-Move, LMR, Futility), tìm kiếm sâu dần với cửa sổ nguyện vọng (aspiration windows), và hàm đánh giá nội suy pha trò chơi (tapered evaluation).
+Để điều hướng trong không gian tìm kiếm khổng lồ của Cờ Tướng — với độ phức tạp cây trò chơi xấp xỉ $10^{150}$ — engine chuyển đổi từ cách tiếp cận vét cạn thô sơ sang một đồ thị tìm kiếm được tối ưu hóa cao độ. Kiến trúc này tích hợp chặt chẽ nhiều kỹ thuật thuật toán: sắp xếp nước đi động bốn tầng (hash move, MVV-LVA, killer heuristic, history heuristic), bộ nhớ đệm hoán vị trạng thái qua Zobrist hashing, tìm kiếm chọn lọc quiescence để ổn định chân trời, kỹ thuật cắt tỉa Null-Move, tìm kiếm sâu dần với cửa sổ nguyện vọng (aspiration windows), và hàm đánh giá nội suy pha trò chơi (tapered evaluation).
 
 ---
 
@@ -96,9 +96,9 @@ Thuật toán đánh giá các chuỗi chiến thuật này lặp đi lặp lạ
 
 ---
 
-## Lược bỏ không gian tìm kiếm thông qua Null-Move, LMR, và Futility Pruning
+## Lược bỏ không gian tìm kiếm thông qua Null-Move Pruning
 
-Bên cạnh việc tối ưu thứ tự nước đi và tránh trùng lặp trạng thái, engine triển khai ba kỹ thuật cắt tỉa bổ sung nhằm giảm hệ số phân nhánh ở các node không tiềm năng. Các kỹ thuật này vận hành ở các mức độ thận trọng khác nhau, từ an toàn tuyệt đối (Null-Move) đến phỏng đoán thống kê (Futility).
+Bên cạnh việc tối ưu thứ tự nước đi và tránh trùng lặp trạng thái, engine triển khai kỹ thuật cắt tỉa bổ sung nhằm giảm hệ số phân nhánh ở các node không tiềm năng, ví dụ như Null-Move Pruning.
 
 ### Null-Move Pruning
 Null-Move Pruning (Donninger, 1993) dựa trên quan sát: nếu bỏ qua lượt của mình mà vị thế vẫn vượt ngưỡng $\beta$ (tức là quá tốt), thì đối thủ đã tránh được nhánh này từ trước. Engine thử bỏ qua lượt (null move), giảm độ sâu tìm kiếm đi $R + 1$ tầng với $R = 2$, và tìm kiếm với cửa sổ null $[\beta - 1, \beta]$. Nếu điểm null-move $\ge \beta$, nhánh bị cắt ngay lập tức.
@@ -109,15 +109,7 @@ Null-Move Pruning (Donninger, 1993) dựa trên quan sát: nếu bỏ qua lượ
 * Bên đi không đang bị chiếu.
 * Tổng số Xe, Mã, Pháo còn lại $\ge 2$ (tránh zugzwang ở tàn cuộc).
 
-### Late Move Reduction (LMR)
-LMR giả định rằng các nước đi xuất hiện cuối danh sách (sau khi đã sắp xếp) ít có khả năng là nước đi tốt nhất. Thay vì tìm kiếm đầy đủ, engine giảm độ sâu đi $1$ tầng (`_LMR_REDUCTION = 1`) cho các nước từ vị trí thứ $4$ trở đi (`_LMR_MIN_MOVE_INDEX = 3`). Nếu kết quả tìm kiếm rút gọn vượt qua $\alpha$, engine tìm kiếm lại với độ sâu đầy đủ. LMR chỉ áp dụng khi $d \ge 3$, nước đi không phải ăn quân, và bên đi không đang bị chiếu.
 
-### Futility Pruning
-Futility Pruning cắt bỏ các nước đi yên tĩnh (non-capture) ở độ sâu nông ($d \le 2$) nếu đánh giá tĩnh cộng biên futility vẫn không đạt $\alpha$. Biên futility theo độ sâu:
-
-$$\text{margin} = \begin{cases} 0 & d = 0 \\ 200 & d = 1 \\ 450 & d = 2 \end{cases}$$
-
-(đơn vị centipawn; $200 \approx 1$ Tốt, $450 \approx 1$ Mã). Nước đi đầu tiên trong danh sách luôn được tìm kiếm đầy đủ để tránh bỏ sót chiến thuật quan trọng.
 
 ---
 
