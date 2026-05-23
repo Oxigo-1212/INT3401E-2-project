@@ -183,8 +183,8 @@ def bot_vs_bot():
 
     bot_red.name = bot_red.get_name() + "_Red"
     bot_black.name = bot_black.get_name() + "_Black"
-    
-    print(f"Đỏ: {bot_red.name}")
+
+    print(f"\nĐỏ: {bot_red.name}")
     print(f"Đen: {bot_black.name}\n")
     
     # Khởi tạo Arena Game
