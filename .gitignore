@@ -14,3 +14,6 @@ venv
 time_log.txt
 src/arena/logs/
 src/logs/
+logs/
+*.log
+*.pgn

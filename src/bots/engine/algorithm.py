@@ -17,18 +17,13 @@ type AlgorithmFunction = Callable[[Board, int, float, float, Optional[MoveSorter
 
 _log = get_logger("algorithm")
 
-# ---------------------------------------------------------------------------
-# Hằng số tuning
-# ---------------------------------------------------------------------------
-_NULL_MOVE_R         = 2    # Null Move: giảm depth đi R tầng
-_NULL_MOVE_MIN_DEPTH = 3    # Chỉ thử Null Move khi depth >= N
+_NULL_MOVE_R         = 2    
+_NULL_MOVE_MIN_DEPTH = 3    
 
 
 
 
-# ---------------------------------------------------------------------------
-# Null Move helpers
-# ---------------------------------------------------------------------------
+
 
 def _is_null_move_ok(board: Board) -> bool:
     """
@@ -44,12 +39,11 @@ def _is_null_move_ok(board: Board) -> bool:
 
 def _do_null_move(board: Board) -> None:
     """Bỏ qua lượt: chỉ đổi side_to_move và XOR zobrist."""
-    # Lưu snapshot vào history để _undo_null_move khôi phục đúng
     board.history.append({
         'move': 0,
         'captured': '.',
         'half_move_clock': board.half_move_clock,
-        'zobrist_key': board.zobrist_key,   # key TRƯỚC khi null move
+        'zobrist_key': board.zobrist_key,
     })
     board.zobrist_history.append(board.zobrist_key)
     board.side_to_move = Color.BLACK if board.side_to_move == Color.RED else Color.RED
@@ -69,9 +63,7 @@ def _undo_null_move(board: Board) -> None:
         board.zobrist_history.pop()
 
 
-# ---------------------------------------------------------------------------
-# negmax với Null Move Pruning
-# ---------------------------------------------------------------------------
+
 
 def negmax(
     board: Board,
@@ -79,12 +71,10 @@ def negmax(
     alpha: float,
     beta: float,
     move_sorter: Optional[MoveSorter] = None,
-    is_null_move: bool = False,   # True nếu nước trước là null move → không null-null
+    is_null_move: bool = False,
 ) -> float:
 
-    # ------------------------------------------------------------------
-    # 1. Transposition Table lookup
-    # ------------------------------------------------------------------
+
     entry, useful = probe(board.zobrist_key, depth, alpha, beta, TT_TABLE)
     if entry is not None and useful:
         if entry.flag == TT_FLAG.EXACT:
@@ -99,9 +89,7 @@ def negmax(
     if move_sorter is None:
         move_sorter = MoveSorter()
 
-    # ------------------------------------------------------------------
-    # 2. Sinh nước đi + kiểm tra kết thúc
-    # ------------------------------------------------------------------
+
     generator = MoveGenerator(board)
     legal_moves: list[int] = get_legal_moves(board, generator)
     tt_move = entry.best_move if entry is not None else 0
@@ -113,18 +101,14 @@ def negmax(
             return 90000.0 + depth
         if status == GameStatus.BlueWin:
             return -90000.0 - depth
-        return 0.0  # Draw
+        return 0.0  
 
     if depth == 0:
         return quiescence_search(board, alpha, beta, move_sorter, qdepth=0)
 
     in_check = is_in_check(board, board.side_to_move)
 
-    # ------------------------------------------------------------------
-    # 3. Null Move Pruning
-    # Nếu bỏ qua lượt mà score vẫn >= beta → đây là nhánh "quá tốt",
-    # đối thủ sẽ tránh từ trước → cắt sớm.
-    # ------------------------------------------------------------------
+
     if (
         depth >= _NULL_MOVE_MIN_DEPTH
         and not is_null_move
@@ -135,7 +119,7 @@ def negmax(
         null_score = -negmax(
             board,
             depth - 1 - _NULL_MOVE_R,
-            -beta, -beta + 1,           # null window
+            -beta, -beta + 1,           
             move_sorter,
             is_null_move=True
         )
@@ -145,9 +129,7 @@ def negmax(
             store(board.zobrist_key, depth, beta, TT_FLAG.LOWERBOUND, 0, TT_TABLE)
             return beta
 
-    # ------------------------------------------------------------------
-    # 4. Main search loop
-    # ------------------------------------------------------------------
+
     original_alpha = alpha
     best_move: int = 0
     max_score: float = -math.inf
@@ -169,9 +151,7 @@ def negmax(
             move_sorter.store_history(move, depth)
             break
 
-    # ------------------------------------------------------------------
-    # 6. Lưu vào TT
-    # ------------------------------------------------------------------
+ 
     flag = TT_FLAG.EXACT
     if max_score <= original_alpha:
         flag = TT_FLAG.UPPERBOUND
@@ -184,9 +164,7 @@ def negmax(
 
 
 
-# ---------------------------------------------------------------------------
-# get_best_move (debug helper)
-# ---------------------------------------------------------------------------
+
 
 def get_best_move(board: Board, algorithm: AlgorithmFunction, depth: int = 3) -> int | None:
     generator = MoveGenerator(board)
