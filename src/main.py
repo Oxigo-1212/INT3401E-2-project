@@ -297,6 +297,7 @@ def bot_vs_bot():
         _log.info("PGN:")
         _log.info("%s", game.pgn)
 
+
 def main() -> None:
     # Xóa file log cũ trước khi bắt đầu trận mới
     with open("time_log.txt", "w", encoding="utf-8") as f:
