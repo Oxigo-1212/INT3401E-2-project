@@ -14,11 +14,9 @@ dependencies = [
 	"colorama>=0.4.6",
 ]
 
-[tool.setuptools]
-py-modules = ["main"]
-
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [project.scripts]
 btl = "main:main"
+perft = "benchmark.cli:main"
