@@ -3,6 +3,9 @@ Chế độ chơi: Con người vs Bot hoặc Bot vs Bot (Tích hợp Arena Game
 """
 
 from typing import Optional
+import argparse
+from benchmark.cli import run_benchmark
+
 from core.board import Board
 from bots.engine.transposition_table import init_tt, TT_TABLE
 from core.board_renderer import BoardRenderer
@@ -299,10 +302,26 @@ def bot_vs_bot():
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Cờ tướng engine")
+    parser.add_argument(
+        "-b",
+        "--benchmark",
+        action="store_true",
+        help="Run perft benchmark",
+    )
+    args = parser.parse_args()
+
+    if args.benchmark:
+        try:
+            run_benchmark()
+        except KeyboardInterrupt:
+            return
+        return
+
     # Xóa file log cũ trước khi bắt đầu trận mới
     with open("time_log.txt", "w", encoding="utf-8") as f:
         f.write("")
-        
+
     init_logging()
     init_tt(1 << 20, TT_TABLE)
     print("=== CỜ TƯỚNG ENGINE ===")
