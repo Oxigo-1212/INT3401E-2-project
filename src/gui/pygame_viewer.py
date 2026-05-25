@@ -5,6 +5,7 @@ import queue
 import threading
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional
 
 try:
@@ -34,14 +35,25 @@ class PygameXiangqiController:
     GRID_COLS = 9
     GRID_ROWS = 10
 
-    BG_COLOR = (245, 231, 197)
-    LINE_COLOR = (75, 45, 15)
-    RED_COLOR = (200, 54, 42)
-    BLACK_COLOR = (43, 72, 102)
-    PIECE_FILL = (242, 216, 170)
-    HINT_WHITE = (255, 255, 255, 140)
+    BG_COLOR = (186, 142, 92)
+    BG_DARK = (130, 89, 50)
+    BG_LIGHT = (214, 175, 121)
+    PANEL_COLOR = (235, 211, 168)
+    LINE_COLOR = (77, 51, 22)
+    GRID_FADE = (120, 84, 48)
+    RED_COLOR = (205, 52, 45)
+    BLACK_COLOR = (54, 54, 54)
+    PIECE_FILL = (247, 233, 202)
+    PIECE_EDGE = (111, 72, 31)
+    PIECE_SHADOW = (74, 48, 24, 90)
+    HINT_WHITE = (255, 255, 255, 135)
     TAG_BG = (33, 33, 33)
     TAG_TEXT = (245, 245, 245)
+
+    PROJECT_ROOT = Path(__file__).resolve().parents[2]
+    ASSET_BOARD = PROJECT_ROOT / "assets" / "table_chess.png"
+    LOCAL_FONT_REGULAR = PROJECT_ROOT / "arial unicode ms.otf"
+    LOCAL_FONT_BOLD = PROJECT_ROOT / "arial unicode ms bold.otf"
 
     def __init__(
         self,
@@ -73,23 +85,44 @@ class PygameXiangqiController:
         self.bot_worker: Optional[threading.Thread] = None
         self.bot_worker_active = False
 
-        self.cell = 64
-        self.left = 42
-        self.top = 92
-        self.board_w = (self.GRID_COLS - 1) * self.cell
-        self.board_h = (self.GRID_ROWS - 1) * self.cell
-        self.window_w = self.left * 2 + self.board_w
-        self.window_h = self.top * 2 + self.board_h + 60
-
         pygame.init()
         pygame.display.set_caption("Xiangqi GUI Viewer")
-        self.screen = pygame.display.set_mode((self.window_w, self.window_h))
 
-        # Font fallback theo hệ điều hành, tránh phụ thuộc font ngoài.
+        self.board_source_surface = pygame.image.load(str(self.ASSET_BOARD))
+        self.board_grid_xs, self.board_grid_ys = self._detect_grid_lines(self.board_source_surface)
+        source_board_w, source_board_h = self.board_source_surface.get_size()
+        self.board_scale = 1.08
+        self.board_w = int(round(source_board_w * self.board_scale))
+        self.board_h = int(round(source_board_h * self.board_scale))
+        self.grid_step_x = self._average_step(self.board_grid_xs)
+        self.grid_step_y = self._average_step(self.board_grid_ys)
+        self.cell = int(round(min(self.grid_step_x, self.grid_step_y) * self.board_scale))
+        self.display_grid_xs = [int(round(x * self.board_scale)) for x in self.board_grid_xs]
+        self.display_grid_ys = [int(round(y * self.board_scale)) for y in self.board_grid_ys]
+
+        self.left = 12
+        # Raise the board a bit so it's centered between the top/bottom player tags
+        self.top = 92
+        # Negative top gap places the top coordinate labels slightly inside the board
+        self.coord_top_gap = -20
+        self.coord_bottom_gap = 16
+        self.window_w = self.left * 2 + self.board_w
+        # Reduce extra bottom padding so window is shorter after removing coordinate strip
+        self.window_h = self.top + self.board_h + self.coord_bottom_gap + 60
+
+        self.screen = pygame.display.set_mode((self.window_w, self.window_h))
+        self.board_source_surface = self.board_source_surface.convert_alpha()
+
+        # Ưu tiên font Unicode có sẵn trong project để tránh ký tự quân cờ bị render thành '?'.
         self.tag_font = self._create_font(["segoe ui", "tahoma", "arial"], 24, bold=True)
-        self.piece_font = self._create_font(["microsoft yahei", "simhei", "simsun", "arial unicode ms"], 30, bold=True)
+        self.piece_font = self._create_piece_font(20)
         self.overlay_font = self._create_font(["segoe ui", "tahoma", "arial"], 34, bold=True)
         self.overlay_small_font = self._create_font(["segoe ui", "tahoma", "arial"], 18, bold=False)
+        self.coord_font = self._create_font(["segoe ui", "tahoma", "arial"], 16, bold=True)
+
+        self.background_surface = self._create_background_surface()
+        self.board_panel_surface = self._create_board_panel_surface()
+        self.board_texture_surface = self._load_board_texture_surface()
 
         self.running = True
         self.game_over = False
@@ -233,8 +266,6 @@ class PygameXiangqiController:
         self.game.moves.append((actor_name, move, move_uci))
         self.game.logger.log_move(self.game.game_id, len(self.game.moves), actor_name, move_uci)
 
-        self.renderer.print_board()
-
         status = check_game_status(self.board, get_legal_moves(self.board, MoveGenerator(self.board)))
         if status != GameStatus.Playing:
             self._close_with_status(status)
@@ -292,9 +323,12 @@ class PygameXiangqiController:
         self.selected_moves = []
 
     def _draw_frame(self) -> None:
-        self.screen.fill(self.BG_COLOR)
+        self.screen.blit(self.background_surface, (0, 0))
+        self.screen.blit(self.board_panel_surface, (0, 0))
         self._draw_board_lines()
+        # Draw player tags first so coordinate labels can be rendered on top
         self._draw_player_tags()
+        self._draw_coordinates()
         self._draw_pieces()
         self._draw_move_hints()
         if self.game_over:
@@ -302,26 +336,7 @@ class PygameXiangqiController:
         pygame.display.flip()
 
     def _draw_board_lines(self) -> None:
-        right = self.left + self.board_w
-        bottom = self.top + self.board_h
-
-        # Ngang.
-        for r in range(self.GRID_ROWS):
-            y = self.top + r * self.cell
-            pygame.draw.line(self.screen, self.LINE_COLOR, (self.left, y), (right, y), 2)
-
-        # Dọc (chừa sông giữa bàn).
-        for c in range(self.GRID_COLS):
-            x = self.left + c * self.cell
-            if c in (0, self.GRID_COLS - 1):
-                pygame.draw.line(self.screen, self.LINE_COLOR, (x, self.top), (x, bottom), 2)
-            else:
-                pygame.draw.line(self.screen, self.LINE_COLOR, (x, self.top), (x, self.top + 4 * self.cell), 2)
-                pygame.draw.line(self.screen, self.LINE_COLOR, (x, self.top + 5 * self.cell), (x, bottom), 2)
-
-        # Cung tướng.
-        self._draw_palace((3, 0), (5, 2))
-        self._draw_palace((3, 7), (5, 9))
+        self.screen.blit(self.board_texture_surface, (self.left, self.top))
 
     def _draw_palace(self, start: tuple[int, int], end: tuple[int, int]) -> None:
         c0, r0 = start
@@ -332,6 +347,45 @@ class PygameXiangqiController:
         y1 = self.top + r1 * self.cell
         pygame.draw.line(self.screen, self.LINE_COLOR, (x0, y0), (x1, y1), 2)
         pygame.draw.line(self.screen, self.LINE_COLOR, (x0, y1), (x1, y0), 2)
+
+    def _draw_coordinates(self) -> None:
+        # Coordinates removed per user request (no-op)
+        return
+
+    def _blit_label(self, text: str, pos: tuple[int, int], font, color, center: bool = False) -> None:
+        surf = font.render(text, True, color)
+        rect = surf.get_rect()
+        if center:
+            rect.center = pos
+        else:
+            rect.topleft = pos
+        self.screen.blit(surf, rect)
+
+    def _create_background_surface(self):
+        surface = pygame.Surface((self.window_w, self.window_h))
+        for y in range(self.window_h):
+            ratio = y / max(1, self.window_h - 1)
+            r = int(self.BG_LIGHT[0] * (1 - ratio) + self.BG_DARK[0] * ratio)
+            g = int(self.BG_LIGHT[1] * (1 - ratio) + self.BG_DARK[1] * ratio)
+            b = int(self.BG_LIGHT[2] * (1 - ratio) + self.BG_DARK[2] * ratio)
+            pygame.draw.line(surface, (r, g, b), (0, y), (self.window_w, y))
+
+        # Họa tiết gỗ nhẹ bằng các vệt ngang.
+        for y in range(0, self.window_h, 18):
+            alpha = 10 if (y // 18) % 2 == 0 else 6
+            pygame.draw.line(surface, (255, 255, 255, alpha), (0, y), (self.window_w, y), 1)
+        return surface
+
+    def _create_board_panel_surface(self):
+        surface = pygame.Surface((self.window_w, self.window_h), pygame.SRCALPHA)
+        panel_rect = pygame.Rect(12, 12, self.window_w - 24, self.window_h - 24)
+        pygame.draw.rect(surface, (70, 46, 24, 255), panel_rect.inflate(8, 8), border_radius=24)
+        pygame.draw.rect(surface, (*self.PANEL_COLOR, 255), panel_rect, border_radius=20)
+        pygame.draw.rect(surface, (111, 73, 36, 255), panel_rect, width=4, border_radius=20)
+        # Nét lót bên trong để tạo chiều sâu.
+        inner = panel_rect.inflate(-14, -14)
+        pygame.draw.rect(surface, (255, 247, 228, 40), inner, width=1, border_radius=16)
+        return surface
 
     def _draw_player_tags(self) -> None:
         red_turn = self.board.side_to_move == Color.RED
@@ -361,10 +415,15 @@ class PygameXiangqiController:
 
             row, col = divmod(sq, 9)
             center = self._square_center(row, col)
-            radius = int(self.cell * 0.38)
+
+            radius = int(self.cell * 0.30)
+            shadow_surface = pygame.Surface((radius * 3, radius * 3), pygame.SRCALPHA)
+            pygame.draw.circle(shadow_surface, self.PIECE_SHADOW, (radius + 3, radius + 5), radius)
+            self.screen.blit(shadow_surface, (center[0] - radius - 3, center[1] - radius - 5))
 
             pygame.draw.circle(self.screen, self.PIECE_FILL, center, radius)
-            pygame.draw.circle(self.screen, self.LINE_COLOR, center, radius, 2)
+            pygame.draw.circle(self.screen, self.PIECE_EDGE, center, radius, 2)
+            pygame.draw.circle(self.screen, (255, 248, 231), center, radius - 5, 1)
 
             text_color = self.RED_COLOR if piece.isupper() else self.BLACK_COLOR
             label = self.piece_font.render(CHINESE_PIECES[piece], True, text_color)
@@ -426,7 +485,54 @@ class PygameXiangqiController:
         self.screen.blit(box_surface, (box_x, box_y))
 
     def _square_center(self, row: int, col: int) -> tuple[int, int]:
-        return (self.left + col * self.cell, self.top + row * self.cell)
+        return (self.left + self.display_grid_xs[col], self.top + self.display_grid_ys[row])
+
+    def _load_board_texture_surface(self):
+        return pygame.transform.smoothscale(self.board_source_surface, (self.board_w, self.board_h))
+
+    def _detect_grid_lines(self, surface) -> tuple[list[int], list[int]]:
+        width, height = surface.get_size()
+
+        def row_score(y: int) -> float:
+            total = 0.0
+            for x in range(width):
+                if surface.get_at((x, y)).a > 0:
+                    total += 1
+            return total / width
+
+        def col_score(x: int) -> float:
+            total = 0.0
+            for y in range(height):
+                if surface.get_at((x, y)).a > 0:
+                    total += 1
+            return total / height
+
+        x_positions = self._pick_grid_positions(width, col_score, 9)
+        y_positions = self._pick_grid_positions(height, row_score, 10)
+        return x_positions, y_positions
+
+    def _pick_grid_positions(self, limit: int, score_fn, count: int) -> list[int]:
+        candidates = sorted(range(limit), key=score_fn, reverse=True)
+        selected: list[int] = []
+        min_gap = 30
+
+        for index in candidates:
+            if all(abs(index - chosen) >= min_gap for chosen in selected):
+                selected.append(index)
+                if len(selected) == count:
+                    break
+
+        selected.sort()
+        return selected
+
+    def _average_step(self, positions: list[int]) -> int:
+        if len(positions) < 2:
+            return self.cell if hasattr(self, "cell") else 48
+
+        total = 0
+        for left, right in zip(positions, positions[1:]):
+            total += right - left
+        return int(round(total / (len(positions) - 1)))
 
     def _create_font(self, font_names: list[str], size: int, bold: bool = False):
         for font_name in font_names:
@@ -436,20 +542,35 @@ class PygameXiangqiController:
 
         return pygame.font.SysFont("segoeui", size, bold=bold)
 
+    def _create_piece_font(self, size: int):
+        if self.LOCAL_FONT_REGULAR.exists():
+            return pygame.font.Font(str(self.LOCAL_FONT_REGULAR), size)
+
+        if self.LOCAL_FONT_BOLD.exists():
+            return pygame.font.Font(str(self.LOCAL_FONT_BOLD), size)
+
+        return self._create_font(["segoe ui", "tahoma", "arial"], size, bold=True)
+
     def _pixel_to_square(self, pos: tuple[int, int]) -> Optional[int]:
         x, y = pos
 
         local_x = x - self.left
         local_y = y - self.top
 
-        col = round(local_x / self.cell)
-        row = round(local_y / self.cell)
-
-        if not (0 <= row < self.GRID_ROWS and 0 <= col < self.GRID_COLS):
+        if not (0 <= local_x <= self.board_w and 0 <= local_y <= self.board_h):
             return None
 
+        # Use the scaled/display grid positions when mapping pixels to board squares.
+        col = min(range(self.GRID_COLS), key=lambda index: abs(local_x - self.display_grid_xs[index]))
+        row = min(range(self.GRID_ROWS), key=lambda index: abs(local_y - self.display_grid_ys[index]))
+
         center_x, center_y = self._square_center(row, col)
-        if abs(x - center_x) > self.cell * 0.45 or abs(y - center_y) > self.cell * 0.45:
+
+        # Compute average step for the displayed grid to determine a sensible click tolerance.
+        disp_step_x = self._average_step(self.display_grid_xs)
+        disp_step_y = self._average_step(self.display_grid_ys)
+
+        if abs(x - center_x) > disp_step_x * 0.38 or abs(y - center_y) > disp_step_y * 0.38:
             return None
 
         return row * 9 + col
@@ -458,3 +579,22 @@ class PygameXiangqiController:
 class HumanPlayer:
     def __init__(self, name: str = "Human") -> None:
         self.name = name
+
+    def get_move(self, board: Board) -> Optional[int]:
+        """CLI-friendly prompt to get a move in UCI format (e.g. a0a1).
+
+        Returns an integer-encoded move or None if the player resigns/aborts.
+        """
+        try:
+            raw = input(f"Nhap nuoc cho {self.name} (UCI, e.g. a0a1). Enter= resign: ").strip()
+        except KeyboardInterrupt:
+            return None
+
+        if raw == "" or raw.lower() in ("resign", "quit", "exit"):
+            return None
+
+        try:
+            return uci_to_move(raw)
+        except Exception:
+            print("UCI khong hop le (dinh dang a0a1). Thu lai.")
+            return self.get_move(board)
