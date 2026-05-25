@@ -70,7 +70,6 @@ def get_legal_moves(board, generator):
         # 2. Không làm lộ mặt Tướng (Flying General)
         if not is_in_check(board, current_side) and not flying_general_check(board):
             legal_moves.append(move)
-            
         board.undo_move()
     return legal_moves
 

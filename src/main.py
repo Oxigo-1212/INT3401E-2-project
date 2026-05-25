@@ -303,8 +303,8 @@ def bot_vs_bot():
 def main() -> None:
     parser = argparse.ArgumentParser(description="Cờ tướng engine")
     parser.add_argument(
-        "-b",
-        "--benchmark",
+        "-p",
+        "--perft",
         action="store_true",
         help="Run perft benchmark",
     )
