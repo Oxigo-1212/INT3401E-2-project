@@ -94,7 +94,7 @@ def run_match_cli(config: MatchConfig) -> None:
         _finalize_game(game)
 
 
-def run_game_app() -> None:
+def main() -> None:
     with open("time_log.txt", "w", encoding="utf-8") as f:
         f.write("")
 
@@ -133,4 +133,4 @@ def run_game_app() -> None:
 
 
 if __name__ == "__main__":
-    run_game_app()
+    main()
