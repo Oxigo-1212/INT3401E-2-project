@@ -49,6 +49,9 @@ class PygameXiangqiController:
     HINT_WHITE = (255, 255, 255, 135)
     TAG_BG = (33, 33, 33)
     TAG_TEXT = (245, 245, 245)
+    # Last-move markers (green)
+    LAST_MOVE_BORDER = (60, 160, 60)
+    LAST_MOVE_TRAIL = (80, 200, 80, 140)
 
     PROJECT_ROOT = Path(__file__).resolve().parents[2]
     ASSET_BOARD = PROJECT_ROOT / "assets" / "table_chess.png"
@@ -330,6 +333,9 @@ class PygameXiangqiController:
         self._draw_player_tags()
         self._draw_coordinates()
         self._draw_pieces()
+        # Draw last-move markers after pieces so markers appear above pieces
+        # but below move hints (hints drawn later) to respect priority.
+        self._draw_last_move_markers()
         self._draw_move_hints()
         if self.game_over:
             self._draw_game_over_overlay()
@@ -483,6 +489,40 @@ class PygameXiangqiController:
         box_surface.blit(hint_label, hint_rect)
 
         self.screen.blit(box_surface, (box_x, box_y))
+
+    def _draw_last_move_markers(self) -> None:
+        # No moves yet
+        if not self.game.moves:
+            return
+
+        # Get last move tuple: (actor_name, move_int, move_uci)
+        _, move, _ = self.game.moves[-1]
+        from_sq = get_from_sq(move)
+        to_sq = get_to_sq(move)
+
+        # Draw small trail circle on the origin square (semi-transparent green)
+        row_from, col_from = divmod(from_sq, 9)
+        from_center = self._square_center(row_from, col_from)
+        piece_radius = int(self.cell * 0.30)
+        trail_radius = max(4, piece_radius - 4)
+        trail_surf_size = trail_radius * 2 + 4
+        trail_surface = pygame.Surface((trail_surf_size, trail_surf_size), pygame.SRCALPHA)
+        pygame.draw.circle(
+            trail_surface,
+            self.LAST_MOVE_TRAIL,
+            (trail_surf_size // 2, trail_surf_size // 2),
+            trail_radius,
+        )
+        self.screen.blit(
+            trail_surface,
+            (from_center[0] - trail_surf_size // 2, from_center[1] - trail_surf_size // 2),
+        )
+
+        # Draw border around the moved piece destination (green)
+        row_to, col_to = divmod(to_sq, 9)
+        to_center = self._square_center(row_to, col_to)
+        border_radius = int(self.cell * 0.42) + 3
+        pygame.draw.circle(self.screen, self.LAST_MOVE_BORDER, to_center, border_radius, 4)
 
     def _square_center(self, row: int, col: int) -> tuple[int, int]:
         return (self.left + self.display_grid_xs[col], self.top + self.display_grid_ys[row])
