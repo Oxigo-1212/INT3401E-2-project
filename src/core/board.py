@@ -6,6 +6,15 @@ from core.zobrist import compute_initial_hash, make_move_hash
 # Chuỗi FEN mặc định khi bắt đầu game
 # FEN: mô tả toàn bộ trạng thái ván cờ bằng 1 string
 START_FEN = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 1"
+_FEN_NORMALIZATION_TABLE = str.maketrans({
+    'H': 'N',
+    'h': 'n',
+})
+
+
+def normalize_fen(fen_str: str) -> str:
+    """Normalize external Xiangqi FEN dialect tokens to internal tokens."""
+    return fen_str.translate(_FEN_NORMALIZATION_TABLE)
 
 class Board:
     def __init__(self):
@@ -34,16 +43,17 @@ class Board:
                 setattr(new, name, value)
         return new
 
-    def set_fen(self, fen: str):
+    def set_fen(self, fen_str: str):
         """Khởi tạo bàn cờ từ chuỗi FEN."""
+        normalized_fen = normalize_fen(fen_str)
         self.state = ['.'] * 90
         self.history.clear()
         self.zobrist_history.clear()
         self.half_move_clock = 0
 
-        parts = fen.split()
+        parts = normalized_fen.split()
         board_part = parts[0]
-        
+
         # Parse phần bàn cờ
         row, col = 0, 0
         for char in board_part:
@@ -56,7 +66,7 @@ class Board:
                 sq = row * 9 + col
                 self.state[sq] = char
                 col += 1
-                
+
         # Parse lượt đi
         if len(parts) > 1:
             self.side_to_move = Color.RED if parts[1] == 'w' else Color.BLACK

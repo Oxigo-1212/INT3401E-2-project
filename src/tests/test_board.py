@@ -99,6 +99,16 @@ class TestFenParsing:
         assert b.state[0*9 + 4] == 'k'   # e0: Tướng Đen
         assert b.state[9*9 + 4] == 'K'   # e9: Tướng Đỏ
 
+
+    def test_set_fen_normalizes_variant_piece_tokens(self):
+        """set_fen phải chuyển token biến thể về ký hiệu nội bộ."""
+        b = Board()
+        b.set_fen("4k4/9/9/4H4/4A4/4h4/4a4/9/9/4K4 w - - 0 1")
+        assert b.state[3*9 + 4] == 'N'
+        assert b.state[4*9 + 4] == 'A'
+        assert b.state[5*9 + 4] == 'n'
+        assert b.state[6*9 + 4] == 'a'
+
     def test_total_pieces_at_start(self, board):
         """Số lượng quân cờ mỗi loại đúng ở vị trí ban đầu."""
         from collections import Counter
