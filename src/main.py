@@ -10,7 +10,7 @@ from core.board import Board
 from bots.engine.transposition_table import init_tt, TT_TABLE
 from core.board_renderer import BoardRenderer
 from core.move_generator import MoveGenerator
-from core.move import uci_to_move, move_to_uci
+from core.move import deserialize_move as uci_to_move, serialize_move as move_to_uci
 from core.rules import check_game_status, get_legal_moves, is_in_check, GameStatus, Color
 from core.utils import move_to_str
 from bots.bot import BotManager

@@ -14,7 +14,7 @@ from core.rules import (
     check_game_status, is_draw, GameStatus
 )
 from core.pieces import Color
-from core.move import uci_to_move, move_to_uci
+from core.move import deserialize_move as uci_to_move, serialize_move as move_to_uci
 
 def setup(fen, side='w'):
     b = Board()

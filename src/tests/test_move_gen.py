@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 import pytest
 from core.board import Board
 from core.move_generator import MoveGenerator
-from core.move import encode_move, uci_to_move, uci_to_sq, sq_to_uci, get_to_sq, get_from_sq
+from core.move import encode_move, deserialize_move as uci_to_move, deserialize_square as uci_to_sq, serialize_square as sq_to_uci, get_to_sq, get_from_sq
 from core.pieces import Color
 
 def make_gen(fen, side='w'):

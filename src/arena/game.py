@@ -11,7 +11,7 @@ try:
     from ..core.board import Board
     from ..core.move_generator import MoveGenerator
     from ..core.rules import check_game_status, GameStatus, get_legal_moves
-    from ..core.move import move_to_uci
+    from ..core.move import serialize_move as move_to_uci
     from ..core.pieces import Color
     from .logger import Logger  # Import Logger từ module hiện tại (arena/logger.py)
 except ImportError:
@@ -20,7 +20,7 @@ except ImportError:
     from core.board import Board
     from core.move_generator import MoveGenerator
     from core.rules import check_game_status, GameStatus, get_legal_moves
-    from core.move import move_to_uci
+    from core.move import serialize_move as move_to_uci
     from core.pieces import Color
     from arena.logger import Logger  # Import Logger theo fallback
 
