@@ -5,7 +5,7 @@ from core.zobrist import compute_initial_hash, make_move_hash
 
 # Chuỗi FEN mặc định khi bắt đầu game
 # FEN: mô tả toàn bộ trạng thái ván cờ bằng 1 string
-START_FEN = "rheakaehr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RHEAKAEHR w - - 0 1"
+START_FEN = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 1"
 
 class Board:
     def __init__(self):
@@ -21,6 +21,18 @@ class Board:
         self.zobrist_history = [] # Lưu danh sách các mã băm để check lặp cờ
         
         self.set_fen(START_FEN)
+
+    def copy(self):
+        """Tạo bản sao nông đủ dùng cho tìm kiếm."""
+        new = self.__class__.__new__(self.__class__)
+        for name, value in self.__dict__.items():
+            if isinstance(value, list):
+                setattr(new, name, value.copy())
+            elif isinstance(value, dict):
+                setattr(new, name, value.copy())
+            else:
+                setattr(new, name, value)
+        return new
 
     def set_fen(self, fen: str):
         """Khởi tạo bàn cờ từ chuỗi FEN."""

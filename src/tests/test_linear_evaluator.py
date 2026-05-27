@@ -82,7 +82,7 @@ def test_defender_count():
     assert _count_defenders(board, Color.BLACK) == 4
 
     # Loại bỏ một sĩ đỏ (ô 76 = hàng 8, cột 4 là Tướng; sĩ tại 66, 68 trên hàng 7)
-    # Thực tế, từ FEN: hàng 9 = RHEAKAEHR → ô 84=R, 85=H, 86=E, 87=A, 88=K, 89=A,...
+    # Thực tế, từ FEN: hàng 9 = RNBAKABNR → ô 84=R, 85=N, 86=B, 87=A, 88=K, 89=A,...
     # Hãy loại bỏ quân sĩ đỏ đầu tiên tìm thấy
     for i, p in enumerate(board.state):
         if p == 'A':
@@ -99,7 +99,7 @@ def test_shield_penalty_missing_defenders():
                                       _find_king(board, Color.RED))
     # Loại bỏ tất cả sĩ và tượng đỏ
     for i in range(90):
-        if board.state[i] in ('A', 'E'):
+        if board.state[i] in ('A', 'B'):
             board.state[i] = '.'
 
     exposed_red = _king_safety_for_side(board, Color.RED,
@@ -175,7 +175,7 @@ def test_king_safety_favors_side_with_stronger_shield():
     """Nếu Đỏ mất tất cả quân phòng thủ nhưng Đen vẫn giữ được, đánh giá nên ưu tiên Đen."""
     board = Board()
     for i in range(90):
-        if board.state[i] in ('A', 'E'):
+        if board.state[i] in ('A', 'B'):
             board.state[i] = '.'
     # Đen vẫn còn sĩ và tượng
     ks = _evaluate_king_safety(board, _game_phase(board))
