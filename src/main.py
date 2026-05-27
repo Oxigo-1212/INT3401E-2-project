@@ -309,9 +309,29 @@ def main() -> None:
         action="store_true",
         help="Run perft benchmark",
     )
-    args = parser.parse_args()
+    parser.add_argument(
+        "--uci",
+        action="store_true",
+        help="Run UCI front-end",
+    )
+    args, remaining = parser.parse_known_args()
 
-    if args.benchmark:
+    if args.uci:
+        from uci import run_uci
+
+        # Check remaining arguments for debug flag
+        debug_mode = False
+        for arg in remaining:
+            arg_lower = arg.lower()
+            if arg_lower in ("--debug", "-d", "debug", "debug=true", "debug=on", "debug=1"):
+                debug_mode = True
+                break
+
+        init_logging(debug=debug_mode)
+        run_uci()
+        return
+
+    if args.perft:
         try:
             run_benchmark()
         except KeyboardInterrupt:
