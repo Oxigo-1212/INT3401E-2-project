@@ -7,7 +7,7 @@ from typing import Optional
 from .adapter import GoParams
 
 
-class UCICommand(str, Enum):
+class UCCICommand(str, Enum):
     UCI = "uci"
     UCCI = "ucci"
     ISREADY = "isready"
@@ -35,7 +35,7 @@ class PositionParams:
 
 @dataclass(slots=True)
 class ParsedCommand:
-    command: UCICommand
+    command: UCCICommand
     go: Optional[GoParams] = None
     setoption: Optional[SetOptionParams] = None
     position: Optional[PositionParams] = None
@@ -54,35 +54,38 @@ def parse_line(line: str) -> Optional[ParsedCommand]:
     command = tokens[0].lower()
 
     try:
-        if command == UCICommand.UCCI.value:
-            return ParsedCommand(UCICommand.UCCI)
-        if command == UCICommand.UCI.value:
-            return ParsedCommand(UCICommand.UCI)
-        if command == UCICommand.ISREADY.value:
-            return ParsedCommand(UCICommand.ISREADY)
-        if command == UCICommand.UCINEWGAME.value:
-            return ParsedCommand(UCICommand.UCINEWGAME)
-        if command == UCICommand.STOP.value:
-            return ParsedCommand(UCICommand.STOP)
-        if command == UCICommand.QUIT.value:
-            return ParsedCommand(UCICommand.QUIT)
-        if command == UCICommand.PONDERHIT.value:
-            return ParsedCommand(UCICommand.PONDERHIT)
-        if command == UCICommand.DEBUG.value:
+        if command == UCCICommand.UCCI.value:
+            return ParsedCommand(UCCICommand.UCCI)
+        if command == UCCICommand.UCI.value:
+            return ParsedCommand(UCCICommand.UCI)
+        if command == UCCICommand.ISREADY.value:
+            return ParsedCommand(UCCICommand.ISREADY)
+        if command == UCCICommand.UCINEWGAME.value:
+            return ParsedCommand(UCCICommand.UCINEWGAME)
+        if command == UCCICommand.STOP.value:
+            return ParsedCommand(UCCICommand.STOP)
+        if command == UCCICommand.QUIT.value:
+            return ParsedCommand(UCCICommand.QUIT)
+        if command == UCCICommand.PONDERHIT.value:
+            return ParsedCommand(UCCICommand.PONDERHIT)
+        if command == UCCICommand.DEBUG.value:
             debug_val = True
             if len(tokens) > 1 and tokens[1].lower() == "off":
                 debug_val = False
-            return ParsedCommand(UCICommand.DEBUG, debug_value=debug_val)
-        if command == UCICommand.SETOPTION.value:
-            return ParsedCommand(UCICommand.SETOPTION, setoption=_parse_setoption(tokens[1:]))
-        if command == UCICommand.POSITION.value:
-            return ParsedCommand(UCICommand.POSITION, position=_parse_position(tokens[1:]))
-        if command == UCICommand.GO.value:
-            return ParsedCommand(UCICommand.GO, go=_parse_go(tokens[1:]))
+            return ParsedCommand(UCCICommand.DEBUG, debug_value=debug_val)
+        if command == UCCICommand.SETOPTION.value:
+            return ParsedCommand(UCCICommand.SETOPTION, setoption=_parse_setoption(tokens[1:]))
+        if command == UCCICommand.POSITION.value:
+            return ParsedCommand(UCCICommand.POSITION, position=_parse_position(tokens[1:]))
+        if command == UCCICommand.GO.value:
+            return ParsedCommand(UCCICommand.GO, go=_parse_go(tokens[1:]))
     except (TypeError, ValueError):
         return None
 
     return None
+
+
+UCICommand = UCCICommand
 
 
 def _parse_setoption(tokens: list[str]) -> SetOptionParams:
