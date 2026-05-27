@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 import pytest
 from core.board import Board, START_FEN
 from core.pieces import Color
-from core.move import encode_move, uci_to_move, move_to_uci
+from core.move import encode_move, deserialize_move as uci_to_move, serialize_move as move_to_uci
 
 
 @pytest.fixture

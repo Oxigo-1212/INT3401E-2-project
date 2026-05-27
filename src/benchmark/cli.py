@@ -6,7 +6,7 @@ from typing import Any
 import importlib
 import time
 
-from core.move import move_to_uci
+from core.move import serialize_move as move_to_uci
 
 from .implementations.xiangqi_board import XiangqiBoardAdapter
 from .xiangqi_perft_positions import POSITIONS

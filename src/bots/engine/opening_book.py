@@ -1,6 +1,6 @@
 import random
 from core.board import Board
-from core.move import uci_to_move
+from core.move import deserialize_move as uci_to_move
 
 # Sổ khai cuộc lưu trữ dưới dạng Dictionary
 # Key: zobrist_key của bàn cờ
