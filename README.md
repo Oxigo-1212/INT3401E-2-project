@@ -107,6 +107,18 @@ Bạn sẽ được lựa chọn:
 
 Mặc định, các tệp log và PGN của ván đấu sẽ được tự động lưu vào thư mục `logs/`.
 
+### Front-end UCCI cho GUI/engine host
+
+Engine hiện cung cấp front-end **UCCI** làm giao diện protocol chính cho các GUI/engine host.
+
+```bash
+btl --ucci
+```
+
+Lệnh cũ `--uci` vẫn được giữ như một alias tương thích ngược.
+
+Khi chạy ở chế độ này, engine có thể nhận các lệnh chuẩn như `ucci`, `isready`, `position`, `go`, `stop`, và `quit` từ GUI hoặc tool host.
+
 ### Danh Sách Các Bot AI
 
 | Tên Bot | Thuật Toán | Mô Tả |
