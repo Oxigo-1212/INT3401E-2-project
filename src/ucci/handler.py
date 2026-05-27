@@ -8,11 +8,11 @@ from core.move_generator import MoveGenerator
 from core.rules import get_legal_moves
 from core.logger import init_logging
 from .adapter import GoParams, SearchFacade, SearchResult
-from .commands import PositionParams, SetOptionParams, UCICommand, parse_line
+from .commands import ParsedCommand, PositionParams, SetOptionParams, UCCICommand, parse_line
 from .utils import build_info, move_to_protocol, protocol_to_move, write_line
 
 
-class UCIHandler:
+class UCCIHandler:
     def __init__(self) -> None:
         self.board = Board()
         self._search_thread: threading.Thread | None = None
@@ -27,27 +27,27 @@ class UCIHandler:
             return True
 
         command = parsed.command
-        if command == UCICommand.UCI:
+        if command == UCCICommand.UCI:
             self._handle_uci()
-        elif command == UCICommand.UCCI:
+        elif command == UCCICommand.UCCI:
             self._handle_ucci()
-        elif command == UCICommand.ISREADY:
+        elif command == UCCICommand.ISREADY:
             self._handle_isready()
-        elif command == UCICommand.SETOPTION and parsed.setoption is not None:
+        elif command == UCCICommand.SETOPTION and parsed.setoption is not None:
             self._handle_setoption(parsed.setoption)
-        elif command == UCICommand.UCINEWGAME:
+        elif command == UCCICommand.UCINEWGAME:
             self._handle_ucinewgame()
-        elif command == UCICommand.POSITION and parsed.position is not None:
+        elif command == UCCICommand.POSITION and parsed.position is not None:
             self._handle_position(parsed.position)
-        elif command == UCICommand.GO and parsed.go is not None:
+        elif command == UCCICommand.GO and parsed.go is not None:
             self._handle_go(parsed.go)
-        elif command == UCICommand.STOP:
+        elif command == UCCICommand.STOP:
             self._handle_stop()
-        elif command == UCICommand.QUIT:
+        elif command == UCCICommand.QUIT:
             return self._handle_quit()
-        elif command == UCICommand.PONDERHIT:
+        elif command == UCCICommand.PONDERHIT:
             self._handle_ponderhit()
-        elif command == UCICommand.DEBUG:
+        elif command == UCCICommand.DEBUG:
             self._handle_debug(parsed)
         return True
 
@@ -169,3 +169,5 @@ class UCIHandler:
 
     def _handle_ponderhit(self) -> None:
         return
+
+UCIHandler = UCCIHandler

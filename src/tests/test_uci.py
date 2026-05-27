@@ -9,23 +9,23 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from core.board import Board
 from core.move import uci_to_move
 from core.pieces import Color
-from uci.adapter import SearchResult
-from uci.commands import UCICommand, parse_line
-from uci.handler import UCIHandler
-from uci.utils import move_to_protocol, protocol_to_move, protocol_to_sq, sq_to_protocol
+from ucci.adapter import SearchResult
+from ucci.commands import UCCICommand, parse_line
+from ucci.handler import UCCIHandler
+from ucci.utils import move_to_protocol, protocol_to_move, protocol_to_sq, sq_to_protocol
 
 
 def test_parse_line_parses_uci_position_go_and_setoption():
     setoption = parse_line("setoption name Hash value 128")
     assert setoption is not None
-    assert setoption.command == UCICommand.SETOPTION
+    assert setoption.command == UCCICommand.SETOPTION
     assert setoption.setoption is not None
     assert setoption.setoption.name == "Hash"
     assert setoption.setoption.value == "128"
 
     position = parse_line("position fen r8/9/9/9/9/9/9/9/9/R3K3k w - - 0 1 moves a0a9 b2b4")
     assert position is not None
-    assert position.command == UCICommand.POSITION
+    assert position.command == UCCICommand.POSITION
     assert position.position is not None
     assert position.position.fen == "r8/9/9/9/9/9/9/9/9/R3K3k w - - 0 1"
     assert position.position.moves == ["a0a9", "b2b4"]
@@ -34,7 +34,7 @@ def test_parse_line_parses_uci_position_go_and_setoption():
         "go wtime 1000 btime 2000 winc 10 binc 20 movestogo 30 depth 4 nodes 123 movetime 50 infinite ponder"
     )
     assert go is not None
-    assert go.command == UCICommand.GO
+    assert go.command == UCCICommand.GO
     assert go.go is not None
     assert go.go.wtime == 1000
     assert go.go.btime == 2000
@@ -51,7 +51,7 @@ def test_parse_line_parses_uci_position_go_and_setoption():
 def test_parse_line_ucci():
     parsed = parse_line("ucci")
     assert parsed is not None
-    assert parsed.command == UCICommand.UCCI
+    assert parsed.command == UCCICommand.UCCI
 
 
 def test_protocol_coordinate_roundtrip():
@@ -65,7 +65,7 @@ def test_protocol_coordinate_roundtrip():
 
 
 def test_handler_position_ignores_invalid_moves():
-    handler = UCIHandler()
+    handler = UCCIHandler()
 
     assert handler.handle_line("position startpos moves e2e4 e7e5") is True
     assert handler.board.side_to_move == Color.RED
@@ -73,7 +73,7 @@ def test_handler_position_ignores_invalid_moves():
 
 
 def test_handler_position_applies_moves():
-    handler = UCIHandler()
+    handler = UCCIHandler()
 
     assert handler.handle_line("position startpos moves b2b4 b7b5") is True
     assert handler.board.side_to_move == Color.RED
@@ -125,7 +125,7 @@ class _BlockingSearchFacade:
 
 
 def test_handler_go_emits_info_and_bestmove(capsys):
-    handler = UCIHandler()
+    handler = UCCIHandler()
     handler._search_facade = _ImmediateSearchFacade()
 
     assert handler.handle_line("go depth 2") is True
@@ -140,7 +140,7 @@ def test_handler_go_emits_info_and_bestmove(capsys):
 
 
 def test_handler_uci_handshake(capsys):
-    handler = UCIHandler()
+    handler = UCCIHandler()
 
     assert handler.handle_line("uci") is True
 
@@ -151,7 +151,7 @@ def test_handler_uci_handshake(capsys):
 
 
 def test_handler_ucci_handshake(capsys):
-    handler = UCIHandler()
+    handler = UCCIHandler()
 
     assert handler.handle_line("ucci") is True
 
@@ -161,8 +161,17 @@ def test_handler_ucci_handshake(capsys):
     assert "ucciok" in output
 
 
+
+def test_legacy_uci_shim_exports_protocol_modules():
+    from ucci.engine import run_ucci
+    from uci.engine import run_uci as legacy_run
+    from uci.handler import UCIHandler as legacy_handler
+
+    assert legacy_run is run_ucci
+    assert legacy_handler is UCCIHandler
+
 def test_handler_stop_aborts_running_search(capsys):
-    handler = UCIHandler()
+    handler = UCCIHandler()
     facade = _BlockingSearchFacade()
     handler._search_facade = facade
 
@@ -183,24 +192,24 @@ def test_handler_stop_aborts_running_search(capsys):
 def test_parse_line_debug():
     parsed = parse_line("debug on")
     assert parsed is not None
-    assert parsed.command == UCICommand.DEBUG
+    assert parsed.command == UCCICommand.DEBUG
     assert parsed.debug_value is True
 
     parsed = parse_line("debug off")
     assert parsed is not None
-    assert parsed.command == UCICommand.DEBUG
+    assert parsed.command == UCCICommand.DEBUG
     assert parsed.debug_value is False
 
     parsed = parse_line("debug")
     assert parsed is not None
-    assert parsed.command == UCICommand.DEBUG
+    assert parsed.command == UCCICommand.DEBUG
     assert parsed.debug_value is True
 
 
 def test_handler_debug_handling():
     import logging
 
-    handler = UCIHandler()
+    handler = UCCIHandler()
 
     # Test command `debug on` / `debug off`
     handler.handle_line("debug on")
@@ -218,7 +227,7 @@ def test_handler_debug_handling():
 
 
 def test_uci_run_ignores_keyboard_interrupt(monkeypatch, capsys):
-    from uci.engine import run
+    from ucci.engine import run_ucci
 
     class _InterruptingStdin:
         def __iter__(self):
@@ -229,7 +238,7 @@ def test_uci_run_ignores_keyboard_interrupt(monkeypatch, capsys):
 
     monkeypatch.setattr(sys, "stdin", _InterruptingStdin())
 
-    run()
+    run_ucci()
 
     captured = capsys.readouterr()
     assert captured.out == ""

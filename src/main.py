@@ -311,13 +311,15 @@ def main() -> None:
     )
     parser.add_argument(
         "--uci",
+        "--ucci",
+        dest="ucci",
         action="store_true",
-        help="Run UCI front-end",
+        help="Run UCCI front-end",
     )
     args, remaining = parser.parse_known_args()
 
-    if args.uci:
-        from uci import run_uci
+    if args.ucci:
+        from ucci import run_ucci
 
         # Check remaining arguments for debug flag
         debug_mode = False
@@ -328,7 +330,7 @@ def main() -> None:
                 break
 
         init_logging(debug=debug_mode)
-        run_uci()
+        run_ucci()
         return
 
     if args.perft:
