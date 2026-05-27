@@ -56,7 +56,7 @@ class TestRookMoves:
 
     def test_rook_blocked_by_own_piece(self):
         """Xe không được đi qua quân mình hoặc đứng trên ô đó."""
-        b, gen = make_gen("4k4/9/9/9/9/9/9/9/9/RH2K4 w - - 0 1")
+        b, gen = make_gen("4k4/9/9/9/9/9/9/9/9/RN2K4 w - - 0 1")
         # Xe ở a9, Mã ở b9 → Xe không được đi sang b9 trở đi theo chiều ngang
         moves = gen.get_pseudo_legal_moves()
         assert_moves_not_contain(moves, "a9b9", "a9c9")
@@ -128,13 +128,13 @@ class TestCannonMoves:
 
 
 # ==============================================================================
-# 3. MÃ (H) - Đi hình chữ L, bị cản chân
+# 3. MÃ (N) - Đi hình chữ L, bị cản chân
 # ==============================================================================
 
 class TestHorseMoves:
     def test_horse_at_center_has_8_moves(self):
         """Mã ở giữa bàn cờ có đúng 8 nước đi."""
-        b, gen = make_gen("4k4/9/9/9/4H4/9/9/9/9/4K4 w - - 0 1")
+        b, gen = make_gen("4k4/9/9/9/4N4/9/9/9/9/4K4 w - - 0 1")
         moves = gen.get_pseudo_legal_moves()
         # Tướng Đỏ e9 cũng sinh nước đi → lọc chỉ lấy nước của Mã e4
         horse_sq = 4*9 + 4  # e4
@@ -144,7 +144,7 @@ class TestHorseMoves:
     def test_horse_blocked_by_leg(self):
         """Mã bị cản chân không đi được hướng đó."""
         # Mã ở e4, chân lên trên bị cản
-        b, gen = make_gen("4k4/9/9/9/4H4/4P4/9/9/9/4K4 w - - 0 1")
+        b, gen = make_gen("4k4/9/9/9/4N4/4P4/9/9/9/4K4 w - - 0 1")
         # Tốt Đỏ ở e5 cản chân lên → Mã không đi được d3, f3
         moves = gen.get_pseudo_legal_moves()
         horse_moves = [m for m in moves if get_from_sq(m) == 4*9+4]
@@ -155,32 +155,32 @@ class TestHorseMoves:
 
     def test_horse_at_corner(self):
         """Mã ở góc bàn cờ chỉ có 2 nước đi hợp lệ."""
-        b, gen = make_gen("k8/9/9/9/9/9/9/9/9/H3K4 w - - 0 1")
+        b, gen = make_gen("k8/9/9/9/9/9/9/9/9/N3K4 w - - 0 1")
         horse_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == 9*9]
         assert len(horse_moves) == 2
 
     def test_horse_cannot_capture_own_piece(self):
         """Mã không được đứng lên ô có quân mình."""
-        b, gen = make_gen("4k4/9/9/9/4H4/9/3P5/9/9/4K4 w - - 0 1")
+        b, gen = make_gen("4k4/9/9/9/4N4/9/3P5/9/9/4K4 w - - 0 1")
         # Tốt Đỏ ở d6, là một trong các ô Mã e4 có thể đến
         horse_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == 4*9+4]
         assert_moves_not_contain(horse_moves, "e4d6")
 
     def test_horse_can_capture_enemy(self):
         """Mã được ăn quân đối phương."""
-        b, gen = make_gen("4k4/9/9/9/4H4/9/3p5/9/9/4K4 w - - 0 1")
+        b, gen = make_gen("4k4/9/9/9/4N4/9/3p5/9/9/4K4 w - - 0 1")
         horse_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == 4*9+4]
         assert_moves_contain(horse_moves, "e4d6")
 
 
 # ==============================================================================
-# 4. TƯỢNG (E) - Đi chéo 2 ô, không qua sông, check mắt tượng
+# 4. TƯỢNG (B) - Đi chéo 2 ô, không qua sông, check mắt tượng
 # ==============================================================================
 
 class TestElephantMoves:
     def test_elephant_cannot_cross_river(self):
         """Tượng Đỏ không được qua sông (hàng 0-4)."""
-        b, gen = make_gen("4k4/9/9/9/9/9/9/4E4/9/4K4 w - - 0 1")
+        b, gen = make_gen("4k4/9/9/9/9/9/9/4B4/9/4K4 w - - 0 1")
         elephant_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == 7*9+4]
         uci_set = to_uci_set(elephant_moves)
         for uci in uci_set:
@@ -190,7 +190,7 @@ class TestElephantMoves:
 
     def test_black_elephant_cannot_cross_river(self):
         """Tượng Đen không được qua sông (hàng 5-9)."""
-        b, gen = make_gen("4k4/9/4e4/9/9/9/9/9/9/4K4 b - - 0 1")
+        b, gen = make_gen("4k4/9/4b4/9/9/9/9/9/9/4K4 b - - 0 1")
         elephant_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == 2*9+4]
         uci_set = to_uci_set(elephant_moves)
         for uci in uci_set:
@@ -201,14 +201,14 @@ class TestElephantMoves:
     def test_elephant_blocked_by_eye(self):
         """Tượng bị cản mắt không đi được hướng đó."""
         # Tượng e7, mắt hướng trên-trái là d8 bị chặn
-        b, gen = make_gen("4k4/9/9/9/9/9/9/4E4/3P5/4K4 w - - 0 1")
+        b, gen = make_gen("4k4/9/9/9/9/9/9/4B4/3P5/4K4 w - - 0 1")
         # d8 (hàng 8, cột 3) = sq 8*9+3=75 có Tốt Đỏ
         elephant_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == 7*9+4]
         assert_moves_not_contain(elephant_moves, "e7c9")  # hướng trên-trái
 
     def test_elephant_max_4_moves(self):
         """Tượng không bị cản tối đa 4 nước đi."""
-        b, gen = make_gen("4k4/9/9/9/9/9/4E4/9/9/4K4 w - - 0 1")
+        b, gen = make_gen("4k4/9/9/9/9/9/4B4/9/9/4K4 w - - 0 1")
         elephant_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == 6*9+4]
         assert len(elephant_moves) <= 4
 
