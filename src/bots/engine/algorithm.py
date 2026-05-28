@@ -83,6 +83,7 @@ def negmax(
         raise SearchStopped()
     if stats is not None:
         stats["nodes"] = stats.get("nodes", 0) + 1
+        stats["search_nodes"] = stats.get("search_nodes", 0) + 1
         stats["seldepth"] = max(stats.get("seldepth", 0), ply)
 
     entry, useful = probe(board.zobrist_key, depth, alpha, beta, TT_TABLE)

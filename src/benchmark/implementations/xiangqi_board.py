@@ -25,6 +25,13 @@ class XiangqiBoardAdapter:
         """Create adapter from FEN string."""
         return cls(fen)
 
+    @classmethod
+    def from_board(cls, board: Board) -> XiangqiBoardAdapter:
+        """Wrap an existing Board instance."""
+        adapter = object.__new__(cls)
+        adapter._board = board
+        return adapter
+
     @property
     def state(self) -> List[str]:
         """Expose board state as list of strings."""
@@ -42,7 +49,6 @@ class XiangqiBoardAdapter:
     def undo_move(self) -> None:
         """Undo last move through wrapped board."""
         self._board.undo_move()
-
 
     def generate_legal_moves(self) -> List[int]:
         """Generate legal Xiangqi moves."""

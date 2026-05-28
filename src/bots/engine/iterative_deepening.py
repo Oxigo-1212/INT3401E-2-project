@@ -112,12 +112,13 @@ def _snapshot(
     pv = _extract_pv(board, depth)
     mate = _mate_from_pv(board, pv)
     score_value = int(round(score)) if math.isfinite(score) else 0
+    search_nodes = stats.get("search_nodes", stats.get("nodes", 0))
     return {
         "best_move": best_move,
         "score": score_value,
         "depth": depth,
         "seldepth": stats.get("seldepth", 0),
-        "nodes": stats.get("nodes", 0),
+        "nodes": search_nodes,
         "time_ms": elapsed_ms,
         "pv": pv,
         "mate": mate,
@@ -145,7 +146,7 @@ def search_with_time_limit(
     depth = 0
     move_sorter = MoveSorter()
     supports_control = _algorithm_supports_control(algorithm)
-    stats = {"nodes": 0, "seldepth": 0} if stats is None else stats
+    stats = {"nodes": 0, "search_nodes": 0, "seldepth": 0} if stats is None else stats
 
     _log.debug("Bắt đầu tìm kiếm: %sms | %d nước hợp lệ", time_limit_ms, len(legal_moves))
 
@@ -238,7 +239,7 @@ def search_with_depth_limit(
     move_sorter = MoveSorter()
     prev_score = 0.0
     supports_control = _algorithm_supports_control(algorithm)
-    stats = {"nodes": 0, "seldepth": 0} if stats is None else stats
+    stats = {"nodes": 0, "search_nodes": 0, "seldepth": 0} if stats is None else stats
 
     _log.debug("Độ sâu tối đa: %d", max_depth)
 
