@@ -296,12 +296,12 @@ def _evaluate_king_safety(board: Board, phase: float) -> int:
 # Tổng hợp
 # ===========================================================================
 
-def _evaluate_absolute_score(board: Board) -> int:
+def _evaluate_absolute_score(board: Board, *, skip_mobility: bool = False) -> int:
     phase = _game_phase(board)
     mat      = _evaluate_material(board)
     pst      = _evaluate_pst(board)
     ksafety  = _evaluate_king_safety(board, phase)
-    mob      = _evaluate_mobility(board)
+    mob      = 0 if skip_mobility else _evaluate_mobility(board)
     rook_op  = _evaluate_rook_open(board)
     return int(
         mat     * WEIGHT_VECTOR["material"]    +
@@ -312,8 +312,8 @@ def _evaluate_absolute_score(board: Board) -> int:
     )
 
 
-def heuristic(board: Board) -> int:
-    s = _evaluate_absolute_score(board)
+def heuristic(board: Board, *, skip_mobility: bool = False) -> int:
+    s = _evaluate_absolute_score(board, skip_mobility=skip_mobility)
     return s if board.side_to_move == Color.RED else -s
 
 

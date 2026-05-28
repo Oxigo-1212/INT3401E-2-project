@@ -19,6 +19,8 @@ def flying_general_check(board):
         if p == 'K':
             K_pos = sq
     
+    if k_pos == -1 or K_pos == -1:
+        return False
     rk, ck = divmod(k_pos, 9)
     rK, cK = divmod(K_pos, 9)
     
