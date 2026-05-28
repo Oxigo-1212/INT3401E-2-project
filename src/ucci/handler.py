@@ -170,11 +170,46 @@ class UCCIHandler:
 
     def _handle_bench(self, bench: BenchParams) -> None:
         self._handle_stop()
-        facade = SearchFacade()
+        self._stop_requested.clear()
         clear_tt(TT_TABLE)
         params = GoParams(depth=bench.depth)
-        result = facade.search(self.board, params)
-        write_line(f"bench depth {result.depth} nodes {result.nodes} time {result.time_ms}")
+        def emit_info(result: SearchResult) -> None:
+            write_line(
+                build_info(
+                    depth=result.depth,
+                    seldepth=result.seldepth,
+                    score=result.score,
+                    nodes=result.nodes,
+                    time_ms=result.time_ms,
+                    pv=result.pv,
+                    mate=result.mate,
+                )
+            )
+        def run_search() -> None:
+            result = SearchResult(
+                best_move=0,
+                score=0,
+                depth=0,
+                seldepth=0,
+                nodes=0,
+                time_ms=0,
+                pv=[],
+                mate=None,
+            )
+            try:
+                result = self._search_facade.search(
+                    self.board,
+                    params,
+                    stop_flag=self._stop_requested.is_set,
+                    info_cb=emit_info,
+                )
+            finally:
+                write_line(f"bench depth {result.depth} nodes {result.nodes} time {result.time_ms}")
+                self._stop_requested.clear()
+                self._search_thread = None
+        thread = threading.Thread(target=run_search, daemon=True)
+        self._search_thread = thread
+        thread.start()
 
     def _handle_perft(self, perft: PerftParams) -> None:
         self._handle_stop()
