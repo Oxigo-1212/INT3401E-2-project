@@ -162,12 +162,13 @@ class SearchFacade:
         score = int(round(score_obj)) if isinstance(score_obj, (int, float)) and isfinite(score_obj) else 0
         mate_obj = snapshot.get("mate")
         mate = int(mate_obj) if isinstance(mate_obj, int) else None
+        nodes_obj = snapshot.get("search_nodes", snapshot.get("nodes", 0))
         return SearchResult(
             best_move=int(snapshot.get("best_move", 0) or 0),
             score=score,
             depth=int(snapshot.get("depth", 0) or 0),
             seldepth=int(snapshot.get("seldepth", 0) or 0),
-            nodes=int(snapshot.get("nodes", 0) or 0),
+            nodes=int(nodes_obj or 0),
             time_ms=int(snapshot.get("time_ms", 0) or 0),
             pv=list(pv),
             mate=mate,
@@ -183,12 +184,13 @@ class SearchFacade:
     ) -> SearchResult:
         if latest is not None:
             return latest
+        nodes = stats.get("search_nodes", stats.get("nodes", 0))
         return SearchResult(
             best_move=best_move or 0,
             score=0,
             depth=depth,
             seldepth=stats.get("seldepth", 0),
-            nodes=stats.get("nodes", 0),
+            nodes=nodes,
             time_ms=elapsed_ms,
             pv=[],
             mate=None,

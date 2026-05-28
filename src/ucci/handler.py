@@ -1,14 +1,25 @@
 from __future__ import annotations
 
+import importlib
 import threading
+import time
 
 from bots.engine.transposition_table import TT_TABLE, clear_tt
+from benchmark.implementations.xiangqi_board import XiangqiBoardAdapter
 from core.board import Board
+from core.logger import init_logging
 from core.move_generator import MoveGenerator
 from core.rules import get_legal_moves
-from core.logger import init_logging
 from .adapter import GoParams, SearchFacade, SearchResult
-from .commands import ParsedCommand, PositionParams, SetOptionParams, UCCICommand, parse_line
+from .commands import (
+    BenchParams,
+    ParsedCommand,
+    PerftParams,
+    PositionParams,
+    SetOptionParams,
+    UCCICommand,
+    parse_line,
+)
 from .utils import build_info, move_to_protocol, protocol_to_move, write_line
 
 
@@ -41,6 +52,10 @@ class UCCIHandler:
             self._handle_position(parsed.position)
         elif command == UCCICommand.GO and parsed.go is not None:
             self._handle_go(parsed.go)
+        elif command == UCCICommand.BENCH and parsed.bench is not None:
+            self._handle_bench(parsed.bench)
+        elif command == UCCICommand.PERFT and parsed.perft is not None:
+            self._handle_perft(parsed.perft)
         elif command == UCCICommand.STOP:
             self._handle_stop()
         elif command == UCCICommand.QUIT:
@@ -83,6 +98,7 @@ class UCCIHandler:
     def _handle_debug(self, parsed: ParsedCommand) -> None:
         debug_on = parsed.debug_value if parsed.debug_value is not None else True
         init_logging(debug=debug_on)
+
     def _handle_ucinewgame(self) -> None:
         self._handle_stop()
         self.board = Board()
@@ -152,6 +168,22 @@ class UCCIHandler:
         self._search_thread = thread
         thread.start()
 
+    def _handle_bench(self, bench: BenchParams) -> None:
+        self._handle_stop()
+        facade = SearchFacade()
+        clear_tt(TT_TABLE)
+        params = GoParams(depth=bench.depth)
+        result = facade.search(self.board, params)
+        write_line(f"bench depth {result.depth} nodes {result.nodes} time {result.time_ms}")
+
+    def _handle_perft(self, perft: PerftParams) -> None:
+        self._handle_stop()
+        adapter = XiangqiBoardAdapter.from_board(self.board)
+        started = time.perf_counter()
+        nodes = importlib.import_module("benchmark.perft").perft(adapter, perft.depth)
+        elapsed_ms = int((time.perf_counter() - started) * 1000)
+        write_line(f"perft depth {perft.depth} nodes {nodes} time {elapsed_ms}")
+
     def _handle_stop(self) -> None:
         thread = self._search_thread
         if thread is None:
@@ -169,5 +201,6 @@ class UCCIHandler:
 
     def _handle_ponderhit(self) -> None:
         return
+
 
 UCIHandler = UCCIHandler
