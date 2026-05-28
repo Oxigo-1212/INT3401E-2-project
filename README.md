@@ -119,6 +119,39 @@ Lệnh cũ `--uci` vẫn được giữ như một alias tương thích ngược
 
 Khi chạy ở chế độ này, engine có thể nhận các lệnh chuẩn như `ucci`, `isready`, `position`, `go`, `stop`, và `quit` từ GUI hoặc tool host.
 
+### Kiểm thử hiệu năng & Benchmark (Performance & Benchmarking)
+
+Engine cung cấp hai công cụ đo đạc hiệu năng và kiểm thử độ chính xác của bộ sinh nước đi và thuật toán tìm kiếm:
+
+**1. Search Benchmark (`--bench`)**
+
+Chạy thuật toán tìm kiếm Negamax trên các thế cờ mẫu phức tạp để đo hiệu suất cắt tỉa và tốc độ tìm kiếm (NPS):
+
+```bash
+btl --bench
+```
+
+Đầu ra hiển thị theo định dạng trực quan:
+`bench depth: {depth} nodes: {nodes} expected: {expected} time: {time} sec`
+*(Trong đó `nodes` là số node duyệt thực tế sau khi cắt tỉa, `expected` là số node duyệt tối đa lý thuyết từ Perft để so sánh hiệu quả).*
+
+**2. Perft Benchmark (`--perft`)**
+
+Chạy bộ đếm node Perft thuần để kiểm tra tính đúng đắn và tốc độ của bộ sinh nước đi:
+
+```bash
+btl --perft
+```
+
+### Các lệnh chẩn đoán nâng cao trong UCCI (Diagnostic Commands)
+
+Trong giao diện dòng lệnh UCCI (`--ucci`), engine hỗ trợ hai lệnh chẩn đoán mở rộng dùng cho các GUI hoặc công cụ phân tích:
+
+- **`bench depth N`** — Chạy thuật toán tìm kiếm Negamax từ thế cờ hiện tại đến độ sâu `N`. Lệnh chạy không đồng bộ (asynchronous), liên tục xuất các thông tin tiến trình dạng `info` (giống lệnh `go`) và xuất dòng tóm tắt khi kết thúc hoặc khi bị dừng:
+  `bench depth {depth} nodes {nodes} time {time_ms}`
+- **`perft depth N`** — Chạy bộ đếm node Perft từ thế cờ hiện tại đến độ sâu `N` và xuất dòng kết quả:
+  `perft depth {depth} nodes {nodes} time {time_ms}`
+
 ### Danh Sách Các Bot AI
 
 | Tên Bot | Thuật Toán | Mô Tả |
