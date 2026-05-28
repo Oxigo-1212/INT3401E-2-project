@@ -5,9 +5,11 @@ Chế độ chơi: Con người vs Bot hoặc Bot vs Bot (Tích hợp Arena Game
 from typing import Optional
 import argparse
 from benchmark.cli import run_benchmark
+from benchmark.xiangqi_perft_positions import POSITIONS
 
 from core.board import Board
-from bots.engine.transposition_table import init_tt, TT_TABLE
+from bots.engine.transposition_table import init_tt, TT_TABLE, clear_tt
+from ucci.adapter import GoParams, SearchFacade
 from core.board_renderer import BoardRenderer
 from core.move_generator import MoveGenerator
 from core.move import deserialize_move as uci_to_move, serialize_move as move_to_uci
@@ -301,6 +303,16 @@ def bot_vs_bot():
         _log.info("%s", game.pgn)
 
 
+def run_search_benchmark() -> None:
+    facade = SearchFacade()
+    for fen, depth, expected in POSITIONS:
+        board = Board()
+        board.set_fen(fen)
+        clear_tt(TT_TABLE)
+        result = facade.search(board, GoParams(depth=depth))
+        print(f"bench depth: {depth} nodes: {result.nodes} expected: {expected} time: {result.time_ms / 1000:.3f} sec")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Cờ tướng engine")
     parser.add_argument(
@@ -308,6 +320,11 @@ def main() -> None:
         "--perft",
         action="store_true",
         help="Run perft benchmark",
+    )
+    parser.add_argument(
+        "--bench",
+        action="store_true",
+        help="Run search benchmark",
     )
     parser.add_argument(
         "--uci",
@@ -333,6 +350,12 @@ def main() -> None:
         run_ucci()
         return
 
+    if args.bench:
+        try:
+            run_search_benchmark()
+        except KeyboardInterrupt:
+            return
+        return
     if args.perft:
         try:
             run_benchmark()

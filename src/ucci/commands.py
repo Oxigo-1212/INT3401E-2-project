@@ -15,6 +15,8 @@ class UCCICommand(str, Enum):
     UCINEWGAME = "ucinewgame"
     POSITION = "position"
     GO = "go"
+    BENCH = "bench"
+    PERFT = "perft"
     STOP = "stop"
     QUIT = "quit"
     PONDERHIT = "ponderhit"
@@ -34,12 +36,24 @@ class PositionParams:
 
 
 @dataclass(slots=True)
+class BenchParams:
+    depth: int
+
+
+@dataclass(slots=True)
+class PerftParams:
+    depth: int
+
+
+@dataclass(slots=True)
 class ParsedCommand:
     command: UCCICommand
     go: Optional[GoParams] = None
     setoption: Optional[SetOptionParams] = None
     position: Optional[PositionParams] = None
     debug_value: Optional[bool] = None
+    bench: Optional[BenchParams] = None
+    perft: Optional[PerftParams] = None
 
 
 _GO_KEYS = {"wtime", "btime", "winc", "binc", "movestogo", "depth", "nodes", "movetime"}
@@ -79,6 +93,10 @@ def parse_line(line: str) -> Optional[ParsedCommand]:
             return ParsedCommand(UCCICommand.POSITION, position=_parse_position(tokens[1:]))
         if command == UCCICommand.GO.value:
             return ParsedCommand(UCCICommand.GO, go=_parse_go(tokens[1:]))
+        if command == UCCICommand.BENCH.value:
+            return ParsedCommand(UCCICommand.BENCH, bench=_parse_bench(tokens[1:]))
+        if command == UCCICommand.PERFT.value:
+            return ParsedCommand(UCCICommand.PERFT, perft=_parse_perft(tokens[1:]))
     except (TypeError, ValueError):
         return None
 
@@ -162,3 +180,25 @@ def _parse_go(tokens: list[str]) -> GoParams:
         i += 1
 
     return params
+
+
+def _parse_bench(tokens: list[str]) -> BenchParams:
+    if len(tokens) != 2 or tokens[0].lower() != "depth":
+        raise ValueError("bench expects 'depth <n>'")
+
+    depth = int(tokens[1])
+    if depth < 0:
+        raise ValueError("Depth must be >= 0")
+
+    return BenchParams(depth=depth)
+
+
+def _parse_perft(tokens: list[str]) -> PerftParams:
+    if len(tokens) != 2 or tokens[0].lower() != "depth":
+        raise ValueError("perft expects 'depth <n>'")
+
+    depth = int(tokens[1])
+    if depth < 0:
+        raise ValueError("Depth must be >= 0")
+
+    return PerftParams(depth=depth)
