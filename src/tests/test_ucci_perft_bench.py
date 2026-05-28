@@ -78,7 +78,7 @@ def test_handler_bench_output_on_startpos(monkeypatch, capsys):
         def search(self, board, params, stop_flag=None, info_cb=None):
             seen["depth"] = params.depth
             seen["board"] = board
-            return SearchResult(
+            res = SearchResult(
                 best_move=0,
                 score=0,
                 depth=params.depth,
@@ -88,15 +88,19 @@ def test_handler_bench_output_on_startpos(monkeypatch, capsys):
                 pv=[],
                 mate=None,
             )
-
+            if info_cb is not None:
+                info_cb(res)
+            return res
     monkeypatch.setattr(engine_handler, "SearchFacade", FakeSearchFacade)
-
     handler = UCCIHandler()
     assert handler.handle_line("position startpos") is True
     assert handler.handle_line("bench depth 3") is True
-
+    thread = handler._search_thread
+    if thread is not None:
+        thread.join(timeout=1)
     output = capsys.readouterr().out.strip().splitlines()
-    assert output == ["bench depth 3 nodes 1234 time 17"]
+    assert "info depth 3 seldepth 0 score cp 0 nodes 1234 time 17" in output[0]
+    assert "bench depth 3 nodes 1234 time 17" in output[1]
     assert seen["facade_inited"] is True
     assert seen["depth"] == 3
     assert isinstance(seen["board"], Board)
