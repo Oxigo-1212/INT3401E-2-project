@@ -73,23 +73,21 @@ pip install -r requirements.txt
 
 ### Chơi Trực Tiếp Trên Console
 
-**Cách 1: Sử dụng lệnh tắt `btl` (Khuyên dùng)**
+**Cách 1: Sử dụng binary (Khuyên dùng)**
 
-Cài đặt gói ở chế độ editable mode (sẽ tự động đăng ký lệnh `btl` hệ thống):
-
-```bash
-# Cài đặt với uv
-uv pip install -e .
-
-# Hoặc cài đặt với pip
-pip install -e .
-```
-
-Sau đó, bạn có thể chạy game trực tiếp từ bất kỳ đâu chỉ bằng lệnh:
+Build binary standalone bằng PyInstaller:
 
 ```bash
-btl
+uv run --with pyinstaller pyinstaller --onefile --name btl src/btl/__main__.py
 ```
+
+Sau đó chạy binary trực tiếp:
+
+```bash
+./dist/btl
+```
+
+Có thể copy `dist/btl` vào `~/.local/bin/` hoặc thư mục bất kỳ trong `$PATH` để gọi từ mọi nơi.
 
 **Cách 2: Chạy trực tiếp file Python**
 
