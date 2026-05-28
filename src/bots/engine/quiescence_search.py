@@ -32,7 +32,7 @@ def quiescence_search(
         stats["nodes"] = stats.get("nodes", 0) + 1
         stats["seldepth"] = max(stats.get("seldepth", 0), ply + qdepth)
 
-    stand_pat = float(heuristic(board))
+    stand_pat = float(heuristic(board, skip_mobility=True))
 
     if stand_pat >= beta:
         return beta

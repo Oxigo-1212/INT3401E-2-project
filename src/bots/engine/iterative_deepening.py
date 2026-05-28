@@ -156,9 +156,12 @@ def search_with_time_limit(
 
         depth += 1
         elapsed = time.time() - start_time
-        if time_limit_sec is not None and elapsed > time_limit_sec * 0.9:
-            _log.debug("Dừng tại depth %d (%.0fms)", depth - 1, elapsed * 1000)
-            break
+        if time_limit_sec is not None:
+            remaining = time_limit_sec - elapsed
+            alloc = max(remaining * 0.5, min(time_limit_sec * 0.1, 0.1))
+            if remaining < alloc:
+                _log.debug("Dừng tại depth %d (%.0fms)", depth - 1, elapsed * 1000)
+                break
 
         _log.debug("Depth %d | %.0fms", depth, elapsed * 1000)
 
