@@ -2,7 +2,6 @@ from core.board import Board
 from core.move import get_from_sq, get_to_sq
 from core.pieces import PIECE_VALUES
 
-
 class MoveSorter:
     def __init__(self) -> None:
         # 90×90 integer matrix for the history heuristic
@@ -15,9 +14,6 @@ class MoveSorter:
             self._killers.append([0, 0])
 
     def store_killer_move(self, depth: int, move: int, beta: float, score: float) -> None:
-        """
-        Append or replace the move in a depth in the killers array
-        """
         if score < beta:
             return
         self._ensure_killer_slot(depth)
@@ -28,25 +24,17 @@ class MoveSorter:
         slot[0] = move
 
     def store_history(self, move: int, depth: int) -> None:
-        """
-        Increment the history counter for a move.
-        `depth` is the remaining depth at which the move was evaluated.
-        A common bonus is depth*depth, but any positive value works.
-        """
         f = get_from_sq(move)
         t = get_to_sq(move)
         self._history[f][t] += depth * depth
 
 
     def get_killers(self, depth: int) -> list[int]:
-        """Return the two killers for ply (0 if empty)."""
-        # Trả về nhiều hơn 2 nước killers.
         self._ensure_killer_slot(depth)
         return self._killers[depth]
 
     # most valuable victim - least valuable attackers
     def _mvv_lva(self, board: Board, move: int) -> int:
-        """Return capture value minus attacker value, scaled for ordering."""
         frm = get_from_sq(move)
         to = get_to_sq(move)
         attacker = board.state[frm]

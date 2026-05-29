@@ -4,9 +4,9 @@ from pathlib import Path
 type TTEntry = TT_Entry | None
 
 class TT_FLAG(IntEnum):
-    EXACT = 0 # Use whene there is no cutoff
-    LOWERBOUND = 1 # Use when there is cutoff.
-    UPPERBOUND = 2 # Use when there is no cutoff and it is the best score in expanding
+    EXACT = 0 
+    LOWERBOUND = 1 
+    UPPERBOUND = 2 
 
 TT_TABLE: list[TTEntry] = []
 
@@ -53,9 +53,9 @@ def probe(key: int, depth: int, alpha: float, beta: float, TT_TABLE: list) -> tu
     index = key % len(TT_TABLE)
     entry = TT_TABLE[index]
 
-    # 1. Key Verification: Is this actually the same position?
+    # Key Verification
     if entry is not None and entry.key == key:
-        # 2. Depth Check: Is this information high-quality enough and if the certain condition is match?
+        # 2. Depth Check
         is_useful = (entry.depth >= depth) and (
         (entry.flag == TT_FLAG.EXACT) or
         (entry.flag == TT_FLAG.LOWERBOUND and entry.score >= beta) or

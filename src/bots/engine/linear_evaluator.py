@@ -2,85 +2,67 @@ from core.board import Board
 from core.move_generator import MoveGenerator
 from core.pieces import Color, PIECE_VALUES, is_black, is_red
 
-# ===========================================================================
-# PIECE-SQUARE TABLES  —  góc nhìn phe ĐỎ, hàng 9 = sân Đỏ
-# Phe Đen dùng bảng lật (89 - sq).
-# ===========================================================================
-
-# --- Xe (R) ---
-# Nguyên tắc:
-#   + Thưởng hàng 7 (hàng trống sau tốt, chuẩn bị tấn công)
-#   + Thưởng cột trung tâm d-f ở PHÍA ĐỊCh (hàng 0-4)
-#   + PHẠT nặng khi vào cung mình (hàng 7-9 cột d-f = sq 66-68,75-77,84-86)
-#   + Vị trí góc ban đầu (a9=81, i9=89) để nguyên, đừng phạt (chờ khai cuộc)
+# Xe
 _PST_R = [
 #   a    b    c    d    e    f    g    h    i
-   206, 208, 207, 210, 208, 210, 207, 208, 206,  # row 0 (địch)
-   208, 212, 209, 212, 212, 212, 209, 212, 208,  # row 1
-   206, 208, 207, 210, 210, 210, 207, 208, 206,  # row 2
-   206, 210, 210, 212, 212, 212, 210, 210, 206,  # row 3
-   208, 211, 211, 213, 214, 213, 211, 211, 208,  # row 4 (giữa bàn)
-   210, 212, 212, 214, 215, 214, 212, 212, 210,  # row 5 (giữa bàn)
-   212, 214, 214, 216, 218, 216, 214, 214, 212,  # row 6 (hàng tốt Đỏ)
-   214, 216, 214, 214, 214, 214, 214, 216, 214,  # row 7 (hàng trống — vị trí tốt nhất)
-   206, 208, 207, 198, 196, 198, 207, 208, 206,  # row 8 (phạt cột d-f = gần cung)
-   206, 208, 207, 196, 194, 196, 207, 208, 206,  # row 9 (phạt cột d-f = trong cung)
+   206, 208, 207, 210, 208, 210, 207, 208, 206,  
+   208, 212, 209, 212, 212, 212, 209, 212, 208, 
+   206, 208, 207, 210, 210, 210, 207, 208, 206, 
+   206, 210, 210, 212, 212, 212, 210, 210, 206,  
+   208, 211, 211, 213, 214, 213, 211, 211, 208,  
+   210, 212, 212, 214, 215, 214, 212, 212, 210, 
+   212, 214, 214, 216, 218, 216, 214, 214, 212, 
+   214, 216, 214, 214, 214, 214, 214, 216, 214,  
+   206, 208, 207, 198, 196, 198, 207, 208, 206, 
+   206, 208, 207, 196, 194, 196, 207, 208, 206,  
 ]
 
-# --- Mã (N) ---
-# Triển khai lên hàng 7 (g7/c7), sau đó tiến sang sông
+# Mã
 _PST_N = [
 #   a    b    c    d    e    f    g    h    i
-    84,  87,  90,  93,  87,  93,  90,  87,  84,  # row 0
-    87,  93, 100,  95,  91,  95, 100,  93,  87,  # row 1
-    89,  96,  97, 101,  96, 101,  97,  96,  89,  # row 2
-    90, 106,  98, 105,  98, 105,  98, 106,  90,  # row 3
-    87,  98,  97, 101, 102, 101,  97,  98,  87,  # row 4
-    87,  96,  99, 100, 101, 100,  99,  96,  87,  # row 5
-    89,  96,  97, 101,  96, 101,  97,  96,  89,  # row 6
-    92, 108,  99, 106,  99, 106,  99, 108,  92,  # row 7 (vị trí triển khai tốt nhất)
-    84,  93, 100,  93,  88,  93, 100,  93,  84,  # row 8
-    80,  83,  83,  88,  83,  88,  83,  83,  80,  # row 9 (ban đầu, nên di chuyển)
+    84,  87,  90,  93,  87,  93,  90,  87,  84,  
+    87,  93, 100,  95,  91,  95, 100,  93,  87,  
+    89,  96,  97, 101,  96, 101,  97,  96,  89,  
+    90, 106,  98, 105,  98, 105,  98, 106,  90,  
+    87,  98,  97, 101, 102, 101,  97,  98,  87,  
+    87,  96,  99, 100, 101, 100,  99,  96,  87,  
+    89,  96,  97, 101,  96, 101,  97,  96,  89, 
+    92, 108,  99, 106,  99, 106,  99, 108,  92,  
+    84,  93, 100,  93,  88,  93, 100,  93,  84,  
+    80,  83,  83,  88,  83,  88,  83,  83,  80,  
 ]
 
-# --- Pháo (C) ---
-# Nguyên tắc:
-#   + Nên ở hàng 7 ban đầu (b7/h7) — đây là vị trí khai cuộc chuẩn
-#   + Tiến lên hàng 4-5 để tấn công (thưởng cột e)
-#   + PHẠT khi lùi về hàng 9 a/i (mất tác dụng tấn công)
-#   + Không thưởng hàng 9 góc nữa
+# Pháo
 _PST_C = [
 #   a    b    c    d    e    f    g    h    i
-   100, 100,  97,  91,  92,  91,  97, 100, 100,  # row 0 (địch)
-    99,  99,  97,  93,  90,  93,  97,  99,  99,  # row 1
-    98,  98,  97,  92,  93,  92,  97,  98,  98,  # row 2
-    97, 100, 100,  99, 101,  99, 100, 100,  97,  # row 3
-    97,  97,  97,  97, 102,  97,  97,  97,  97,  # row 4
-    96,  97, 100,  97, 102,  97, 100,  97,  96,  # row 5 (giữa bàn)
-    97,  97,  97,  97, 100,  97,  97,  97,  97,  # row 6
-    99,  99,  98,  92,  93,  92,  98,  99,  99,  # row 7 (vị trí khai cuộc)
-    95,  95,  94,  90,  88,  90,  94,  95,  95,  # row 8
-    93,  91,  93,  89,  88,  89,  93,  91,  93,  # row 9 (phạt góc a9/i9)
+   100, 100,  97,  91,  92,  91,  97, 100, 100,  
+    99,  99,  97,  93,  90,  93,  97,  99,  99,  
+    98,  98,  97,  92,  93,  92,  97,  98,  98,  
+    97, 100, 100,  99, 101,  99, 100, 100,  97, 
+    97,  97,  97,  97, 102,  97,  97,  97,  97,  
+    96,  97, 100,  97, 102,  97, 100,  97,  96,  
+    97,  97,  97,  97, 100,  97,  97,  97,  97, 
+    99,  99,  98,  92,  93,  92,  98,  99,  99, 
+    95,  95,  94,  90,  88,  90,  94,  95,  95,  
+    93,  91,  93,  89,  88,  89,  93,  91,  93,  
 ]
 
-# --- Tốt (P) ---
-# Hàng 6 của Đỏ = chưa qua sông → 0 điểm vị trí, chỉ tiến
-# Hàng 0-4 (đã qua sông) → thưởng mạnh, đặc biệt cột giữa
+# Tốt
 _PST_P = [
 #   a    b    c    d    e    f    g    h    i
-     9,   9,   9,  11,  13,  11,   9,   9,   9,  # row 0 (sát sân địch)
-    13,  13,  13,  15,  15,  15,  13,  13,  13,  # row 1
-    14,  14,  14,  16,  17,  16,  14,  14,  14,  # row 2
-    14,  16,  16,  20,  22,  20,  16,  16,  14,  # row 3
-    14,  16,  16,  20,  22,  20,  16,  16,  14,  # row 4
-     0,   0,   5,   0,   5,   0,   5,   0,   0,  # row 5 (chưa qua sông)
-     0,   0,   5,   0,   5,   0,   5,   0,   0,  # row 6 (vị trí ban đầu tốt Đỏ)
-     0,   0,   0,   0,   0,   0,   0,   0,   0,  # row 7
-     0,   0,   0,   0,   0,   0,   0,   0,   0,  # row 8
-     0,   0,   0,   0,   0,   0,   0,   0,   0,  # row 9
+     9,   9,   9,  11,  13,  11,   9,   9,   9, 
+    13,  13,  13,  15,  15,  15,  13,  13,  13,  
+    14,  14,  14,  16,  17,  16,  14,  14,  14,  
+    14,  16,  16,  20,  22,  20,  16,  16,  14,  
+    14,  16,  16,  20,  22,  20,  16,  16,  14, 
+     0,   0,   5,   0,   5,   0,   5,   0,   0,  
+     0,   0,   5,   0,   5,   0,   5,   0,   0,  
+     0,   0,   0,   0,   0,   0,   0,   0,   0, 
+     0,   0,   0,   0,   0,   0,   0,   0,   0,  
+     0,   0,   0,   0,   0,   0,   0,   0,   0, 
 ]
 
-# --- Sĩ (A) ---
+# Sĩ
 _PST_A = [
     0, 0, 0,  0,  0,  0,  0, 0, 0,
     0, 0, 0,  0,  0,  0,  0, 0, 0,
@@ -94,7 +76,7 @@ _PST_A = [
     0, 0, 0, 20,  0, 20,  0, 0, 0,
 ]
 
-# --- Tượng (B) ---
+# Tượng
 _PST_B = [
     0,  0, 20,  0,  0,  0, 20,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -109,7 +91,7 @@ _PST_B = [
 ]
 
 
-# --- Tướng (K): ở giữa cung, tránh sát biên ---
+# Tướng
 _PST_K = [
     0, 0, 0,  1,  1,  1,  0, 0, 0,
     0, 0, 0,  2,  2,  2,  0, 0, 0,
@@ -128,7 +110,6 @@ _PST_MAP = {
     'P': _PST_P, 'A': _PST_A, 'B': _PST_B, 'K': _PST_K,
 }
 
-# Trọng số — giảm king_safety để bot bớt thụ động
 WEIGHT_VECTOR = {
     "material":   1.0,
     "position":   1.2,  
@@ -137,12 +118,8 @@ WEIGHT_VECTOR = {
     "rook_open":  0.6,
 }
 
-# ===========================================================================
-# GAME PHASE
-# ===========================================================================
 _PHASE_OPENING = 2400
 _PHASE_ENDGAME = 1200
-
 
 def _game_phase(board: Board) -> float:
     """0.0 = endgame, 1.0 = opening."""
@@ -153,10 +130,6 @@ def _game_phase(board: Board) -> float:
     )
     return min(1.0, max(0.0, (total - _PHASE_ENDGAME) / (_PHASE_OPENING - _PHASE_ENDGAME)))
 
-
-# ===========================================================================
-# PST evaluation
-# ===========================================================================
 
 def _evaluate_pst(board: Board) -> int:
     score = 0
@@ -172,11 +145,6 @@ def _evaluate_pst(board: Board) -> int:
             score -= table[89 - sq]
     return score
 
-
-# ===========================================================================
-# Material
-# ===========================================================================
-
 def _evaluate_material(board: Board) -> int:
     score = 0
     for piece in board.state:
@@ -189,11 +157,6 @@ def _evaluate_material(board: Board) -> int:
             score -= val
     return score
 
-
-# ===========================================================================
-# Mobility (pseudo-legal — nhanh)
-# ===========================================================================
-
 def _evaluate_mobility(board: Board) -> int:
     gen = MoveGenerator(board)
     orig = board.side_to_move
@@ -204,11 +167,6 @@ def _evaluate_mobility(board: Board) -> int:
     board.side_to_move = orig
     return red_moves - black_moves
 
-
-# ===========================================================================
-# Rook open file/rank bonus
-# ===========================================================================
-
 def _evaluate_rook_open(board: Board) -> int:
     score = 0
     for sq, piece in enumerate(board.state):
@@ -217,7 +175,7 @@ def _evaluate_rook_open(board: Board) -> int:
         row, col = divmod(sq, 9)
         red = piece == 'R'
 
-        # Cột mở: không có quân cùng phe trên cùng cột
+        # Cột mở
         col_open = all(
             board.state[r * 9 + col] == '.' or
             (red and is_black(board.state[r * 9 + col])) or
@@ -240,12 +198,8 @@ def _evaluate_rook_open(board: Board) -> int:
     return score
 
 
-# ===========================================================================
 # King Safety
-# ===========================================================================
-
 _TROPISM_WEIGHT = {'R': 4, 'r': 4, 'C': 3, 'c': 3, 'N': 3, 'n': 3, 'P': 1, 'p': 1}
-
 
 def _chebyshev(sq1: int, sq2: int) -> int:
     r1, c1 = divmod(sq1, 9)
@@ -279,10 +233,8 @@ def _king_danger(board: Board, color: Color, king_sq: int, phase: float) -> int:
                 dist = max(_chebyshev(sq, king_sq), 1)
                 tropism += w * 10 // dist
 
-    # Tropism mạnh hơn trong opening, yếu hơn endgame
     tropism = int(tropism * (0.4 + 0.6 * phase))
     return shield_penalty + tropism
-
 
 def _evaluate_king_safety(board: Board, phase: float) -> int:
     red_king_sq   = _find_king(board, Color.RED)
@@ -290,11 +242,6 @@ def _evaluate_king_safety(board: Board, phase: float) -> int:
     red_danger    = _king_danger(board, Color.RED,   red_king_sq,   phase)
     black_danger  = _king_danger(board, Color.BLACK, black_king_sq, phase)
     return black_danger - red_danger
-
-
-# ===========================================================================
-# Tổng hợp
-# ===========================================================================
 
 def _evaluate_absolute_score(board: Board, *, skip_mobility: bool = False) -> int:
     phase = _game_phase(board)
@@ -311,11 +258,9 @@ def _evaluate_absolute_score(board: Board, *, skip_mobility: bool = False) -> in
         rook_op * WEIGHT_VECTOR["rook_open"]
     )
 
-
 def heuristic(board: Board, *, skip_mobility: bool = False) -> int:
     s = _evaluate_absolute_score(board, skip_mobility=skip_mobility)
     return s if board.side_to_move == Color.RED else -s
-
 
 def get_heuristic_breakdown(board: Board) -> dict:
     phase    = _game_phase(board)

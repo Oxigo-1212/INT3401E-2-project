@@ -22,16 +22,7 @@ _NULL_MOVE_R         = 2
 _NULL_MOVE_MIN_DEPTH = 3    
 
 
-
-
-
-
 def _is_null_move_ok(board: Board) -> bool:
-    """
-    Null Move không an toàn khi:
-    - Đang bị chiếu
-    - Endgame cạn quân (nguy cơ zugzwang): tổng Xe/Mã/Pháo < 2
-    """
     if is_in_check(board, board.side_to_move):
         return False
     attackers = sum(1 for p in board.state if p in ('R', 'N', 'C', 'r', 'n', 'c'))
@@ -39,7 +30,6 @@ def _is_null_move_ok(board: Board) -> bool:
 
 
 def _do_null_move(board: Board) -> None:
-    """Bỏ qua lượt: chỉ đổi side_to_move và XOR zobrist."""
     board.history.append({
         'move': 0,
         'captured': '.',
@@ -53,7 +43,6 @@ def _do_null_move(board: Board) -> None:
 
 
 def _undo_null_move(board: Board) -> None:
-    """Hoàn tác null move."""
     if not board.history:
         return
     old = board.history.pop()
@@ -62,9 +51,6 @@ def _undo_null_move(board: Board) -> None:
     board.zobrist_key = old['zobrist_key']
     if board.zobrist_history:
         board.zobrist_history.pop()
-
-
-
 
 def negmax(
     board: Board,
@@ -107,9 +93,7 @@ def negmax(
     status = check_game_status(board, legal_moves)
 
     if status != GameStatus.Playing:
-        if status == GameStatus.RedWin:
-            return 90000.0 + depth
-        if status == GameStatus.BlueWin:
+        if status == GameStatus.RedWin or status == GameStatus.BlueWin:
             return -90000.0 - depth
         return 0.0
 
@@ -191,12 +175,6 @@ def negmax(
         flag = TT_FLAG.LOWERBOUND
     store(board.zobrist_key, depth, max_score, flag, best_move, TT_TABLE)
     return max_score
-
-
-
-
-
-
 
 def get_best_move(board: Board, algorithm: AlgorithmFunction, depth: int = 3) -> int | None:
     generator = MoveGenerator(board)

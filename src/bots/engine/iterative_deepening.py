@@ -14,13 +14,9 @@ from core.rules import GameStatus, check_game_status, get_legal_moves
 from core.utils import move_to_str
 from core.logger import get_logger
 
-# Aspiration Window: cửa sổ alpha/beta hẹp ban đầu quanh score lần trước.
-# Nếu fail-low hoặc fail-high thì mở rộng ra và search lại.
-_ASPIRATION_DELTA = 50    # Cửa sổ ban đầu: [prev - 50, prev + 50]
-_ASPIRATION_MIN_DEPTH = 4  # Chỉ bật Aspiration từ depth này trở lên
-
+_ASPIRATION_DELTA = 50  
+_ASPIRATION_MIN_DEPTH = 4  
 _log = get_logger("IDS")
-
 
 class SearchStopped(Exception):
     pass
@@ -36,7 +32,6 @@ def _algorithm_supports_control(algorithm: Callable) -> bool:
     if any(param.kind == inspect.Parameter.VAR_KEYWORD for param in params.values()):
         return True
     return {"stats", "stop_flag", "ply"}.issubset(params)
-
 
 def _call_algorithm(
     algorithm: Callable,
@@ -64,7 +59,6 @@ def _call_algorithm(
         )
     return algorithm(board, depth, alpha, beta, move_sorter)
 
-
 def _extract_pv(board: Board, max_depth: int) -> list[int]:
     pv: list[int] = []
     cursor = board.copy()
@@ -77,7 +71,6 @@ def _extract_pv(board: Board, max_depth: int) -> list[int]:
         cursor.make_move(entry.best_move)
 
     return pv
-
 
 def _mate_from_pv(board: Board, pv: list[int]) -> Optional[int]:
     if not pv:
@@ -99,7 +92,6 @@ def _mate_from_pv(board: Board, pv: list[int]) -> Optional[int]:
                 return None
             return ply if winner == root_side else -ply
     return None
-
 
 def _snapshot(
     board: Board,
@@ -123,7 +115,6 @@ def _snapshot(
         "pv": pv,
         "mate": mate,
     }
-
 
 def search_with_time_limit(
     board: Board,
@@ -194,8 +185,6 @@ def search_with_time_limit(
                     ply=1,
                     supports_control=supports_control,
                 )
-            except SearchStopped:
-                completed = False
                 break
             except Exception:
                 value = -math.inf
@@ -221,7 +210,6 @@ def search_with_time_limit(
     elapsed_total = (time.time() - start_time) * 1000
     _log.debug("Kết thúc: %s | %.0fms", move_to_str(best_move), elapsed_total)
     return best_move
-
 
 def search_with_depth_limit(
     board: Board,
@@ -290,9 +278,6 @@ def search_with_depth_limit(
                         ply=1,
                         supports_control=supports_control,
                     )
-                except SearchStopped:
-                    stopped = True
-                    break
                 except Exception:
                     value = -math.inf
                 finally:
@@ -311,7 +296,7 @@ def search_with_depth_limit(
                 aspiration_done = True
                 break
 
-            # Kiểm tra fail-low / fail-high → mở rộng cửa sổ
+            # Kiểm tra fail-low / fail-high -> mở rộng cửa sổ
             if iter_best_value <= prev_score - _ASPIRATION_DELTA and depth >= _ASPIRATION_MIN_DEPTH:
                 # Fail-low: mở rộng xuống
                 alpha = -math.inf
