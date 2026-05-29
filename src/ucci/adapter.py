@@ -46,18 +46,27 @@ StopFlag = Callable[[], bool]
 
 
 def _time_from_clock(board: Board, params: GoParams) -> Optional[int]:
+    """Return a *soft* time budget for this move (ms)."""
     remaining = params.wtime if board.side_to_move == Color.RED else params.btime
     if remaining is None:
         return None
-
     increment = params.winc if board.side_to_move == Color.RED else params.binc
     moves_to_go = params.movestogo or 30
+    # Basic slice based on how many moves we expect to play.
     slice_ms = remaining // max(2, moves_to_go)
+    # Give a fraction of the increment (80 % is a common heuristic).
     bonus_ms = 0 if increment is None else (increment * 4) // 5
+    # ---- Start of the new cap logic ----
+    # 1️⃣ Compute the raw budget.
     budget = slice_ms + bonus_ms
+    # 2️⃣ **Cap at 50 % of the remaining clock.**
+    budget = min(budget, remaining // 2)
+    # 3️⃣ Keep a safety margin of at least 50 ms for the *next* move.
+    #    (If we have ≤ 50 ms left we just give whatever we have.)
     if remaining > 50:
         budget = min(budget, remaining - 50)
-    return max(1, budget)
+    # ---- End of the new cap logic ----
+    return max(1, budget)  # never return 0 ms
 
 
 class SearchFacade:
