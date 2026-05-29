@@ -4,7 +4,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from core.board import Board
-from core.move import uci_to_move, uci_to_sq
+from core.move import deserialize_move as uci_to_move, deserialize_square as uci_to_sq
 from bots.engine.move_ordering import MoveSorter
 
 

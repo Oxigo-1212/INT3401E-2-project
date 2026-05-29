@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 import pytest
 from core.board import Board, START_FEN
 from core.pieces import Color
-from core.move import encode_move, uci_to_move, move_to_uci
+from core.move import encode_move, deserialize_move as uci_to_move, serialize_move as move_to_uci
 
 
 @pytest.fixture
@@ -37,24 +37,24 @@ class TestFenParsing:
     def test_start_fen_black_side(self):
         """Parse FEN với lượt của Đen."""
         b = Board()
-        b.set_fen("rheakaehr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RHEAKAEHR b - - 0 1")
+        b.set_fen("rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR b - - 0 1")
         assert b.side_to_move == Color.BLACK
 
     def test_start_fen_piece_positions(self, board):
         """Kiểm tra vị trí các quân cờ ban đầu (theo FEN chuẩn)."""
-        # Hàng 0 (Đen): r h e a k a e h r
+        # Hàng 0 (Đen): r n b a k a b n r
         assert board.state[0]  == 'r'  # a0: Xe Đen trái
-        assert board.state[1]  == 'h'  # b0: Mã Đen trái
-        assert board.state[2]  == 'e'  # c0: Tượng Đen trái
+        assert board.state[1]  == 'n'  # b0: Mã Đen trái
+        assert board.state[2]  == 'b'  # c0: Tượng Đen trái
         assert board.state[3]  == 'a'  # d0: Sĩ Đen trái
         assert board.state[4]  == 'k'  # e0: Tướng Đen
         assert board.state[5]  == 'a'  # f0: Sĩ Đen phải
-        assert board.state[6]  == 'e'  # g0: Tượng Đen phải
-        assert board.state[7]  == 'h'  # h0: Mã Đen phải
+        assert board.state[6]  == 'b'  # g0: Tượng Đen phải
+        assert board.state[7]  == 'n'  # h0: Mã Đen phải
         assert board.state[8]  == 'r'  # i0: Xe Đen phải
-        # Hàng 9 (Đỏ): R H E A K A E H R
+        # Hàng 9 (Đỏ): R N B A K A B N R
         assert board.state[81] == 'R'  # a9
-        assert board.state[82] == 'H'  # b9
+        assert board.state[82] == 'N'  # b9
         assert board.state[85] == 'K'  # e9: Tướng Đỏ
         assert board.state[89] == 'R'  # i9
 
@@ -98,6 +98,16 @@ class TestFenParsing:
         assert b.state[4*9 + 4] == 'R'   # e4: Xe Đỏ
         assert b.state[0*9 + 4] == 'k'   # e0: Tướng Đen
         assert b.state[9*9 + 4] == 'K'   # e9: Tướng Đỏ
+
+
+    def test_set_fen_normalizes_variant_piece_tokens(self):
+        """set_fen phải chuyển token biến thể về ký hiệu nội bộ."""
+        b = Board()
+        b.set_fen("4k4/9/9/4H4/4A4/4h4/4a4/9/9/4K4 w - - 0 1")
+        assert b.state[3*9 + 4] == 'N'
+        assert b.state[4*9 + 4] == 'A'
+        assert b.state[5*9 + 4] == 'n'
+        assert b.state[6*9 + 4] == 'a'
 
     def test_total_pieces_at_start(self, board):
         """Số lượng quân cờ mỗi loại đúng ở vị trí ban đầu."""

@@ -12,6 +12,7 @@ from bots.engine.quiescence_search import quiescence_search
 from core.move import get_to_sq
 from core.zobrist import ZOBRIST_SIDE
 from core.logger import get_logger
+from bots.engine.iterative_deepening import SearchStopped
 
 type AlgorithmFunction = Callable[[Board, int, float, float, Optional[MoveSorter]], float]
 
@@ -33,7 +34,7 @@ def _is_null_move_ok(board: Board) -> bool:
     """
     if is_in_check(board, board.side_to_move):
         return False
-    attackers = sum(1 for p in board.state if p in ('R', 'H', 'C', 'r', 'h', 'c'))
+    attackers = sum(1 for p in board.state if p in ('R', 'N', 'C', 'r', 'n', 'c'))
     return attackers >= 2
 
 
@@ -72,14 +73,24 @@ def negmax(
     beta: float,
     move_sorter: Optional[MoveSorter] = None,
     is_null_move: bool = False,
+    *,
+    stats: Optional[dict[str, int]] = None,
+    stop_flag: Optional[Callable[[], bool]] = None,
+    ply: int = 0,
 ) -> float:
 
+    if stop_flag is not None and stop_flag():
+        raise SearchStopped()
+    if stats is not None:
+        stats["nodes"] = stats.get("nodes", 0) + 1
+        stats["search_nodes"] = stats.get("search_nodes", 0) + 1
+        stats["seldepth"] = max(stats.get("seldepth", 0), ply)
 
     entry, useful = probe(board.zobrist_key, depth, alpha, beta, TT_TABLE)
     if entry is not None and useful:
         if entry.flag == TT_FLAG.EXACT:
             return entry.score
-        elif entry.flag == TT_FLAG.LOWERBOUND:
+        if entry.flag == TT_FLAG.LOWERBOUND:
             alpha = max(alpha, entry.score)
         elif entry.flag == TT_FLAG.UPPERBOUND:
             beta = min(beta, entry.score)
@@ -88,7 +99,6 @@ def negmax(
 
     if move_sorter is None:
         move_sorter = MoveSorter()
-
 
     generator = MoveGenerator(board)
     legal_moves: list[int] = get_legal_moves(board, generator)
@@ -101,13 +111,21 @@ def negmax(
             return 90000.0 + depth
         if status == GameStatus.BlueWin:
             return -90000.0 - depth
-        return 0.0  
+        return 0.0
 
     if depth == 0:
-        return quiescence_search(board, alpha, beta, move_sorter, qdepth=0)
+        return quiescence_search(
+            board,
+            alpha,
+            beta,
+            move_sorter,
+            qdepth=0,
+            stats=stats,
+            stop_flag=stop_flag,
+            ply=ply,
+        )
 
     in_check = is_in_check(board, board.side_to_move)
-
 
     if (
         depth >= _NULL_MOVE_MIN_DEPTH
@@ -116,19 +134,24 @@ def negmax(
         and _is_null_move_ok(board)
     ):
         _do_null_move(board)
-        null_score = -negmax(
-            board,
-            depth - 1 - _NULL_MOVE_R,
-            -beta, -beta + 1,           
-            move_sorter,
-            is_null_move=True
-        )
-        _undo_null_move(board)
+        try:
+            null_score = -negmax(
+                board,
+                depth - 1 - _NULL_MOVE_R,
+                -beta,
+                -beta + 1,
+                move_sorter,
+                is_null_move=True,
+                stats=stats,
+                stop_flag=stop_flag,
+                ply=ply,
+            )
+        finally:
+            _undo_null_move(board)
 
         if null_score >= beta:
             store(board.zobrist_key, depth, beta, TT_FLAG.LOWERBOUND, 0, TT_TABLE)
             return beta
-
 
     original_alpha = alpha
     best_move: int = 0
@@ -136,9 +159,19 @@ def negmax(
 
     for move in legal_moves:
         board.make_move(move)
-        score = -negmax(board, depth - 1, -beta, -alpha, move_sorter)
-
-        board.undo_move()
+        try:
+            score = -negmax(
+                board,
+                depth - 1,
+                -beta,
+                -alpha,
+                move_sorter,
+                stats=stats,
+                stop_flag=stop_flag,
+                ply=ply + 1,
+            )
+        finally:
+            board.undo_move()
 
         if score > max_score:
             max_score = score
@@ -151,7 +184,6 @@ def negmax(
             move_sorter.store_history(move, depth)
             break
 
- 
     flag = TT_FLAG.EXACT
     if max_score <= original_alpha:
         flag = TT_FLAG.UPPERBOUND

@@ -27,9 +27,9 @@ _PST_R = [
    206, 208, 207, 196, 194, 196, 207, 208, 206,  # row 9 (phạt cột d-f = trong cung)
 ]
 
-# --- Mã (H) ---
+# --- Mã (N) ---
 # Triển khai lên hàng 7 (g7/c7), sau đó tiến sang sông
-_PST_H = [
+_PST_N = [
 #   a    b    c    d    e    f    g    h    i
     84,  87,  90,  93,  87,  93,  90,  87,  84,  # row 0
     87,  93, 100,  95,  91,  95, 100,  93,  87,  # row 1
@@ -94,8 +94,8 @@ _PST_A = [
     0, 0, 0, 20,  0, 20,  0, 0, 0,
 ]
 
-# --- Tượng (E) ---
-_PST_E = [
+# --- Tượng (B) ---
+_PST_B = [
     0,  0, 20,  0,  0,  0, 20,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,
    18,  0,  0,  0, 23,  0,  0,  0, 18,
@@ -107,6 +107,7 @@ _PST_E = [
     0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0, 20,  0,  0,  0, 20,  0,  0,
 ]
+
 
 # --- Tướng (K): ở giữa cung, tránh sát biên ---
 _PST_K = [
@@ -123,8 +124,8 @@ _PST_K = [
 ]
 
 _PST_MAP = {
-    'R': _PST_R, 'H': _PST_H, 'C': _PST_C,
-    'P': _PST_P, 'A': _PST_A, 'E': _PST_E, 'K': _PST_K,
+    'R': _PST_R, 'N': _PST_N, 'C': _PST_C,
+    'P': _PST_P, 'A': _PST_A, 'B': _PST_B, 'K': _PST_K,
 }
 
 # Trọng số — giảm king_safety để bot bớt thụ động
@@ -243,7 +244,7 @@ def _evaluate_rook_open(board: Board) -> int:
 # King Safety
 # ===========================================================================
 
-_TROPISM_WEIGHT = {'R': 4, 'r': 4, 'C': 3, 'c': 3, 'H': 3, 'h': 3, 'P': 1, 'p': 1}
+_TROPISM_WEIGHT = {'R': 4, 'r': 4, 'C': 3, 'c': 3, 'N': 3, 'n': 3, 'P': 1, 'p': 1}
 
 
 def _chebyshev(sq1: int, sq2: int) -> int:
@@ -259,8 +260,8 @@ def _find_king(board: Board, color: Color) -> int:
 
 def _count_defenders(board: Board, color: Color) -> int:
     if color == Color.RED:
-        return sum(1 for p in board.state if p in ('A', 'E'))
-    return sum(1 for p in board.state if p in ('a', 'e'))
+        return sum(1 for p in board.state if p in ('A', 'B'))
+    return sum(1 for p in board.state if p in ('a', 'b'))
 
 
 def _king_danger(board: Board, color: Color, king_sq: int, phase: float) -> int:
@@ -295,12 +296,12 @@ def _evaluate_king_safety(board: Board, phase: float) -> int:
 # Tổng hợp
 # ===========================================================================
 
-def _evaluate_absolute_score(board: Board) -> int:
+def _evaluate_absolute_score(board: Board, *, skip_mobility: bool = False) -> int:
     phase = _game_phase(board)
     mat      = _evaluate_material(board)
     pst      = _evaluate_pst(board)
     ksafety  = _evaluate_king_safety(board, phase)
-    mob      = _evaluate_mobility(board)
+    mob      = 0 if skip_mobility else _evaluate_mobility(board)
     rook_op  = _evaluate_rook_open(board)
     return int(
         mat     * WEIGHT_VECTOR["material"]    +
@@ -311,8 +312,8 @@ def _evaluate_absolute_score(board: Board) -> int:
     )
 
 
-def heuristic(board: Board) -> int:
-    s = _evaluate_absolute_score(board)
+def heuristic(board: Board, *, skip_mobility: bool = False) -> int:
+    s = _evaluate_absolute_score(board, skip_mobility=skip_mobility)
     return s if board.side_to_move == Color.RED else -s
 
 

@@ -14,7 +14,7 @@ from core.rules import (
     check_game_status, is_draw, GameStatus
 )
 from core.pieces import Color
-from core.move import uci_to_move, move_to_uci
+from core.move import deserialize_move as uci_to_move, serialize_move as move_to_uci
 
 def setup(fen, side='w'):
     b = Board()
@@ -33,7 +33,7 @@ def legal_uci_set(b, gen):
 class TestIsInCheck:
     def test_not_in_check_initial(self):
         """Vị trí ban đầu: cả hai phe đều không bị chiếu."""
-        b, _ = setup("rheakaehr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RHEAKAEHR w - - 0 1")
+        b, _ = setup("rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 1")
         assert not is_in_check(b, Color.RED)
         assert not is_in_check(b, Color.BLACK)
 
@@ -54,16 +54,16 @@ class TestIsInCheck:
 
     def test_in_check_by_horse(self):
         """Tướng bị chiếu bởi Mã."""
-        b, _ = setup("4k4/9/9/9/9/9/9/9/3H5/4K4 w - - 0 1")
+        b, _ = setup("4k4/9/9/9/9/9/9/9/3N5/4K4 w - - 0 1")
         # Mã d8 có thể đến e9 (tiến 1 phải 2 = +9+2=11? kiểm tra lại)
         # Mã ở f8: +9-2=7+2 đến e9? 
         # Dùng FEN đơn giản: Mã Đỏ d8 chiếu Tướng Đen e0?
         b2 = Board()
-        b2.set_fen("4k4/9/9/9/9/9/9/9/3h5/4K4 b - - 0 1")
+        b2.set_fen("4k4/9/9/9/9/9/9/9/3n5/4K4 b - - 0 1")
         # Mã Đen d8: di chuyển -9+2 = -7 → e9? 8*9+3=75, 75-7=68 = d7?
         # Tạo test chắc chắn: Mã chiếu Tướng trực tiếp
         b3 = Board()
-        b3.set_fen("4k4/9/9/9/9/9/9/9/9/2h1K4 w - - 0 1")
+        b3.set_fen("4k4/9/9/9/9/9/9/9/9/2n1K4 w - - 0 1")
         # Mã Đen c9 (sq=84+2=86? không, 9*9+2=83)
         # Thực ra: Mã ở c9 → c9 đến e8: +9+2 = 83+11=94 OOB. Thử Mã f8 chiếu e9?
         # f8 = 8*9+5=77; e9=9*9+4=85; diff=8=không hợp

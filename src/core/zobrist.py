@@ -11,7 +11,7 @@ random.seed(42)
 
 # Bảng băm cho 14 loại quân cờ trên 90 ô
 ZOBRIST_TABLE: dict[str, list[int]] = {}
-PIECES = ['K', 'A', 'E', 'H', 'R', 'C', 'P', 'k', 'a', 'e', 'h', 'r', 'c', 'p']
+PIECES = ['K', 'A', 'B', 'N', 'R', 'C', 'P', 'k', 'a', 'b', 'n', 'r', 'c', 'p']
 
 # Khởi tạo một tập giá trị random key trong 90 ô của một tập quân cờ
 for p in PIECES:

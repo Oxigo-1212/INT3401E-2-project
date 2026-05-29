@@ -29,8 +29,8 @@ class MoveGenerator:
         r, c = divmod(sq, 9)
         is_red_piece = piece.isupper()
 
-        # 1. MÃ (H): Hình chữ L, check chân mã
-        if p == 'H':
+        # 1. MÃ (N): Hình chữ L, check chân mã
+        if p == 'N':
             # (offset_đi, offset_chân_mã)
             horse_logic = [
                 (-18 - 1, -9), (-18 + 1, -9), # Tiến 2 trái/phải 1 - Chân: trên
@@ -49,8 +49,8 @@ class MoveGenerator:
                         if target_piece == '.' or (is_red_piece != target_piece.isupper()):
                             moves.append(encode_move(sq, target_sq))
 
-        # 2. TƯỢNG (E): Đi chéo 2 ô, không qua sông, check mắt tượng
-        elif p == 'E':
+        # 2. TƯỢNG (B): Đi chéo 2 ô, không qua sông, check mắt tượng
+        elif p == 'B':
             elephant_logic = [-20, -16, 16, 20] # 4 hướng chéo
             for off in elephant_logic:
                 target_sq = sq + off

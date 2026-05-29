@@ -9,9 +9,11 @@ _INITIALIZED = False
 
 
 def init_logging(*, debug: bool = False) -> None:
-    """Khởi tạo logging một lần. Gọi lại không có tác dụng."""
+    """Khởi tạo logging một lần. Gọi lại cập nhật level."""
     global _INITIALIZED
+    level = logging.DEBUG if debug else logging.INFO
     if _INITIALIZED:
+        logging.root.setLevel(level)
         return
     _INITIALIZED = True
 

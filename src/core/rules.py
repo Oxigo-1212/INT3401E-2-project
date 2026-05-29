@@ -19,6 +19,8 @@ def flying_general_check(board):
         if p == 'K':
             K_pos = sq
     
+    if k_pos == -1 or K_pos == -1:
+        return False
     rk, ck = divmod(k_pos, 9)
     rK, cK = divmod(K_pos, 9)
     
@@ -70,7 +72,6 @@ def get_legal_moves(board, generator):
         # 2. Không làm lộ mặt Tướng (Flying General)
         if not is_in_check(board, current_side) and not flying_general_check(board):
             legal_moves.append(move)
-            
         board.undo_move()
     return legal_moves
 

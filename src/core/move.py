@@ -19,25 +19,31 @@ def get_to_sq(move: int) -> int:
     return move & 0x7F
 
 # Các hàm tiện ích (debug/giao tiếp với người chơi)
-# uci: universal chess interface
-def sq_to_uci(sq: int) -> str:
+
+def serialize_square(sq: int) -> str:
     """Chuyển index (0-89) sang tọa độ chuẩn (ví dụ: 0 -> a0, 89 -> i9)."""
     file_idx = sq % 9   # Cột từ 0-8 (a-i)
     rank_idx = sq // 9  # Hàng từ 0-9 (0-9)
     return chr(ord('a') + file_idx) + str(rank_idx)
 
-def uci_to_sq(uci: str) -> int:
+def deserialize_square(sq_str: str) -> int:
     """Chuyển tọa độ chuẩn (ví dụ: a0) sang index (0-89)."""
-    file_idx = ord(uci[0]) - ord('a')
-    rank_idx = int(uci[1])
+    file_idx = ord(sq_str[0]) - ord('a')
+    rank_idx = int(sq_str[1])
     return rank_idx * 9 + file_idx
 
-def move_to_uci(move: int) -> str:
+def serialize_move(move: int) -> str:
     """Chuyển integer move thành chuỗi dễ đọc (VD: 1420 -> 'h2e2')."""
-    return sq_to_uci(get_from_sq(move)) + sq_to_uci(get_to_sq(move))
+    return serialize_square(get_from_sq(move)) + serialize_square(get_to_sq(move))
 
-def uci_to_move(uci: str) -> int:
+def deserialize_move(move_str: str) -> int:
     """Chuyển chuỗi (VD: 'h2e2') thành integer move."""
-    from_sq = uci_to_sq(uci[0:2])
-    to_sq = uci_to_sq(uci[2:4])
+    from_sq = deserialize_square(move_str[0:2])
+    to_sq = deserialize_square(move_str[2:4])
     return encode_move(from_sq, to_sq)
+
+# Backward compatibility aliases
+sq_to_uci = serialize_square
+uci_to_sq = deserialize_square
+move_to_uci = serialize_move
+uci_to_move = deserialize_move

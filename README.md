@@ -73,23 +73,21 @@ pip install -r requirements.txt
 
 ### Chơi Trực Tiếp Trên Console
 
-**Cách 1: Sử dụng lệnh tắt `btl` (Khuyên dùng)**
+**Cách 1: Sử dụng binary (Khuyên dùng)**
 
-Cài đặt gói ở chế độ editable mode (sẽ tự động đăng ký lệnh `btl` hệ thống):
-
-```bash
-# Cài đặt với uv
-uv pip install -e .
-
-# Hoặc cài đặt với pip
-pip install -e .
-```
-
-Sau đó, bạn có thể chạy game trực tiếp từ bất kỳ đâu chỉ bằng lệnh:
+Build binary standalone bằng PyInstaller:
 
 ```bash
-btl
+uv run --with pyinstaller pyinstaller --onefile --name btl src/btl/__main__.py
 ```
+
+Sau đó chạy binary trực tiếp:
+
+```bash
+./dist/btl
+```
+
+Có thể copy `dist/btl` vào `~/.local/bin/` hoặc thư mục bất kỳ trong `$PATH` để gọi từ mọi nơi.
 
 **Cách 2: Chạy trực tiếp file Python**
 
@@ -106,6 +104,51 @@ Bạn sẽ được lựa chọn:
 2. **Bot vs Bot** — Xem hai bot Negamax tự đấu với nhau trên màn hình console theo từng nước đi.
 
 Mặc định, các tệp log và PGN của ván đấu sẽ được tự động lưu vào thư mục `logs/`.
+
+### Front-end UCCI cho GUI/engine host
+
+Engine hiện cung cấp front-end **UCCI** làm giao diện protocol chính cho các GUI/engine host.
+
+```bash
+btl --ucci
+```
+
+Lệnh cũ `--uci` vẫn được giữ như một alias tương thích ngược.
+
+Khi chạy ở chế độ này, engine có thể nhận các lệnh chuẩn như `ucci`, `isready`, `position`, `go`, `stop`, và `quit` từ GUI hoặc tool host.
+
+### Kiểm thử hiệu năng & Benchmark (Performance & Benchmarking)
+
+Engine cung cấp hai công cụ đo đạc hiệu năng và kiểm thử độ chính xác của bộ sinh nước đi và thuật toán tìm kiếm:
+
+**1. Search Benchmark (`--bench`)**
+
+Chạy thuật toán tìm kiếm Negamax trên các thế cờ mẫu phức tạp để đo hiệu suất cắt tỉa và tốc độ tìm kiếm (NPS):
+
+```bash
+btl --bench
+```
+
+Đầu ra hiển thị theo định dạng trực quan:
+`bench depth: {depth} nodes: {nodes} expected: {expected} time: {time} sec`
+*(Trong đó `nodes` là số node duyệt thực tế sau khi cắt tỉa, `expected` là số node duyệt tối đa lý thuyết từ Perft để so sánh hiệu quả).*
+
+**2. Perft Benchmark (`--perft`)**
+
+Chạy bộ đếm node Perft thuần để kiểm tra tính đúng đắn và tốc độ của bộ sinh nước đi:
+
+```bash
+btl --perft
+```
+
+### Các lệnh chẩn đoán nâng cao trong UCCI (Diagnostic Commands)
+
+Trong giao diện dòng lệnh UCCI (`--ucci`), engine hỗ trợ hai lệnh chẩn đoán mở rộng dùng cho các GUI hoặc công cụ phân tích:
+
+- **`bench depth N`** — Chạy thuật toán tìm kiếm Negamax từ thế cờ hiện tại đến độ sâu `N`. Lệnh chạy không đồng bộ (asynchronous), liên tục xuất các thông tin tiến trình dạng `info` (giống lệnh `go`) và xuất dòng tóm tắt khi kết thúc hoặc khi bị dừng:
+  `bench depth {depth} nodes {nodes} time {time_ms}`
+- **`perft depth N`** — Chạy bộ đếm node Perft từ thế cờ hiện tại đến độ sâu `N` và xuất dòng kết quả:
+  `perft depth {depth} nodes {nodes} time {time_ms}`
 
 ### Danh Sách Các Bot AI
 

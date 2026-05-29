@@ -1,10 +1,12 @@
-from typing import Optional
-from core.board import Board
-from core.move_generator import MoveGenerator
-from core.rules import get_legal_moves
+from typing import Callable, Optional
+
+from bots.engine.iterative_deepening import SearchStopped
 from bots.engine.linear_evaluator import heuristic
 from bots.engine.move_ordering import MoveSorter
+from core.board import Board
 from core.move import get_to_sq
+from core.move_generator import MoveGenerator
+from core.rules import get_legal_moves
 
 _MAX_QUIESCENCE_DEPTH = 4  # Giới hạn độ sâu quiescence để tránh đệ quy vô hạn
 
@@ -18,9 +20,19 @@ def quiescence_search(
     alpha: float,
     beta: float,
     move_sorter: Optional[MoveSorter] = None,
-    qdepth: int = 0
+    qdepth: int = 0,
+    *,
+    stats: Optional[dict[str, int]] = None,
+    stop_flag: Callable[[], bool] | None = None,
+    ply: int = 0,
 ) -> float:
-    stand_pat = float(heuristic(board))
+    if stop_flag is not None and stop_flag():
+        raise SearchStopped()
+    if stats is not None:
+        stats["nodes"] = stats.get("nodes", 0) + 1
+        stats["seldepth"] = max(stats.get("seldepth", 0), ply + qdepth)
+
+    stand_pat = float(heuristic(board, skip_mobility=True))
 
     if stand_pat >= beta:
         return beta
@@ -48,8 +60,19 @@ def quiescence_search(
 
     for move in capture_moves:
         board.make_move(move)
-        score = -quiescence_search(board, -beta, -alpha, move_sorter, qdepth + 1)
-        board.undo_move()
+        try:
+            score = -quiescence_search(
+                board,
+                -beta,
+                -alpha,
+                move_sorter,
+                qdepth + 1,
+                stats=stats,
+                stop_flag=stop_flag,
+                ply=ply,
+            )
+        finally:
+            board.undo_move()
 
         if score >= beta:
             return beta

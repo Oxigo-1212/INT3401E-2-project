@@ -6,6 +6,14 @@ from arena.game import Game, GameResultStatus, Winner
 import sys
 from bots.engine.transposition_table import TT_TABLE, init_tt
 from core.board import Board
+from typing import Optional
+import argparse
+from benchmark.cli import run_benchmark
+from benchmark.xiangqi_perft_positions import POSITIONS
+
+from core.board import Board
+from bots.engine.transposition_table import init_tt, TT_TABLE, clear_tt
+from ucci.adapter import GoParams, SearchFacade
 from core.board_renderer import BoardRenderer
 from core.logger import get_logger, init_logging
 from core.move import move_to_uci
@@ -13,6 +21,18 @@ from core.move_generator import MoveGenerator
 from core.pieces import Color
 from core.rules import GameStatus, check_game_status, get_legal_moves
 from match_ui import MatchConfig, build_entities, configure_match, run_gui_game
+from core.move import deserialize_move as uci_to_move, serialize_move as move_to_uci
+from core.rules import check_game_status, get_legal_moves, is_in_check, GameStatus, Color
+from core.utils import move_to_str
+from bots.bot import BotManager
+from colorama import init
+import time 
+from core.logger import init_logging, get_logger
+
+# Import thêm Game và các Enum liên quan từ arena.game
+from arena.game import Game, Winner, GameResultStatus
+
+init()
 
 _log = get_logger("main")
 
@@ -94,7 +114,67 @@ def run_match_cli(config: MatchConfig) -> None:
         _finalize_game(game)
 
 
+def run_search_benchmark() -> None:
+    facade = SearchFacade()
+    for fen, depth, expected in POSITIONS:
+        board = Board()
+        board.set_fen(fen)
+        clear_tt(TT_TABLE)
+        result = facade.search(board, GoParams(depth=depth))
+        print(f"bench depth: {depth} nodes: {result.nodes} expected: {expected} time: {result.time_ms / 1000:.3f} sec")
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Cờ tướng engine")
+    parser.add_argument(
+        "-p",
+        "--perft",
+        action="store_true",
+        help="Run perft benchmark",
+    )
+    parser.add_argument(
+        "--bench",
+        action="store_true",
+        help="Run search benchmark",
+    )
+    parser.add_argument(
+        "--uci",
+        "--ucci",
+        dest="ucci",
+        action="store_true",
+        help="Run UCCI front-end",
+    )
+    args, remaining = parser.parse_known_args()
+
+    if args.ucci:
+        from ucci import run_ucci
+
+        # Check remaining arguments for debug flag
+        debug_mode = False
+        for arg in remaining:
+            arg_lower = arg.lower()
+            if arg_lower in ("--debug", "-d", "debug", "debug=true", "debug=on", "debug=1"):
+                debug_mode = True
+                break
+
+        init_logging(debug=debug_mode)
+        run_ucci()
+        return
+
+    if args.bench:
+        try:
+            run_search_benchmark()
+        except KeyboardInterrupt:
+            return
+        return
+    if args.perft:
+        try:
+            run_benchmark()
+        except KeyboardInterrupt:
+            return
+        return
+
+    # Xóa file log cũ trước khi bắt đầu trận mới
     with open("time_log.txt", "w", encoding="utf-8") as f:
         f.write("")
 
