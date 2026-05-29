@@ -150,7 +150,6 @@ class GreedyBot(Bot):
         return best_move
 
 
-
 class BotManager:
     """
     Quản lý các Bot khác nhau.
@@ -173,7 +172,7 @@ class BotManager:
             depth = kwargs.get("depth", 4)
             time_limit = kwargs.get("time_limit_ms")
             return NegmaxBot(depth=depth, time_limit_ms=time_limit)
-        
+
         elif bot_type.lower() == "random":
             return RandomBot()
         
