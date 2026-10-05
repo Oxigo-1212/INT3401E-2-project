@@ -1,167 +1,93 @@
-# Engine Cờ Tướng (Xiangqi Engine)
+# Xiangqi Engine
 
-Một engine Cờ Tướng viết bằng Python, tích hợp nhiều bot AI với các thuật toán tìm kiếm có thể cấu hình, hệ thống đấu trường (arena) chạy tự động các trận bot-vs-bot, cùng giao diện tương tác trên console cho người chơi.
+A fully-featured Xiangqi (Chinese Chess) engine implemented in Python. The project features a complete rule generator, advanced heuristic evaluations, an integrated arena for bot battles, and a graphical user interface (GUI). 
 
-## Các Tính Năng Nổi Bật
+![GUI Screenshot](assets/screenshot.png)
 
-- **Đầy đủ luật Cờ Tướng** — Sinh nước đi hợp lệ, phát hiện chiếu/chiếu bí, các điều kiện hòa cờ (lặp nước, luật thế sát/hết nước đi), và luật Lộ mặt Tướng (flying general).
-- **Đa dạng Bot AI** — Các chiến thuật Negamax, Random, và Greedy.
-- **Tối ưu hóa tìm kiếm** — Cắt tỉa Alpha-Beta (Alpha-Beta pruning), Tìm kiếm sâu dần (Iterative Deepening Search - IDS), Tìm kiếm tĩnh (Quiescence Search), Bảng chuyển vị (Transposition Table), Sắp xếp nước đi (Move Ordering), và Sách khai cuộc (Opening Book).
-- **Hàm đánh giá Heuristic chi tiết** — Giá trị quân cờ (material balance), bảng vị trí quân cờ (piece-square tables), độ cơ động (mobility), cấu trúc Tốt (pawn structure), và an toàn Tướng (áp lực tấn công, lá chắn bảo vệ, khoảng cách tới Tướng - tropism).
-- **Hệ thống Đấu trường (Arena)** — Tự động chạy trận đấu, hỗ trợ xuất biên bản PGN và ghi log chi tiết.
-- **Băm Zobrist (Zobrist hashing)** — Mã hóa trạng thái bàn cờ gia số giúp tra cứu cực nhanh trong bảng chuyển vị.
-- **Giao diện Console sinh động** — Hiển thị bàn cờ có màu sắc với các ký tự quân cờ tiếng Việt/Trung.
+## Overview
 
-## Cấu Trúc Thư Mục Dự Án
+The engine serves as both a playable application and a framework for AI bot development in Xiangqi. It adheres to all standard rules, including complex edge cases such as the flying general rule and various draw conditions. 
 
-```
-src/
-├── main.py                      # File chạy chính: Chế độ Người chơi vs Bot / Bot vs Bot
-├── core/                        # Biểu diễn bàn cờ và luật chơi
-│   ├── board.py                 # Trạng thái bàn cờ, đọc/ghi FEN, thực hiện/hủy nước đi
-│   ├── pieces.py                # Định nghĩa quân cờ, màu quân, giá trị quân
-│   ├── move.py                  # Mã hóa/giải mã nước đi 16-bit, chuyển đổi UCI
-│   ├── move_generator.py        # Sinh nước đi hợp lệ cho tất cả các loại quân
-│   ├── rules.py                 # Kiểm tra chiếu, chiếu bí, hết nước đi, hòa cờ
-│   ├── zobrist.py               # Băm Zobrist cho trạng thái bàn cờ
-│   ├── board_renderer.py        # Hiển thị bàn cờ màu sắc trên console
-│   └── utils.py                 # Hàm hỗ trợ tải FEN, tọa độ bàn cờ
-├── bots/
-│   ├── bot.py                   # Lớp cơ sở Bot, NegmaxBot, RandomBot, GreedyBot, BotManager
-│   └── engine/
-│       ├── algorithm.py         # Thuật toán tìm kiếm Negamax với cắt tỉa alpha-beta
-│       ├── iterative_deepening.py  # IDS hỗ trợ giới hạn thời gian (time limit) và giới hạn độ sâu (depth limit)
-│       ├── linear_evaluator.py  # Đánh giá Heuristic (lực lượng, vị trí, cơ động, an toàn Tướng)
-│       ├── quiescence_search.py # Tìm kiếm tĩnh giúp giảm hiệu ứng chân trời (horizon effect)
-│       ├── transposition_table.py  # Bảng chuyển vị để lưu trữ kết quả tìm kiếm
-│       ├── move_ordering.py     # Sắp xếp nước đi bằng MVV-LVA và nước đi sát thủ (killer moves)
-│       └── opening_book.py      # Sổ khai cuộc có sẵn cho các biến phổ biến
-├── arena/
-│   ├── game.py                  # Quản lý trận đấu: vòng lặp chơi, xin thua, hết giờ, xuất PGN
-│   └── logger.py                # Ghi log trận đấu có cấu trúc (ra file + console)
-└── tests/                       # Unit tests
-    ├── test_board.py
-    ├── test_rules.py
-    ├── test_move_gen.py
-    ├── test_algorithm.py
-    ├── test_linear_evaluator.py
-    ├── test_move_ordering.py
-    └── test_move_sorted.py
-```
+### Key Capabilities
 
-## Yêu Cầu Hệ Thống
+*   **Move Generation & Validation**: Full rule enforcement, including check, checkmate, stalemate detection, and repetition rules.
+*   **Search Algorithms**: Utilizes Negamax with Alpha-Beta pruning, enhanced by Iterative Deepening Search (IDS).
+*   **Search Enhancements**: Implements Quiescence Search to mitigate the horizon effect, Transposition Tables (via Zobrist Hashing) for state caching, and Move Ordering (MVV-LVA, Killer Moves) for faster alpha-beta cutoffs.
+*   **Evaluation Function**: A comprehensive linear heuristic evaluator that considers material advantage, piece-square tables, mobility, pawn structures, and king safety.
+*   **Opening Book**: Integrated standard opening lines.
+*   **Bot Arena**: Automated framework to run bot-versus-bot matches, complete with PGN exports and detailed structured logging.
+*   **UCCI Protocol**: Provides a Universal Chinese Chess Protocol (UCCI) interface to connect with standard GUI hosts.
 
-- Python >= 3.12
-- Thư viện phụ thuộc: `numpy`, `scipy`, `networkx`, `pygame`, `colorama`
-- Môi trường phát triển: `pytest`, `black`
+## Project Structure
 
-## Hướng Dẫn Cài Đặt
+The codebase is organized modularly to separate core logic, AI agents, and interface layers:
+
+*   `src/main.py`: Application entry point.
+*   `src/core/`: Board representation, move generation, and game rules.
+*   `src/bots/`: AI agent definitions and engine logic (search, evaluation).
+*   `src/arena/`: Matchmaking, automated game loops, and logging.
+*   `src/gui/`: Pygame-based graphical user interface.
+*   `src/ucci/`: UCCI protocol adapter for external integration.
+*   `src/tests/`: Unit test suite ensuring logic correctness.
+
+## Requirements
+
+*   Python 3.12 or higher.
+*   Dependencies: `numpy`, `scipy`, `networkx`, `pygame`, `colorama`.
+
+## Installation
+
+Clone the repository and install the required packages. Using `uv` is recommended for dependency management:
 
 ```bash
-# Clone repository này về máy
-git clone <repo-url>
-cd btl
+git clone <repository_url>
+cd INT3401E-2-project
 
-# Cài đặt bằng uv (khuyên dùng)
+# Install via uv
 uv sync
 
-# Hoặc cài đặt bằng pip truyền thống
+# Or using standard pip
 pip install -r requirements.txt
 ```
 
-## Cách Sử Dụng
+## Usage
 
-### Chơi Trực Tiếp Trên Console
+### Interactive Game (GUI / CLI)
 
-**Cách 1: Sử dụng binary (Khuyên dùng)**
-
-Build binary standalone bằng PyInstaller:
-
-```bash
-uv run --with pyinstaller pyinstaller --onefile --name btl src/btl/__main__.py
-```
-
-Sau đó chạy binary trực tiếp:
-
-```bash
-./dist/btl
-```
-
-Có thể copy `dist/btl` vào `~/.local/bin/` hoặc thư mục bất kỳ trong `$PATH` để gọi từ mọi nơi.
-
-**Cách 2: Chạy trực tiếp file Python**
-
-Chạy file chính từ thư mục `src/`:
+Run the application module to launch the interactive prompt:
 
 ```bash
 cd src
 python main.py
 ```
 
-Bạn sẽ được lựa chọn:
+You can choose to play as a human against an AI bot, or watch two bots compete. The game can be rendered in the terminal (CLI mode) or via the Pygame graphical interface. Match logs and PGN files are saved in the `logs/` directory.
 
-1. **Con người vs Bot** — Chọn loại bot (Negamax, Random, Greedy), chọn bên đi trước (Đỏ/Đen), và nhập nước đi theo định dạng UCI (Ví dụ: `h2e2`).
-2. **Bot vs Bot** — Xem hai bot Negamax tự đấu với nhau trên màn hình console theo từng nước đi.
+### UCCI Mode
 
-Mặc định, các tệp log và PGN của ván đấu sẽ được tự động lưu vào thư mục `logs/`.
-
-### Front-end UCCI cho GUI/engine host
-
-Engine hiện cung cấp front-end **UCCI** làm giao diện protocol chính cho các GUI/engine host.
+To use the engine as a backend for standard Xiangqi GUIs (such as WinBoard or Pengfei), start the engine in UCCI mode:
 
 ```bash
-btl --ucci
+python main.py --ucci
 ```
 
-Lệnh cũ `--uci` vẫn được giữ như một alias tương thích ngược.
+### Benchmarks
 
-Khi chạy ở chế độ này, engine có thể nhận các lệnh chuẩn như `ucci`, `isready`, `position`, `go`, `stop`, và `quit` từ GUI hoặc tool host.
+The project includes built-in benchmarking tools to measure the performance of the move generator and the search engine.
 
-### Kiểm thử hiệu năng & Benchmark (Performance & Benchmarking)
+*   **Search Benchmark**: Measures nodes per second (NPS) and alpha-beta pruning efficiency.
+    ```bash
+    python main.py --bench
+    ```
+*   **Perft Benchmark**: Validates the correct number of leaf nodes generated at various depths to ensure rule engine accuracy.
+    ```bash
+    python main.py --perft
+    ```
 
-Engine cung cấp hai công cụ đo đạc hiệu năng và kiểm thử độ chính xác của bộ sinh nước đi và thuật toán tìm kiếm:
+## Documentation
 
-**1. Search Benchmark (`--bench`)**
+Detailed methodology and reporting on the engine's design can be found in the `docs/` directory.
 
-Chạy thuật toán tìm kiếm Negamax trên các thế cờ mẫu phức tạp để đo hiệu suất cắt tỉa và tốc độ tìm kiếm (NPS):
+## License
 
-```bash
-btl --bench
-```
-
-Đầu ra hiển thị theo định dạng trực quan:
-`bench depth: {depth} nodes: {nodes} expected: {expected} time: {time} sec`
-*(Trong đó `nodes` là số node duyệt thực tế sau khi cắt tỉa, `expected` là số node duyệt tối đa lý thuyết từ Perft để so sánh hiệu quả).*
-
-**2. Perft Benchmark (`--perft`)**
-
-Chạy bộ đếm node Perft thuần để kiểm tra tính đúng đắn và tốc độ của bộ sinh nước đi:
-
-```bash
-btl --perft
-```
-
-### Các lệnh chẩn đoán nâng cao trong UCCI (Diagnostic Commands)
-
-Trong giao diện dòng lệnh UCCI (`--ucci`), engine hỗ trợ hai lệnh chẩn đoán mở rộng dùng cho các GUI hoặc công cụ phân tích:
-
-- **`bench depth N`** — Chạy thuật toán tìm kiếm Negamax từ thế cờ hiện tại đến độ sâu `N`. Lệnh chạy không đồng bộ (asynchronous), liên tục xuất các thông tin tiến trình dạng `info` (giống lệnh `go`) và xuất dòng tóm tắt khi kết thúc hoặc khi bị dừng:
-  `bench depth {depth} nodes {nodes} time {time_ms}`
-- **`perft depth N`** — Chạy bộ đếm node Perft từ thế cờ hiện tại đến độ sâu `N` và xuất dòng kết quả:
-  `perft depth {depth} nodes {nodes} time {time_ms}`
-
-### Danh Sách Các Bot AI
-
-| Tên Bot | Thuật Toán | Mô Tả |
-|---|---|---|
-| `negamax` | Negamax + Alpha-Beta + IDS | Bot mạnh nhất. Hỗ trợ tham số độ sâu `depth` và giới hạn thời gian `time_limit_ms`. |
-| `greedy` | Ăn quân tham lam (1-ply) | Ưu tiên chọn các nước đi ăn quân có giá trị lớn nhất ngay lập tức; nếu không có nước ăn quân thì đi nước đầu tiên. |
-| `random` | Ngẫu nhiên | Chọn ngẫu nhiên một nước đi hợp lệ. Dùng chủ yếu để kiểm thử. |
-
-## Tài Liệu
-
-Báo cáo chi tiết về phương pháp giải quyết và kết quả của dự án có sẵn tại **[Report](docs/REPORT.md)**.
-
-## Bản Quyền (License)
-
-Bản quyền MIT. Xem chi tiết tại tệp [LICENSE](LICENSE).
+This project is licensed under the MIT License. See the `LICENSE` file for full details.
