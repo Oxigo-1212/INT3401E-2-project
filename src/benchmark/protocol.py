@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import List, Literal, Protocol
+from typing import Literal, Protocol
 
 Color = Literal["white", "black"]
 
@@ -10,7 +10,7 @@ Color = Literal["white", "black"]
 class _PerftBoard(Protocol):
     """Structural interface required by benchmark perft."""
 
-    state: List[str]
+    state: list[str]
     side_to_move: Color
 
     def make_move(self, move: int) -> None:
@@ -21,7 +21,6 @@ class _PerftBoard(Protocol):
         """Undo last move."""
         ...
 
-
-    def generate_legal_moves(self) -> List[int]:
+    def generate_legal_moves(self) -> list[int]:
         """Return legal moves for side_to_move."""
         ...

@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import sys
-from typing import Sequence
+from collections.abc import Sequence
 
 from core.move import encode_move, get_from_sq, get_to_sq
-
 
 # ---------------------------------------------------------------------------
 # Protocol ↔ internal coordinate conversion
@@ -13,16 +12,17 @@ from core.move import encode_move, get_from_sq, get_to_sq
 # Protocol: rank 0 = Red's back rank (bottom), rank 9 = Black's back rank (top)
 # ---------------------------------------------------------------------------
 
+
 def sq_to_protocol(sq: int) -> str:
     """Convert internal square index to protocol coordinate string."""
     file_idx = sq % 9
     rank_idx = 9 - (sq // 9)
-    return chr(ord('a') + file_idx) + str(rank_idx)
+    return chr(ord("a") + file_idx) + str(rank_idx)
 
 
 def protocol_to_sq(s: str) -> int:
     """Convert protocol coordinate string to internal square index."""
-    file_idx = ord(s[0]) - ord('a')
+    file_idx = ord(s[0]) - ord("a")
     rank_idx = 9 - int(s[1])
     return rank_idx * 9 + file_idx
 

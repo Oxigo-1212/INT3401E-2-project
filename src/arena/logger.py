@@ -9,7 +9,6 @@ from __future__ import annotations
 import datetime
 import logging
 from pathlib import Path
-from typing import Optional
 
 
 class Logger:
@@ -22,8 +21,8 @@ class Logger:
     def __init__(
         self,
         log_dir: str | Path = "logs",
-        game_id: Optional[str] = None,
-        log_file: Optional[str | Path] = None,
+        game_id: str | None = None,
+        log_file: str | Path | None = None,
         level: int = logging.DEBUG,
         console: bool = False,
     ):
@@ -37,7 +36,9 @@ class Logger:
         elif game_id:
             self.log_file = self.log_dir / f"{game_id}.log"
         else:
-            self.log_file = self.log_dir / f"log_{datetime.datetime.now().strftime('%Y%m%d')}.log"
+            self.log_file = (
+                self.log_dir / f"log_{datetime.datetime.now().strftime('%Y%m%d')}.log"
+            )
 
         self.log_file = self.log_file.expanduser().resolve()
 
@@ -119,15 +120,20 @@ class Logger:
             stream_handler.setLevel(max(logging.INFO, self.level))
             stream_handler.setFormatter(formatter)
 
-    def _find_file_handler(self) -> Optional[logging.FileHandler]:
+    def _find_file_handler(self) -> logging.FileHandler | None:
         for handler in self._logger.handlers:
-            if isinstance(handler, logging.FileHandler) and getattr(handler, "_arena_log_path", None) == self.log_file:
+            if (
+                isinstance(handler, logging.FileHandler)
+                and getattr(handler, "_arena_log_path", None) == self.log_file
+            ):
                 return handler
         return None
 
-    def _find_stream_handler(self) -> Optional[logging.StreamHandler]:
+    def _find_stream_handler(self) -> logging.StreamHandler | None:
         for handler in self._logger.handlers:
-            if isinstance(handler, logging.StreamHandler) and not isinstance(handler, logging.FileHandler):
+            if isinstance(handler, logging.StreamHandler) and not isinstance(
+                handler, logging.FileHandler
+            ):
                 if getattr(handler, "_arena_console_handler", False):
                     return handler
         return None

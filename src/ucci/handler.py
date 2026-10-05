@@ -4,12 +4,13 @@ import importlib
 import threading
 import time
 
-from bots.engine.transposition_table import TT_TABLE, clear_tt
 from benchmark.implementations.xiangqi_board import XiangqiBoardAdapter
+from bots.engine.transposition_table import TT_TABLE, clear_tt
 from core.board import Board
 from core.logger import init_logging
 from core.move_generator import MoveGenerator
 from core.rules import get_legal_moves
+
 from .adapter import GoParams, SearchFacade, SearchResult
 from .commands import (
     BenchParams,
@@ -92,7 +93,11 @@ class UCCIHandler:
         name = params.name.lower()
         self.options[name] = params.value
         if name == "debug":
-            debug_on = params.value is not None and params.value.lower() in ("true", "on", "1")
+            debug_on = params.value is not None and params.value.lower() in (
+                "true",
+                "on",
+                "1",
+            )
             init_logging(debug=debug_on)
 
     def _handle_debug(self, parsed: ParsedCommand) -> None:
@@ -159,7 +164,9 @@ class UCCIHandler:
                     info_cb=emit_info,
                 )
             finally:
-                move_text = move_to_protocol(result.best_move) if result.best_move else "0000"
+                move_text = (
+                    move_to_protocol(result.best_move) if result.best_move else "0000"
+                )
                 write_line(f"bestmove {move_text}")
                 self._stop_requested.clear()
                 self._search_thread = None
@@ -173,6 +180,7 @@ class UCCIHandler:
         self._stop_requested.clear()
         clear_tt(TT_TABLE)
         params = GoParams(depth=bench.depth)
+
         def emit_info(result: SearchResult) -> None:
             write_line(
                 build_info(
@@ -185,6 +193,7 @@ class UCCIHandler:
                     mate=result.mate,
                 )
             )
+
         def run_search() -> None:
             result = SearchResult(
                 best_move=0,
@@ -204,9 +213,12 @@ class UCCIHandler:
                     info_cb=emit_info,
                 )
             finally:
-                write_line(f"bench depth {result.depth} nodes {result.nodes} time {result.time_ms}")
+                write_line(
+                    f"bench depth {result.depth} nodes {result.nodes} time {result.time_ms}"
+                )
                 self._stop_requested.clear()
                 self._search_thread = None
+
         thread = threading.Thread(target=run_search, daemon=True)
         self._search_thread = thread
         thread.start()

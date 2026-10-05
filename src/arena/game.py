@@ -4,29 +4,29 @@ import datetime
 import os
 import sys
 from enum import Enum
-from typing import Optional, List, Tuple
 
 # Handle relative imports for both package and direct execution
 try:
     from ..core.board import Board
-    from ..core.move_generator import MoveGenerator
-    from ..core.rules import check_game_status, GameStatus, get_legal_moves
     from ..core.move import serialize_move as move_to_uci
+    from ..core.move_generator import MoveGenerator
     from ..core.pieces import Color
+    from ..core.rules import GameStatus, check_game_status, get_legal_moves
     from .logger import Logger  # Import Logger từ module hiện tại (arena/logger.py)
 except ImportError:
     # Fallback for direct execution
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-    from core.board import Board
-    from core.move_generator import MoveGenerator
-    from core.rules import check_game_status, GameStatus, get_legal_moves
-    from core.move import serialize_move as move_to_uci
-    from core.pieces import Color
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
     from arena.logger import Logger  # Import Logger theo fallback
+    from core.board import Board
+    from core.move import serialize_move as move_to_uci
+    from core.move_generator import MoveGenerator
+    from core.pieces import Color
+    from core.rules import GameStatus, check_game_status, get_legal_moves
 
 
 class Winner(Enum):
     """Enum để xác định người thắng (dùng màu quân, không phải tên bot)."""
+
     RED = "Red"
     BLACK = "Black"
     DRAW = "Draw"
@@ -34,6 +34,7 @@ class Winner(Enum):
 
 class GameResultStatus(str, Enum):
     """Enum cho trạng thái kết thúc ván cờ."""
+
     PLAYING = "playing"
     CHECKMATE = "checkmate"
     RESIGN = "resign"
@@ -49,7 +50,7 @@ class GameResultStatus(str, Enum):
 class Game:
     """
     Lớp quản lý một ván cờ tướng giữa hai bot/người chơi.
-    
+
     Attributes:
         player1: Bot/Player thứ nhất (phe Đỏ/RED)
         player2: Bot/Player thứ hai (phe Đen/BLACK)
@@ -62,18 +63,18 @@ class Game:
         logger: Thư ký ghi chép (Logger instance)
         game_result_status: Trạng thái chi tiết (GameResultStatus enum)
     """
-    
+
     def __init__(
         self,
         player1,
         player2,
         board: Board,
-        game_id: Optional[str] = None,
-        log_path: Optional[str] = None
+        game_id: str | None = None,
+        log_path: str | None = None,
     ):
         """
         Khởi tạo một ván cờ.
-        
+
         Args:
             player1: Bot/Player thứ nhất (phe Đỏ/RED - sở hữu Tướng K)
             player2: Bot/Player thứ hai (phe Đen/BLACK - sở hữu Tướng k)
@@ -84,21 +85,21 @@ class Game:
         self.player1 = player1
         self.player2 = player2
         self.board = board
-        self.moves: List[Tuple[str, int, str]] = []  # (player_name, move_int, move_uci)
+        self.moves: list[tuple[str, int, str]] = []  # (player_name, move_int, move_uci)
         self.game_status = GameStatus.Playing
-        self.winner: Optional[Winner] = None
+        self.winner: Winner | None = None
         self.game_result_status: GameResultStatus = GameResultStatus.PLAYING
         self.pgn = ""
         self.game_id = game_id or datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
         self.log_path = log_path or "logs"
-        
+
         # SỬ DỤNG LOGGER.PY: Khởi tạo Logger chuẩn của project
         self.logger = Logger(log_dir=self.log_path, game_id=self.game_id, console=True)
 
     def play(self) -> str:
         """
         Chạy ván cờ đến khi kết thúc.
-        
+
         Returns:
             game_id của ván cờ
         """
@@ -135,16 +136,24 @@ class Game:
                 move = current_player.get_move(self.board)
             except Exception as e:
                 # Ghi log lỗi ngoại lệ của bot
-                self.logger.log_error(self.game_id, current_player.name, f"Exception runtime: {e}")
-                self._set_winner(Winner.BLACK if current_color == Color.RED else Winner.RED)
+                self.logger.log_error(
+                    self.game_id, current_player.name, f"Exception runtime: {e}"
+                )
+                self._set_winner(
+                    Winner.BLACK if current_color == Color.RED else Winner.RED
+                )
                 self.game_result_status = GameResultStatus.ERROR
                 break
 
             # Kiểm tra nước đi có hợp lệ không
             if move not in legal_moves:
                 # Ghi log lỗi nước đi không hợp lệ
-                self.logger.log_error(self.game_id, current_player.name, f"Illegal move: {move}")
-                self._set_winner(Winner.BLACK if current_color == Color.RED else Winner.RED)
+                self.logger.log_error(
+                    self.game_id, current_player.name, f"Illegal move: {move}"
+                )
+                self._set_winner(
+                    Winner.BLACK if current_color == Color.RED else Winner.RED
+                )
                 self.game_result_status = GameResultStatus.ILLEGAL_MOVE
                 break
 
@@ -152,9 +161,11 @@ class Game:
             move_uci = move_to_uci(move)
             self.board.make_move(move)
             self.moves.append((current_player.name, move, move_uci))
-            
+
             # Ghi log nước đi
-            self.logger.log_move(self.game_id, move_count + 1, current_player.name, move_uci)
+            self.logger.log_move(
+                self.game_id, move_count + 1, current_player.name, move_uci
+            )
 
             # Đổi lượt
             current_player, other_player = other_player, current_player
@@ -168,9 +179,9 @@ class Game:
 
         # Ghi log tổng kết kết thúc trận
         self.logger.log_game_end(
-            self.game_id, 
-            winner=self.winner.value if self.winner else "None", 
-            reason=self.game_result_status.value
+            self.game_id,
+            winner=self.winner.value if self.winner else "None",
+            reason=self.game_result_status.value,
         )
 
         # Xuất PGN
@@ -201,10 +212,14 @@ class Game:
         Args:
             player_name: Tên của người chơi bỏ cuộc
         """
-        self._set_winner(Winner.BLACK if player_name == self.player1.name else Winner.RED)
+        self._set_winner(
+            Winner.BLACK if player_name == self.player1.name else Winner.RED
+        )
         self.game_result_status = GameResultStatus.RESIGN
         # Ghi log khi bỏ cuộc
-        self.logger.log_game_end(self.game_id, winner=self.winner.value, reason=f"{player_name} resigned")
+        self.logger.log_game_end(
+            self.game_id, winner=self.winner.value, reason=f"{player_name} resigned"
+        )
 
     def timeout(self, player_name: str) -> None:
         """
@@ -213,10 +228,14 @@ class Game:
         Args:
             player_name: Tên của người chơi hết giờ
         """
-        self._set_winner(Winner.BLACK if player_name == self.player1.name else Winner.RED)
+        self._set_winner(
+            Winner.BLACK if player_name == self.player1.name else Winner.RED
+        )
         self.game_result_status = GameResultStatus.TIMEOUT
         # Ghi log khi hết giờ
-        self.logger.log_game_end(self.game_id, winner=self.winner.value, reason=f"{player_name} timeout")
+        self.logger.log_game_end(
+            self.game_id, winner=self.winner.value, reason=f"{player_name} timeout"
+        )
 
     def export_pgn(self) -> str:
         """
@@ -237,7 +256,9 @@ class Game:
         pgn_lines.append(f'[GameID "{self.game_id}"]')
         pgn_lines.append(f'[Termination "{self.game_result_status.value}"]')
         pgn_lines.append(f'[Moves "{len(self.moves)}"]')
-        pgn_lines.append(f'[Winner "{self.winner.value if self.winner else "Unknown"}"]')
+        pgn_lines.append(
+            f'[Winner "{self.winner.value if self.winner else "Unknown"}"]'
+        )
         pgn_lines.append("")
 
         # Thêm các nước đi
@@ -272,7 +293,7 @@ class Game:
         else:
             return "*"
 
-    def _save_pgn(self, log_path: Optional[str] = None) -> None:
+    def _save_pgn(self, log_path: str | None = None) -> None:
         """
         Lưu PGN vào file.
 
@@ -291,6 +312,7 @@ class Game:
         except Exception as e:
             self.logger.error(f"Failed to save PGN: {e}")
 
+
 # Demo test
 if __name__ == "__main__":
     from bots.bot import NegmaxBot, RandomBot
@@ -298,17 +320,17 @@ if __name__ == "__main__":
 
     bot1 = NegmaxBot(depth=3)
     bot2 = RandomBot()
-    
+
     board = Board()
     game = Game(bot1, bot2, board, log_path="logs")
-    
+
     game_id = game.play()
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print(f"Game {game_id} finished!")
     print(f"Winner: {game.winner.value}")
     print(f"Result Status: {game.game_result_status}")
     print(f"Game Status: {game.game_status.name}")
     print(f"Total Moves: {len(game.moves)}")
-    print(f"{'='*50}\n")
+    print(f"{'=' * 50}\n")
     print("PGN:")
     print(game.pgn)

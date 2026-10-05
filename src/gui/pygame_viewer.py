@@ -6,7 +6,6 @@ import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 try:
     import pygame
@@ -65,7 +64,7 @@ class PygameXiangqiController:
         renderer: BoardRenderer,
         red_entity,
         black_entity,
-        human_color: Optional[Color],
+        human_color: Color | None,
         fps: int = 60,
     ) -> None:
         self.board = board
@@ -74,34 +73,44 @@ class PygameXiangqiController:
         self.red_entity = red_entity
         self.black_entity = black_entity
         self.human_color = human_color
-        self.participants = MatchParticipants(red_name=red_entity.name, black_name=black_entity.name)
+        self.participants = MatchParticipants(
+            red_name=red_entity.name, black_name=black_entity.name
+        )
 
         self.max_moves = 200
         self.move_count = 0
         self.fps = fps
         self.clock = pygame.time.Clock()
 
-        self.selected_sq: Optional[int] = None
+        self.selected_sq: int | None = None
         self.selected_moves: list[int] = []
 
         self.bot_queue: queue.Queue[dict] = queue.Queue()
-        self.bot_worker: Optional[threading.Thread] = None
+        self.bot_worker: threading.Thread | None = None
         self.bot_worker_active = False
 
         pygame.init()
         pygame.display.set_caption("Xiangqi GUI Viewer")
 
         self.board_source_surface = pygame.image.load(str(self.ASSET_BOARD))
-        self.board_grid_xs, self.board_grid_ys = self._detect_grid_lines(self.board_source_surface)
+        self.board_grid_xs, self.board_grid_ys = self._detect_grid_lines(
+            self.board_source_surface
+        )
         source_board_w, source_board_h = self.board_source_surface.get_size()
         self.board_scale = 1.08
         self.board_w = int(round(source_board_w * self.board_scale))
         self.board_h = int(round(source_board_h * self.board_scale))
         self.grid_step_x = self._average_step(self.board_grid_xs)
         self.grid_step_y = self._average_step(self.board_grid_ys)
-        self.cell = int(round(min(self.grid_step_x, self.grid_step_y) * self.board_scale))
-        self.display_grid_xs = [int(round(x * self.board_scale)) for x in self.board_grid_xs]
-        self.display_grid_ys = [int(round(y * self.board_scale)) for y in self.board_grid_ys]
+        self.cell = int(
+            round(min(self.grid_step_x, self.grid_step_y) * self.board_scale)
+        )
+        self.display_grid_xs = [
+            int(round(x * self.board_scale)) for x in self.board_grid_xs
+        ]
+        self.display_grid_ys = [
+            int(round(y * self.board_scale)) for y in self.board_grid_ys
+        ]
 
         self.left = 12
         # Raise the board a bit so it's centered between the top/bottom player tags
@@ -117,11 +126,19 @@ class PygameXiangqiController:
         self.board_source_surface = self.board_source_surface.convert_alpha()
 
         # Ưu tiên font Unicode có sẵn trong project để tránh ký tự quân cờ bị render thành '?'.
-        self.tag_font = self._create_font(["segoe ui", "tahoma", "arial"], 24, bold=True)
+        self.tag_font = self._create_font(
+            ["segoe ui", "tahoma", "arial"], 24, bold=True
+        )
         self.piece_font = self._create_piece_font(20)
-        self.overlay_font = self._create_font(["segoe ui", "tahoma", "arial"], 34, bold=True)
-        self.overlay_small_font = self._create_font(["segoe ui", "tahoma", "arial"], 18, bold=False)
-        self.coord_font = self._create_font(["segoe ui", "tahoma", "arial"], 16, bold=True)
+        self.overlay_font = self._create_font(
+            ["segoe ui", "tahoma", "arial"], 34, bold=True
+        )
+        self.overlay_small_font = self._create_font(
+            ["segoe ui", "tahoma", "arial"], 18, bold=False
+        )
+        self.coord_font = self._create_font(
+            ["segoe ui", "tahoma", "arial"], 16, bold=True
+        )
 
         self.background_surface = self._create_background_surface()
         self.board_panel_surface = self._create_board_panel_surface()
@@ -208,7 +225,9 @@ class PygameXiangqiController:
             self.game.logger.error("Worker bot error: %s", result["error"])
             loser = result.get("bot_name", "Unknown")
             self.game.resign(loser)
-            self._show_game_over_overlay("GAME OVER", f"{loser} gặp lỗi khi tính nước đi")
+            self._show_game_over_overlay(
+                "GAME OVER", f"{loser} gặp lỗi khi tính nước đi"
+            )
             return
 
         move = result.get("move")
@@ -216,7 +235,9 @@ class PygameXiangqiController:
         if move is None:
             self.game.logger.warning("%s không có nước đi hợp lệ", bot_name)
             self.game.resign(bot_name)
-            self._show_game_over_overlay("GAME OVER", f"{bot_name} không còn nước đi hợp lệ")
+            self._show_game_over_overlay(
+                "GAME OVER", f"{bot_name} không còn nước đi hợp lệ"
+            )
             return
 
         self._execute_move(move, bot_name)
@@ -228,7 +249,11 @@ class PygameXiangqiController:
         if self.bot_worker_active:
             return
 
-        side_entity = self.red_entity if self.board.side_to_move == Color.RED else self.black_entity
+        side_entity = (
+            self.red_entity
+            if self.board.side_to_move == Color.RED
+            else self.black_entity
+        )
         if self._is_human_turn():
             return
 
@@ -245,21 +270,29 @@ class PygameXiangqiController:
             try:
                 move = bot.get_move(snapshot)
                 elapsed = time.time() - start
-                self.bot_queue.put({"move": move, "bot_name": bot.name, "time": elapsed})
+                self.bot_queue.put(
+                    {"move": move, "bot_name": bot.name, "time": elapsed}
+                )
             except Exception as exc:
                 self.bot_queue.put({"error": str(exc), "bot_name": bot.name})
 
         self.bot_worker_active = True
-        self.bot_worker = threading.Thread(target=worker, name="bot-worker", daemon=True)
+        self.bot_worker = threading.Thread(
+            target=worker, name="bot-worker", daemon=True
+        )
         self.bot_worker.start()
 
     def _execute_move(self, move: int, actor_name: str) -> None:
         legal_moves = get_legal_moves(self.board, MoveGenerator(self.board))
         if move not in legal_moves:
-            self.game.logger.error("Illegal move from %s: %s", actor_name, move_to_uci(move))
+            self.game.logger.error(
+                "Illegal move from %s: %s", actor_name, move_to_uci(move)
+            )
             self.game.game_result_status = GameResultStatus.ILLEGAL_MOVE
             self.game.resign(actor_name)
-            self._show_game_over_overlay("GAME OVER", f"Nước đi không hợp lệ từ {actor_name}")
+            self._show_game_over_overlay(
+                "GAME OVER", f"Nước đi không hợp lệ từ {actor_name}"
+            )
             return
 
         move_uci = move_to_uci(move)
@@ -267,9 +300,13 @@ class PygameXiangqiController:
         self.move_count += 1
 
         self.game.moves.append((actor_name, move, move_uci))
-        self.game.logger.log_move(self.game.game_id, len(self.game.moves), actor_name, move_uci)
+        self.game.logger.log_move(
+            self.game.game_id, len(self.game.moves), actor_name, move_uci
+        )
 
-        status = check_game_status(self.board, get_legal_moves(self.board, MoveGenerator(self.board)))
+        status = check_game_status(
+            self.board, get_legal_moves(self.board, MoveGenerator(self.board))
+        )
         if status != GameStatus.Playing:
             self._close_with_status(status)
             return
@@ -277,7 +314,9 @@ class PygameXiangqiController:
         if self.move_count >= self.max_moves:
             self.game._set_winner(Winner.DRAW)
             self.game.game_result_status = GameResultStatus.DRAW
-            self._show_game_over_overlay("HÒA CỜ", "Ván cờ kết thúc sau khi đạt giới hạn nước đi")
+            self._show_game_over_overlay(
+                "HÒA CỜ", "Ván cờ kết thúc sau khi đạt giới hạn nước đi"
+            )
 
     def _close_with_status(self, status: GameStatus) -> None:
         if status == GameStatus.Draw:
@@ -298,7 +337,9 @@ class PygameXiangqiController:
             winner=self.game.winner.value if self.game.winner else "None",
             reason=self.game.game_result_status.value,
         )
-        self._show_game_over_overlay(title, f"Kết quả: {self.game.game_result_status.value}")
+        self._show_game_over_overlay(
+            title, f"Kết quả: {self.game.game_result_status.value}"
+        )
 
     def _show_game_over_overlay(self, title: str, detail: str) -> None:
         self.game_over = True
@@ -310,12 +351,18 @@ class PygameXiangqiController:
         return self.game.game_result_status != GameResultStatus.PLAYING
 
     def _is_human_turn(self) -> bool:
-        return self.human_color is not None and self.board.side_to_move == self.human_color
+        return (
+            self.human_color is not None and self.board.side_to_move == self.human_color
+        )
 
     def _current_side_name(self) -> str:
-        return self.red_entity.name if self.board.side_to_move == Color.RED else self.black_entity.name
+        return (
+            self.red_entity.name
+            if self.board.side_to_move == Color.RED
+            else self.black_entity.name
+        )
 
-    def _find_selected_move(self, clicked_sq: int) -> Optional[int]:
+    def _find_selected_move(self, clicked_sq: int) -> int | None:
         for move in self.selected_moves:
             if get_to_sq(move) == clicked_sq:
                 return move
@@ -358,7 +405,9 @@ class PygameXiangqiController:
         # Coordinates removed per user request (no-op)
         return
 
-    def _blit_label(self, text: str, pos: tuple[int, int], font, color, center: bool = False) -> None:
+    def _blit_label(
+        self, text: str, pos: tuple[int, int], font, color, center: bool = False
+    ) -> None:
         surf = font.render(text, True, color)
         rect = surf.get_rect()
         if center:
@@ -379,15 +428,23 @@ class PygameXiangqiController:
         # Họa tiết gỗ nhẹ bằng các vệt ngang.
         for y in range(0, self.window_h, 18):
             alpha = 10 if (y // 18) % 2 == 0 else 6
-            pygame.draw.line(surface, (255, 255, 255, alpha), (0, y), (self.window_w, y), 1)
+            pygame.draw.line(
+                surface, (255, 255, 255, alpha), (0, y), (self.window_w, y), 1
+            )
         return surface
 
     def _create_board_panel_surface(self):
         surface = pygame.Surface((self.window_w, self.window_h), pygame.SRCALPHA)
         panel_rect = pygame.Rect(12, 12, self.window_w - 24, self.window_h - 24)
-        pygame.draw.rect(surface, (70, 46, 24, 255), panel_rect.inflate(8, 8), border_radius=24)
-        pygame.draw.rect(surface, (*self.PANEL_COLOR, 255), panel_rect, border_radius=20)
-        pygame.draw.rect(surface, (111, 73, 36, 255), panel_rect, width=4, border_radius=20)
+        pygame.draw.rect(
+            surface, (70, 46, 24, 255), panel_rect.inflate(8, 8), border_radius=24
+        )
+        pygame.draw.rect(
+            surface, (*self.PANEL_COLOR, 255), panel_rect, border_radius=20
+        )
+        pygame.draw.rect(
+            surface, (111, 73, 36, 255), panel_rect, width=4, border_radius=20
+        )
         # Nét lót bên trong để tạo chiều sâu.
         inner = panel_rect.inflate(-14, -14)
         pygame.draw.rect(surface, (255, 247, 228, 40), inner, width=1, border_radius=16)
@@ -408,7 +465,9 @@ class PygameXiangqiController:
 
         tag_surface = pygame.Surface((width, height), pygame.SRCALPHA)
         alpha = 255 if active else 102
-        pygame.draw.rect(tag_surface, (*self.TAG_BG, alpha), (0, 0, width, height), border_radius=10)
+        pygame.draw.rect(
+            tag_surface, (*self.TAG_BG, alpha), (0, 0, width, height), border_radius=10
+        )
         label = self.tag_font.render(text, True, self.TAG_TEXT)
         label_rect = label.get_rect(center=(width // 2, height // 2))
         tag_surface.blit(label, label_rect)
@@ -424,8 +483,12 @@ class PygameXiangqiController:
 
             radius = int(self.cell * 0.30)
             shadow_surface = pygame.Surface((radius * 3, radius * 3), pygame.SRCALPHA)
-            pygame.draw.circle(shadow_surface, self.PIECE_SHADOW, (radius + 3, radius + 5), radius)
-            self.screen.blit(shadow_surface, (center[0] - radius - 3, center[1] - radius - 5))
+            pygame.draw.circle(
+                shadow_surface, self.PIECE_SHADOW, (radius + 3, radius + 5), radius
+            )
+            self.screen.blit(
+                shadow_surface, (center[0] - radius - 3, center[1] - radius - 5)
+            )
 
             pygame.draw.circle(self.screen, self.PIECE_FILL, center, radius)
             pygame.draw.circle(self.screen, self.PIECE_EDGE, center, radius, 2)
@@ -442,7 +505,9 @@ class PygameXiangqiController:
 
         sel_row, sel_col = divmod(self.selected_sq, 9)
         center = self._square_center(sel_row, sel_col)
-        pygame.draw.circle(self.screen, (255, 255, 255), center, int(self.cell * 0.42), 3)
+        pygame.draw.circle(
+            self.screen, (255, 255, 255), center, int(self.cell * 0.42), 3
+        )
 
         for move in self.selected_moves:
             to_sq = get_to_sq(move)
@@ -458,9 +523,14 @@ class PygameXiangqiController:
                     (self.cell // 2, self.cell // 2),
                     int(self.cell * 0.13),
                 )
-                self.screen.blit(hint_surface, (to_center[0] - self.cell // 2, to_center[1] - self.cell // 2))
+                self.screen.blit(
+                    hint_surface,
+                    (to_center[0] - self.cell // 2, to_center[1] - self.cell // 2),
+                )
             else:
-                pygame.draw.circle(self.screen, (215, 50, 50), to_center, int(self.cell * 0.42), 3)
+                pygame.draw.circle(
+                    self.screen, (215, 50, 50), to_center, int(self.cell * 0.42), 3
+                )
 
     def _draw_game_over_overlay(self) -> None:
         overlay = pygame.Surface((self.window_w, self.window_h), pygame.SRCALPHA)
@@ -473,18 +543,30 @@ class PygameXiangqiController:
         box_y = (self.window_h - box_h) // 2
 
         box_surface = pygame.Surface((box_w, box_h), pygame.SRCALPHA)
-        pygame.draw.rect(box_surface, (244, 236, 220, 235), (0, 0, box_w, box_h), border_radius=18)
-        pygame.draw.rect(box_surface, (75, 45, 15, 255), (0, 0, box_w, box_h), width=3, border_radius=18)
+        pygame.draw.rect(
+            box_surface, (244, 236, 220, 235), (0, 0, box_w, box_h), border_radius=18
+        )
+        pygame.draw.rect(
+            box_surface,
+            (75, 45, 15, 255),
+            (0, 0, box_w, box_h),
+            width=3,
+            border_radius=18,
+        )
 
         title_label = self.overlay_font.render(self.game_over_text, True, (65, 35, 20))
         title_rect = title_label.get_rect(center=(box_w // 2, 54))
         box_surface.blit(title_label, title_rect)
 
-        detail_label = self.overlay_small_font.render(self.game_over_detail, True, (90, 60, 30))
+        detail_label = self.overlay_small_font.render(
+            self.game_over_detail, True, (90, 60, 30)
+        )
         detail_rect = detail_label.get_rect(center=(box_w // 2, 98))
         box_surface.blit(detail_label, detail_rect)
 
-        hint_label = self.overlay_small_font.render("Đóng cửa sổ bằng nút X để thoát", True, (90, 60, 30))
+        hint_label = self.overlay_small_font.render(
+            "Đóng cửa sổ bằng nút X để thoát", True, (90, 60, 30)
+        )
         hint_rect = hint_label.get_rect(center=(box_w // 2, 124))
         box_surface.blit(hint_label, hint_rect)
 
@@ -506,7 +588,9 @@ class PygameXiangqiController:
         piece_radius = int(self.cell * 0.30)
         trail_radius = max(4, piece_radius - 4)
         trail_surf_size = trail_radius * 2 + 4
-        trail_surface = pygame.Surface((trail_surf_size, trail_surf_size), pygame.SRCALPHA)
+        trail_surface = pygame.Surface(
+            (trail_surf_size, trail_surf_size), pygame.SRCALPHA
+        )
         pygame.draw.circle(
             trail_surface,
             self.LAST_MOVE_TRAIL,
@@ -515,20 +599,30 @@ class PygameXiangqiController:
         )
         self.screen.blit(
             trail_surface,
-            (from_center[0] - trail_surf_size // 2, from_center[1] - trail_surf_size // 2),
+            (
+                from_center[0] - trail_surf_size // 2,
+                from_center[1] - trail_surf_size // 2,
+            ),
         )
 
         # Draw border around the moved piece destination (green)
         row_to, col_to = divmod(to_sq, 9)
         to_center = self._square_center(row_to, col_to)
         border_radius = int(self.cell * 0.42) + 3
-        pygame.draw.circle(self.screen, self.LAST_MOVE_BORDER, to_center, border_radius, 4)
+        pygame.draw.circle(
+            self.screen, self.LAST_MOVE_BORDER, to_center, border_radius, 4
+        )
 
     def _square_center(self, row: int, col: int) -> tuple[int, int]:
-        return (self.left + self.display_grid_xs[col], self.top + self.display_grid_ys[row])
+        return (
+            self.left + self.display_grid_xs[col],
+            self.top + self.display_grid_ys[row],
+        )
 
     def _load_board_texture_surface(self):
-        return pygame.transform.smoothscale(self.board_source_surface, (self.board_w, self.board_h))
+        return pygame.transform.smoothscale(
+            self.board_source_surface, (self.board_w, self.board_h)
+        )
 
     def _detect_grid_lines(self, surface) -> tuple[list[int], list[int]]:
         width, height = surface.get_size()
@@ -591,7 +685,7 @@ class PygameXiangqiController:
 
         return self._create_font(["segoe ui", "tahoma", "arial"], size, bold=True)
 
-    def _pixel_to_square(self, pos: tuple[int, int]) -> Optional[int]:
+    def _pixel_to_square(self, pos: tuple[int, int]) -> int | None:
         x, y = pos
 
         local_x = x - self.left
@@ -601,8 +695,14 @@ class PygameXiangqiController:
             return None
 
         # Use the scaled/display grid positions when mapping pixels to board squares.
-        col = min(range(self.GRID_COLS), key=lambda index: abs(local_x - self.display_grid_xs[index]))
-        row = min(range(self.GRID_ROWS), key=lambda index: abs(local_y - self.display_grid_ys[index]))
+        col = min(
+            range(self.GRID_COLS),
+            key=lambda index: abs(local_x - self.display_grid_xs[index]),
+        )
+        row = min(
+            range(self.GRID_ROWS),
+            key=lambda index: abs(local_y - self.display_grid_ys[index]),
+        )
 
         center_x, center_y = self._square_center(row, col)
 
@@ -610,7 +710,10 @@ class PygameXiangqiController:
         disp_step_x = self._average_step(self.display_grid_xs)
         disp_step_y = self._average_step(self.display_grid_ys)
 
-        if abs(x - center_x) > disp_step_x * 0.38 or abs(y - center_y) > disp_step_y * 0.38:
+        if (
+            abs(x - center_x) > disp_step_x * 0.38
+            or abs(y - center_y) > disp_step_y * 0.38
+        ):
             return None
 
         return row * 9 + col
@@ -620,13 +723,15 @@ class HumanPlayer:
     def __init__(self, name: str = "Human") -> None:
         self.name = name
 
-    def get_move(self, board: Board) -> Optional[int]:
+    def get_move(self, board: Board) -> int | None:
         """CLI-friendly prompt to get a move in UCI format (e.g. a0a1).
 
         Returns an integer-encoded move or None if the player resigns/aborts.
         """
         try:
-            raw = input(f"Nhap nuoc cho {self.name} (UCI, e.g. a0a1). Enter= resign: ").strip()
+            raw = input(
+                f"Nhap nuoc cho {self.name} (UCI, e.g. a0a1). Enter= resign: "
+            ).strip()
         except KeyboardInterrupt:
             return None
 

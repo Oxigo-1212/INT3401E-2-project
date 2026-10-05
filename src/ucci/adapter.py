@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from math import isfinite
 from time import perf_counter
-from typing import Callable, Optional
 
 from bots.engine.algorithm import negmax
 from bots.engine.iterative_deepening import (
@@ -17,14 +17,14 @@ from core.pieces import Color
 
 @dataclass(slots=True)
 class GoParams:
-    wtime: Optional[int] = None
-    btime: Optional[int] = None
-    winc: Optional[int] = None
-    binc: Optional[int] = None
-    movestogo: Optional[int] = None
-    depth: Optional[int] = None
-    nodes: Optional[int] = None
-    movetime: Optional[int] = None
+    wtime: int | None = None
+    btime: int | None = None
+    winc: int | None = None
+    binc: int | None = None
+    movestogo: int | None = None
+    depth: int | None = None
+    nodes: int | None = None
+    movetime: int | None = None
     infinite: bool = False
     ponder: bool = False
 
@@ -38,14 +38,14 @@ class SearchResult:
     nodes: int
     time_ms: int
     pv: list[int] = field(default_factory=list)
-    mate: Optional[int] = None
+    mate: int | None = None
 
 
 InfoCallback = Callable[[SearchResult], None]
 StopFlag = Callable[[], bool]
 
 
-def _time_from_clock(board: Board, params: GoParams) -> Optional[int]:
+def _time_from_clock(board: Board, params: GoParams) -> int | None:
     """Return a *soft* time budget for this move (ms)."""
     remaining = params.wtime if board.side_to_move == Color.RED else params.btime
     if remaining is None:
@@ -168,7 +168,11 @@ class SearchFacade:
         if not isinstance(pv, list):
             pv = list(pv)
         score_obj = snapshot.get("score", 0)
-        score = int(round(score_obj)) if isinstance(score_obj, (int, float)) and isfinite(score_obj) else 0
+        score = (
+            int(round(score_obj))
+            if isinstance(score_obj, (int, float)) and isfinite(score_obj)
+            else 0
+        )
         mate_obj = snapshot.get("mate")
         mate = int(mate_obj) if isinstance(mate_obj, int) else None
         nodes_obj = snapshot.get("search_nodes", snapshot.get("nodes", 0))

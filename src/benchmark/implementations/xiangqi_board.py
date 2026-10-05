@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import List
-
 from core.board import Board
 from core.move_generator import MoveGenerator
 from core.pieces import Color as XiangqiColor
@@ -33,7 +31,7 @@ class XiangqiBoardAdapter:
         return adapter
 
     @property
-    def state(self) -> List[str]:
+    def state(self) -> list[str]:
         """Expose board state as list of strings."""
         return self._board.state
 
@@ -50,6 +48,6 @@ class XiangqiBoardAdapter:
         """Undo last move through wrapped board."""
         self._board.undo_move()
 
-    def generate_legal_moves(self) -> List[int]:
+    def generate_legal_moves(self) -> list[int]:
         """Generate legal Xiangqi moves."""
         return get_legal_moves(self._board, MoveGenerator(self._board))

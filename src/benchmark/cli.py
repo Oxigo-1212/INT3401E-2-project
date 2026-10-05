@@ -1,10 +1,10 @@
 """Benchmark runner for xiangqi perft."""
 
 from __future__ import annotations
-from typing import Any
 
 import importlib
 import time
+from typing import Any
 
 from core.move import serialize_move as move_to_uci
 
@@ -27,7 +27,9 @@ def run_benchmark(verbose: bool = False) -> None:
         elapsed = time.perf_counter() - start
         ok = nodes == expected
         status = "OK" if ok else "FAIL"
-        print(f"{status} depth={depth} nodes={nodes} expected={expected} time={elapsed:.3f}s")
+        print(
+            f"{status} depth={depth} nodes={nodes} expected={expected} time={elapsed:.3f}s"
+        )
         total += 1
         if not ok:
             failed += 1

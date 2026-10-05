@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 from arena.game import Game
 from bots.bot import BotManager
@@ -17,21 +16,21 @@ from gui.pygame_viewer import HumanPlayer, PygameXiangqiController
 class MatchConfig:
     display_mode: str  # "gui" | "cli"
     mode: str  # "human_vs_bot" | "bot_vs_bot"
-    human_color: Optional[Color]
-    red_bot_type: Optional[str]
-    black_bot_type: Optional[str]
-    red_depth: Optional[int]
-    black_depth: Optional[int]
+    human_color: Color | None
+    red_bot_type: str | None
+    black_bot_type: str | None
+    red_depth: int | None
+    black_depth: int | None
 
 
-def safe_input(prompt: str) -> Optional[str]:
+def safe_input(prompt: str) -> str | None:
     try:
         return input(prompt).strip()
     except KeyboardInterrupt:
         return None
 
 
-def ask_depth(bot_type: str, default_depth: int = 3) -> Optional[int]:
+def ask_depth(bot_type: str, default_depth: int = 3) -> int | None:
     if bot_type != "negamax":
         return None
 
@@ -46,7 +45,7 @@ def ask_depth(bot_type: str, default_depth: int = 3) -> Optional[int]:
     return default_depth
 
 
-def choose_display_mode() -> Optional[str]:
+def choose_display_mode() -> str | None:
     print("\nChon kieu hien thi:")
     print("1. GUI")
     print("2. CLI")
@@ -61,7 +60,7 @@ def choose_display_mode() -> Optional[str]:
     return "gui"
 
 
-def choose_bot(label: str) -> tuple[str, Optional[int]]:
+def choose_bot(label: str) -> tuple[str, int | None]:
     bot_options = ["negamax", "random", "greedy"]
     print(f"\nChon bot cho {label}:")
     for idx, name in enumerate(bot_options, start=1):
@@ -82,7 +81,7 @@ def choose_bot(label: str) -> tuple[str, Optional[int]]:
     return bot_type, depth
 
 
-def configure_match() -> Optional[MatchConfig]:
+def configure_match() -> MatchConfig | None:
     print("=== CO TUONG ENGINE + PYGAME GUI ===")
     display_mode = choose_display_mode()
     if display_mode is None:
@@ -103,20 +102,38 @@ def configure_match() -> Optional[MatchConfig]:
         human_color = Color.RED if side_choice != "2" else Color.BLACK
 
         if human_color == Color.RED:
-            return MatchConfig(display_mode, "human_vs_bot", human_color, None, bot_type, None, bot_depth)
+            return MatchConfig(
+                display_mode,
+                "human_vs_bot",
+                human_color,
+                None,
+                bot_type,
+                None,
+                bot_depth,
+            )
 
-        return MatchConfig(display_mode, "human_vs_bot", human_color, bot_type, None, bot_depth, None)
+        return MatchConfig(
+            display_mode, "human_vs_bot", human_color, bot_type, None, bot_depth, None
+        )
 
     if mode_choice == "2":
         red_bot_type, red_depth = choose_bot("Do")
         black_bot_type, black_depth = choose_bot("Den")
-        return MatchConfig(display_mode, "bot_vs_bot", None, red_bot_type, black_bot_type, red_depth, black_depth)
+        return MatchConfig(
+            display_mode,
+            "bot_vs_bot",
+            None,
+            red_bot_type,
+            black_bot_type,
+            red_depth,
+            black_depth,
+        )
 
     print("Lua chon khong hop le.")
     return None
 
 
-def create_bot(bot_type: str, depth: Optional[int]):
+def create_bot(bot_type: str, depth: int | None):
     kwargs = {}
     if depth is not None:
         kwargs["depth"] = depth
@@ -127,7 +144,9 @@ def create_bot(bot_type: str, depth: Optional[int]):
 
 def build_entities(config: MatchConfig):
     if config.mode == "human_vs_bot":
-        human = HumanPlayer("Human_RED" if config.human_color == Color.RED else "Human_BLACK")
+        human = HumanPlayer(
+            "Human_RED" if config.human_color == Color.RED else "Human_BLACK"
+        )
 
         if config.human_color == Color.RED:
             bot = create_bot(config.black_bot_type or "negamax", config.black_depth)
@@ -143,7 +162,14 @@ def build_entities(config: MatchConfig):
     return red_entity, black_entity
 
 
-def run_gui_game(config: MatchConfig, game: Game, board: Board, renderer: BoardRenderer, red_entity, black_entity) -> None:
+def run_gui_game(
+    config: MatchConfig,
+    game: Game,
+    board: Board,
+    renderer: BoardRenderer,
+    red_entity,
+    black_entity,
+) -> None:
     controller = PygameXiangqiController(
         board=board,
         game=game,

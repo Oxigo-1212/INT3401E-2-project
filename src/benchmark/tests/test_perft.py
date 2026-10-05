@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 import sys
-from typing import List
 
 import pytest
 
@@ -17,12 +16,12 @@ from benchmark.protocol import Color
 class MockBoard:
     """Mock board that implements _PerftBoard for deterministic branching."""
 
-    def __init__(self, branch_factors: List[int]) -> None:
+    def __init__(self, branch_factors: list[int]) -> None:
         self.branch_factors = branch_factors
         self.state = ["mock"]
         self.side_to_move: Color = "white"
-        self.made_moves: List[int] = []
-        self.undone_moves: List[int] = []
+        self.made_moves: list[int] = []
+        self.undone_moves: list[int] = []
 
         self.max_depth_reached = 0
         self.undo_calls = 0
@@ -36,8 +35,7 @@ class MockBoard:
         if self.made_moves:
             self.undone_moves.append(self.made_moves.pop())
 
-
-    def generate_legal_moves(self) -> List[int]:
+    def generate_legal_moves(self) -> list[int]:
         depth_index = len(self.made_moves)
         if depth_index < len(self.branch_factors):
             return list(range(self.branch_factors[depth_index]))
@@ -69,4 +67,3 @@ def test_perft_invalid_depth() -> None:
     board = MockBoard([3])
     with pytest.raises(ValueError, match="Depth must be >= 0"):
         perft(board, -1)
-

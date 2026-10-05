@@ -2,35 +2,27 @@
 
 from __future__ import annotations
 
-from arena.game import Game, GameResultStatus, Winner
-import sys
-from bots.engine.transposition_table import TT_TABLE, init_tt
-from core.board import Board
-from typing import Optional
 import argparse
+import sys
+
+from colorama import init
+
+from arena.game import Game, GameResultStatus, Winner
 from benchmark.cli import run_benchmark
 from benchmark.xiangqi_perft_positions import POSITIONS
-
+from bots.engine.transposition_table import TT_TABLE, clear_tt, init_tt
 from core.board import Board
-from bots.engine.transposition_table import init_tt, TT_TABLE, clear_tt
-from ucci.adapter import GoParams, SearchFacade
 from core.board_renderer import BoardRenderer
 from core.logger import get_logger, init_logging
 from core.move import move_to_uci
+from core.move import serialize_move as move_to_uci
 from core.move_generator import MoveGenerator
 from core.pieces import Color
-from core.rules import GameStatus, check_game_status, get_legal_moves
+from core.rules import Color, GameStatus, check_game_status, get_legal_moves
 from match_ui import MatchConfig, build_entities, configure_match, run_gui_game
-from core.move import deserialize_move as uci_to_move, serialize_move as move_to_uci
-from core.rules import check_game_status, get_legal_moves, is_in_check, GameStatus, Color
-from core.utils import move_to_str
-from bots.bot import BotManager
-from colorama import init
-import time 
-from core.logger import init_logging, get_logger
+from ucci.adapter import GoParams, SearchFacade
 
 # Import thêm Game và các Enum liên quan từ arena.game
-from arena.game import Game, Winner, GameResultStatus
 
 init()
 
@@ -91,21 +83,29 @@ def run_match_cli(config: MatchConfig) -> None:
                 )
                 break
 
-            current_player = red_entity if board.side_to_move == Color.RED else black_entity
+            current_player = (
+                red_entity if board.side_to_move == Color.RED else black_entity
+            )
             move = current_player.get_move(board)
             if move is None:
                 game.resign(current_player.name)
                 break
 
             if move not in legal_moves:
-                game.logger.log_error(game.game_id, current_player.name, f"Illegal move: {move_to_uci(move)}")
+                game.logger.log_error(
+                    game.game_id,
+                    current_player.name,
+                    f"Illegal move: {move_to_uci(move)}",
+                )
                 game.resign(current_player.name)
                 break
 
             board.make_move(move)
             move_uci = move_to_uci(move)
             game.moves.append((current_player.name, move, move_uci))
-            game.logger.log_move(game.game_id, len(game.moves), current_player.name, move_uci)
+            game.logger.log_move(
+                game.game_id, len(game.moves), current_player.name, move_uci
+            )
 
     except KeyboardInterrupt:
         game.game_result_status = GameResultStatus.ERROR
@@ -121,7 +121,9 @@ def run_search_benchmark() -> None:
         board.set_fen(fen)
         clear_tt(TT_TABLE)
         result = facade.search(board, GoParams(depth=depth))
-        print(f"bench depth: {depth} nodes: {result.nodes} expected: {expected} time: {result.time_ms / 1000:.3f} sec")
+        print(
+            f"bench depth: {depth} nodes: {result.nodes} expected: {expected} time: {result.time_ms / 1000:.3f} sec"
+        )
 
 
 def main() -> None:
@@ -153,7 +155,14 @@ def main() -> None:
         debug_mode = False
         for arg in remaining:
             arg_lower = arg.lower()
-            if arg_lower in ("--debug", "-d", "debug", "debug=true", "debug=on", "debug=1"):
+            if arg_lower in (
+                "--debug",
+                "-d",
+                "debug",
+                "debug=true",
+                "debug=on",
+                "debug=1",
+            ):
                 debug_mode = True
                 break
 

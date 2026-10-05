@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
 
 from .adapter import GoParams
 
@@ -26,12 +25,12 @@ class UCCICommand(str, Enum):
 @dataclass(slots=True)
 class SetOptionParams:
     name: str
-    value: Optional[str] = None
+    value: str | None = None
 
 
 @dataclass(slots=True)
 class PositionParams:
-    fen: Optional[str] = None
+    fen: str | None = None
     moves: list[str] = field(default_factory=list)
 
 
@@ -48,18 +47,18 @@ class PerftParams:
 @dataclass(slots=True)
 class ParsedCommand:
     command: UCCICommand
-    go: Optional[GoParams] = None
-    setoption: Optional[SetOptionParams] = None
-    position: Optional[PositionParams] = None
-    debug_value: Optional[bool] = None
-    bench: Optional[BenchParams] = None
-    perft: Optional[PerftParams] = None
+    go: GoParams | None = None
+    setoption: SetOptionParams | None = None
+    position: PositionParams | None = None
+    debug_value: bool | None = None
+    bench: BenchParams | None = None
+    perft: PerftParams | None = None
 
 
 _GO_KEYS = {"wtime", "btime", "winc", "binc", "movestogo", "depth", "nodes", "movetime"}
 
 
-def parse_line(line: str) -> Optional[ParsedCommand]:
+def parse_line(line: str) -> ParsedCommand | None:
     text = line.strip()
     if not text:
         return None
@@ -88,9 +87,13 @@ def parse_line(line: str) -> Optional[ParsedCommand]:
                 debug_val = False
             return ParsedCommand(UCCICommand.DEBUG, debug_value=debug_val)
         if command == UCCICommand.SETOPTION.value:
-            return ParsedCommand(UCCICommand.SETOPTION, setoption=_parse_setoption(tokens[1:]))
+            return ParsedCommand(
+                UCCICommand.SETOPTION, setoption=_parse_setoption(tokens[1:])
+            )
         if command == UCCICommand.POSITION.value:
-            return ParsedCommand(UCCICommand.POSITION, position=_parse_position(tokens[1:]))
+            return ParsedCommand(
+                UCCICommand.POSITION, position=_parse_position(tokens[1:])
+            )
         if command == UCCICommand.GO.value:
             return ParsedCommand(UCCICommand.GO, go=_parse_go(tokens[1:]))
         if command == UCCICommand.BENCH.value:
@@ -133,7 +136,7 @@ def _parse_position(tokens: list[str]) -> PositionParams:
         return PositionParams()
 
     index = 0
-    fen: Optional[str] = None
+    fen: str | None = None
     moves: list[str] = []
 
     if tokens[index].lower() == "startpos":
@@ -174,7 +177,11 @@ def _parse_go(tokens: list[str]) -> GoParams:
             continue
         if token == "searchmoves":
             i += 1
-            while i < len(tokens) and tokens[i].lower() not in _GO_KEYS and tokens[i].lower() not in {"infinite", "ponder", "searchmoves"}:
+            while (
+                i < len(tokens)
+                and tokens[i].lower() not in _GO_KEYS
+                and tokens[i].lower() not in {"infinite", "ponder", "searchmoves"}
+            ):
                 i += 1
             continue
         i += 1
