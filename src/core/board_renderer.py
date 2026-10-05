@@ -13,15 +13,17 @@ class BoardRenderer:
         self.board = board
 
     def print_board(self):
-        print(f"\nLượt đi: {self.RED + 'ĐỎ' if self.board.side_to_move == Color.RED else self.BLUE + 'ĐEN'}{self.RESET}")
-        header = "   " + "  ".join(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'])
+        print(
+            f"\nLượt đi: {self.RED + 'ĐỎ' if self.board.side_to_move == Color.RED else self.BLUE + 'ĐEN'}{self.RESET}"
+        )
+        header = "   " + "  ".join(["a", "b", "c", "d", "e", "f", "g", "h", "i"])
         print(self.GRAY + header + self.RESET)
         for row in range(10):
             row_str = [self.GRAY + str(row) + self.RESET]
             for col in range(9):
                 piece = self.board.state[row * 9 + col]
                 char = CHINESE_PIECES[piece]
-                if piece == '.':
+                if piece == ".":
                     row_str.append(self.GRAY + char + self.RESET)
                 elif piece.isupper():
                     row_str.append(self.RED + char + self.RESET)
