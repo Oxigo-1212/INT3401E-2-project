@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from bots.engine.iterative_deepening import SearchStopped
 from bots.engine.linear_evaluator import heuristic
@@ -12,17 +12,17 @@ _MAX_QUIESCENCE_DEPTH = 4  # Giới hạn độ sâu quiescence để tránh đ�
 
 
 def is_capture(board: Board, move: int) -> bool:
-    return board.state[get_to_sq(move)] != '.'
+    return board.state[get_to_sq(move)] != "."
 
 
 def quiescence_search(
     board: Board,
     alpha: float,
     beta: float,
-    move_sorter: Optional[MoveSorter] = None,
+    move_sorter: MoveSorter | None = None,
     qdepth: int = 0,
     *,
-    stats: Optional[dict[str, int]] = None,
+    stats: dict[str, int] | None = None,
     stop_flag: Callable[[], bool] | None = None,
     ply: int = 0,
 ) -> float:
@@ -36,8 +36,7 @@ def quiescence_search(
 
     if stand_pat >= beta:
         return beta
-    if alpha < stand_pat:
-        alpha = stand_pat
+    alpha = max(alpha, stand_pat)
 
     # Dừng khi đạt độ sâu tối đa — tránh đệ quy vô hạn
     if qdepth >= _MAX_QUIESCENCE_DEPTH:
@@ -76,7 +75,6 @@ def quiescence_search(
 
         if score >= beta:
             return beta
-        if score > alpha:
-            alpha = score
+        alpha = max(alpha, score)
 
     return alpha

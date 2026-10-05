@@ -1,41 +1,42 @@
 import math
-from typing import Callable, Optional
-from core.board import Board
-from core.move_generator import MoveGenerator
-from core.rules import check_game_status, get_legal_moves, is_in_check, GameStatus
-from core.pieces import Color
-from bots.engine.linear_evaluator import heuristic
-from bots.engine.move_ordering import MoveSorter
-from core.utils import move_to_str
-from bots.engine.transposition_table import TT_TABLE, store, probe, TT_FLAG
-from bots.engine.quiescence_search import quiescence_search
-from core.move import get_to_sq
-from core.zobrist import ZOBRIST_SIDE
-from core.logger import get_logger
-from bots.engine.iterative_deepening import SearchStopped
+from collections.abc import Callable
 
-type AlgorithmFunction = Callable[[Board, int, float, float, Optional[MoveSorter]], float]
+from bots.engine.iterative_deepening import SearchStopped
+from bots.engine.move_ordering import MoveSorter
+from bots.engine.quiescence_search import quiescence_search
+from bots.engine.transposition_table import TT_FLAG, TT_TABLE, probe, store
+from core.board import Board
+from core.logger import get_logger
+from core.move_generator import MoveGenerator
+from core.pieces import Color
+from core.rules import GameStatus, check_game_status, get_legal_moves, is_in_check
+from core.utils import move_to_str
+from core.zobrist import ZOBRIST_SIDE
+
+type AlgorithmFunction = Callable[[Board, int, float, float, MoveSorter | None], float]
 
 _log = get_logger("algorithm")
 
-_NULL_MOVE_R         = 2    
-_NULL_MOVE_MIN_DEPTH = 3    
+_NULL_MOVE_R = 2
+_NULL_MOVE_MIN_DEPTH = 3
 
 
 def _is_null_move_ok(board: Board) -> bool:
     if is_in_check(board, board.side_to_move):
         return False
-    attackers = sum(1 for p in board.state if p in ('R', 'N', 'C', 'r', 'n', 'c'))
+    attackers = sum(1 for p in board.state if p in ("R", "N", "C", "r", "n", "c"))
     return attackers >= 2
 
 
 def _do_null_move(board: Board) -> None:
-    board.history.append({
-        'move': 0,
-        'captured': '.',
-        'half_move_clock': board.half_move_clock,
-        'zobrist_key': board.zobrist_key,
-    })
+    board.history.append(
+        {
+            "move": 0,
+            "captured": ".",
+            "half_move_clock": board.half_move_clock,
+            "zobrist_key": board.zobrist_key,
+        }
+    )
     board.zobrist_history.append(board.zobrist_key)
     board.side_to_move = Color.BLACK if board.side_to_move == Color.RED else Color.RED
     board.zobrist_key ^= ZOBRIST_SIDE
@@ -47,21 +48,22 @@ def _undo_null_move(board: Board) -> None:
         return
     old = board.history.pop()
     board.side_to_move = Color.BLACK if board.side_to_move == Color.RED else Color.RED
-    board.half_move_clock = old['half_move_clock']
-    board.zobrist_key = old['zobrist_key']
+    board.half_move_clock = old["half_move_clock"]
+    board.zobrist_key = old["zobrist_key"]
     if board.zobrist_history:
         board.zobrist_history.pop()
+
 
 def negmax(
     board: Board,
     depth: int,
     alpha: float,
     beta: float,
-    move_sorter: Optional[MoveSorter] = None,
+    move_sorter: MoveSorter | None = None,
     is_null_move: bool = False,
     *,
-    stats: Optional[dict[str, int]] = None,
-    stop_flag: Optional[Callable[[], bool]] = None,
+    stats: dict[str, int] | None = None,
+    stop_flag: Callable[[], bool] | None = None,
     ply: int = 0,
 ) -> float:
 
@@ -160,8 +162,7 @@ def negmax(
         if score > max_score:
             max_score = score
             best_move = move
-        if score > alpha:
-            alpha = score
+        alpha = max(alpha, score)
 
         if alpha >= beta:
             move_sorter.store_killer_move(depth, move, beta, score)
@@ -176,7 +177,10 @@ def negmax(
     store(board.zobrist_key, depth, max_score, flag, best_move, TT_TABLE)
     return max_score
 
-def get_best_move(board: Board, algorithm: AlgorithmFunction, depth: int = 3) -> int | None:
+
+def get_best_move(
+    board: Board, algorithm: AlgorithmFunction, depth: int = 3
+) -> int | None:
     generator = MoveGenerator(board)
     legal_moves = get_legal_moves(board, generator)
     if not legal_moves:

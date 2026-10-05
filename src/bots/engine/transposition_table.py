@@ -3,15 +3,18 @@ from pathlib import Path
 
 type TTEntry = TT_Entry | None
 
+
 class TT_FLAG(IntEnum):
-    EXACT = 0 
-    LOWERBOUND = 1 
-    UPPERBOUND = 2 
+    EXACT = 0
+    LOWERBOUND = 1
+    UPPERBOUND = 2
+
 
 TT_TABLE: list[TTEntry] = []
 
+
 class TT_Entry:
-    __slots__ = ['key', 'depth', 'score', 'flag', 'best_move']
+    __slots__ = ["best_move", "depth", "flag", "key", "score"]
 
     def __init__(self, key, depth, score, flag, best_move):
         self.key = key
@@ -20,17 +23,20 @@ class TT_Entry:
         self.flag = flag
         self.best_move = best_move
 
+
 def init_tt(size: int, TT_TABLE: list) -> None:
-    TT_TABLE[:] = [ None for _ in enumerate(range(size)) ]
+    TT_TABLE[:] = [None for _ in enumerate(range(size))]
+
 
 def clear_tt(TT_TABLE: list):
     for i in range(len(TT_TABLE)):
         TT_TABLE[i] = None
 
+
 def store(key, depth, score, flag, best_move, TT_TABLE):
     if not TT_TABLE:
         return
-        
+
     index = key % len(TT_TABLE)
     entry = TT_TABLE[index]
 
@@ -46,10 +52,12 @@ def store(key, depth, score, flag, best_move, TT_TABLE):
         entry.best_move = best_move
 
 
-def probe(key: int, depth: int, alpha: float, beta: float, TT_TABLE: list) -> tuple[TTEntry, bool]:
+def probe(
+    key: int, depth: int, alpha: float, beta: float, TT_TABLE: list
+) -> tuple[TTEntry, bool]:
     if not TT_TABLE:
         return None, False
-    
+
     index = key % len(TT_TABLE)
     entry = TT_TABLE[index]
 
@@ -57,13 +65,13 @@ def probe(key: int, depth: int, alpha: float, beta: float, TT_TABLE: list) -> tu
     if entry is not None and entry.key == key:
         # 2. Depth Check
         is_useful = (entry.depth >= depth) and (
-        (entry.flag == TT_FLAG.EXACT) or
-        (entry.flag == TT_FLAG.LOWERBOUND and entry.score >= beta) or
-        (entry.flag == TT_FLAG.UPPERBOUND and entry.score <= alpha)
-    )
+            (entry.flag == TT_FLAG.EXACT)
+            or (entry.flag == TT_FLAG.LOWERBOUND and entry.score >= beta)
+            or (entry.flag == TT_FLAG.UPPERBOUND and entry.score <= alpha)
+        )
         return entry, is_useful
 
-    return None, False # Cache Miss
+    return None, False  # Cache Miss
 
 
 def save(path: str = "data/tt") -> None:
@@ -71,13 +79,14 @@ def save(path: str = "data/tt") -> None:
 
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
-    with target.open('wb') as f:
+    with target.open("wb") as f:
         pickle.dump(TT_TABLE, f)
+
 
 def load(path: str = "data/tt") -> None:
     import pickle
 
     target = Path(path)
-    with target.open('rb') as f:
+    with target.open("rb") as f:
         data = pickle.load(f)
     TT_TABLE[:] = data

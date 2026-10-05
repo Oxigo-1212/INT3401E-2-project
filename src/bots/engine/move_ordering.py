@@ -2,6 +2,7 @@ from core.board import Board
 from core.move import get_from_sq, get_to_sq
 from core.pieces import PIECE_VALUES
 
+
 class MoveSorter:
     def __init__(self) -> None:
         # 90×90 integer matrix for the history heuristic
@@ -13,7 +14,9 @@ class MoveSorter:
         while len(self._killers) <= depth:
             self._killers.append([0, 0])
 
-    def store_killer_move(self, depth: int, move: int, beta: float, score: float) -> None:
+    def store_killer_move(
+        self, depth: int, move: int, beta: float, score: float
+    ) -> None:
         if score < beta:
             return
         self._ensure_killer_slot(depth)
@@ -28,7 +31,6 @@ class MoveSorter:
         t = get_to_sq(move)
         self._history[f][t] += depth * depth
 
-
     def get_killers(self, depth: int) -> list[int]:
         self._ensure_killer_slot(depth)
         return self._killers[depth]
@@ -41,7 +43,9 @@ class MoveSorter:
         captured = board.state[to]
         return PIECE_VALUES[captured] * 1000 - PIECE_VALUES[attacker]
 
-    def move_sort(self, moves: list[int], board: Board, depth: int, tt_move: int = 0) -> list[int]:
+    def move_sort(
+        self, moves: list[int], board: Board, depth: int, tt_move: int = 0
+    ) -> list[int]:
         killers = self.get_killers(depth)
         state = board.state
         history = self._history
@@ -51,7 +55,7 @@ class MoveSorter:
                 return 4, 0
             frm = get_from_sq(move)
             to = get_to_sq(move)
-            if state[to] != '.':
+            if state[to] != ".":
                 return 3, self._mvv_lva(board, move)
             if move == killers[0]:
                 return 2, 0
@@ -61,4 +65,3 @@ class MoveSorter:
 
         moves.sort(key=score, reverse=True)
         return moves
-

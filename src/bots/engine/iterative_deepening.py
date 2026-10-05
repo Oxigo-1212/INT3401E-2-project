@@ -3,20 +3,21 @@ from __future__ import annotations
 import inspect
 import math
 import time
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from bots.engine.move_ordering import MoveSorter
 from bots.engine.transposition_table import TT_TABLE, probe
-from core.pieces import Color
 from core.board import Board
+from core.logger import get_logger
 from core.move_generator import MoveGenerator
+from core.pieces import Color
 from core.rules import GameStatus, check_game_status, get_legal_moves
 from core.utils import move_to_str
-from core.logger import get_logger
 
-_ASPIRATION_DELTA = 50  
-_ASPIRATION_MIN_DEPTH = 4  
+_ASPIRATION_DELTA = 50
+_ASPIRATION_MIN_DEPTH = 4
 _log = get_logger("IDS")
+
 
 class SearchStopped(Exception):
     pass
@@ -33,13 +34,14 @@ def _algorithm_supports_control(algorithm: Callable) -> bool:
         return True
     return {"stats", "stop_flag", "ply"}.issubset(params)
 
+
 def _call_algorithm(
     algorithm: Callable,
     board: Board,
     depth: int,
     alpha: float,
     beta: float,
-    move_sorter: Optional[MoveSorter],
+    move_sorter: MoveSorter | None,
     *,
     stats: dict[str, int],
     stop_flag: Callable[[], bool] | None,
@@ -59,6 +61,7 @@ def _call_algorithm(
         )
     return algorithm(board, depth, alpha, beta, move_sorter)
 
+
 def _extract_pv(board: Board, max_depth: int) -> list[int]:
     pv: list[int] = []
     cursor = board.copy()
@@ -72,7 +75,8 @@ def _extract_pv(board: Board, max_depth: int) -> list[int]:
 
     return pv
 
-def _mate_from_pv(board: Board, pv: list[int]) -> Optional[int]:
+
+def _mate_from_pv(board: Board, pv: list[int]) -> int | None:
     if not pv:
         return None
 
@@ -92,6 +96,7 @@ def _mate_from_pv(board: Board, pv: list[int]) -> Optional[int]:
                 return None
             return ply if winner == root_side else -ply
     return None
+
 
 def _snapshot(
     board: Board,
@@ -116,6 +121,7 @@ def _snapshot(
         "mate": mate,
     }
 
+
 def search_with_time_limit(
     board: Board,
     algorithm: Callable,
@@ -123,8 +129,8 @@ def search_with_time_limit(
     *,
     stop_flag: Callable[[], bool] | None = None,
     info_cb: Callable[[dict[str, object]], None] | None = None,
-    stats: Optional[dict[str, int]] = None,
-) -> Optional[int]:
+    stats: dict[str, int] | None = None,
+) -> int | None:
     start_time = time.time()
     time_limit_sec = None if time_limit_ms is None else time_limit_ms / 1000.0
 
@@ -139,7 +145,9 @@ def search_with_time_limit(
     supports_control = _algorithm_supports_control(algorithm)
     stats = {"nodes": 0, "search_nodes": 0, "seldepth": 0} if stats is None else stats
 
-    _log.debug("Bắt đầu tìm kiếm: %sms | %d nước hợp lệ", time_limit_ms, len(legal_moves))
+    _log.debug(
+        "Bắt đầu tìm kiếm: %sms | %d nước hợp lệ", time_limit_ms, len(legal_moves)
+    )
 
     while True:
         if stop_flag is not None and stop_flag():
@@ -199,10 +207,14 @@ def search_with_time_limit(
         if completed and moves_evaluated == len(sorted_moves):
             best_move = current_best_move
             elapsed_ms = int((time.time() - start_time) * 1000)
-            snapshot = _snapshot(board, best_move, current_best_value, depth, stats, elapsed_ms)
+            snapshot = _snapshot(
+                board, best_move, current_best_value, depth, stats, elapsed_ms
+            )
             if info_cb is not None:
                 info_cb(snapshot)
-            _log.debug("depth %d: %s (%.0f)", depth, move_to_str(best_move), current_best_value)
+            _log.debug(
+                "depth %d: %s (%.0f)", depth, move_to_str(best_move), current_best_value
+            )
         else:
             _log.debug("Timeout — giữ kết quả depth %d", depth - 1)
             break
@@ -211,6 +223,7 @@ def search_with_time_limit(
     _log.debug("Kết thúc: %s | %.0fms", move_to_str(best_move), elapsed_total)
     return best_move
 
+
 def search_with_depth_limit(
     board: Board,
     algorithm: Callable,
@@ -218,8 +231,8 @@ def search_with_depth_limit(
     *,
     stop_flag: Callable[[], bool] | None = None,
     info_cb: Callable[[dict[str, object]], None] | None = None,
-    stats: Optional[dict[str, int]] = None,
-) -> Optional[int]:
+    stats: dict[str, int] | None = None,
+) -> int | None:
     start_time = time.time()
     generator = MoveGenerator(board)
     legal_moves = get_legal_moves(board, generator)
@@ -287,8 +300,7 @@ def search_with_depth_limit(
                     iter_best_value = value
                     iter_best_move = move
 
-                if value > alpha:
-                    alpha = value
+                alpha = max(alpha, value)
                 if alpha >= beta:
                     break
 
@@ -297,12 +309,18 @@ def search_with_depth_limit(
                 break
 
             # Kiểm tra fail-low / fail-high -> mở rộng cửa sổ
-            if iter_best_value <= prev_score - _ASPIRATION_DELTA and depth >= _ASPIRATION_MIN_DEPTH:
+            if (
+                iter_best_value <= prev_score - _ASPIRATION_DELTA
+                and depth >= _ASPIRATION_MIN_DEPTH
+            ):
                 # Fail-low: mở rộng xuống
                 alpha = -math.inf
                 beta = iter_best_value + 1
                 _log.debug("  Fail-low (%.0f), mở rộng cửa sổ xuống", iter_best_value)
-            elif iter_best_value >= prev_score + _ASPIRATION_DELTA and depth >= _ASPIRATION_MIN_DEPTH:
+            elif (
+                iter_best_value >= prev_score + _ASPIRATION_DELTA
+                and depth >= _ASPIRATION_MIN_DEPTH
+            ):
                 # Fail-high: mở rộng lên
                 alpha = iter_best_value - 1
                 beta = math.inf
@@ -320,7 +338,9 @@ def search_with_depth_limit(
         prev_score = depth_best_value
 
         elapsed_ms = int((time.time() - start_time) * 1000)
-        snapshot = _snapshot(board, best_move, depth_best_value, depth, stats, elapsed_ms)
+        snapshot = _snapshot(
+            board, best_move, depth_best_value, depth, stats, elapsed_ms
+        )
         if info_cb is not None:
             info_cb(snapshot)
 
