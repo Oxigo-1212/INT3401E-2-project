@@ -3,19 +3,24 @@
 Unit tests cho core/board.py
 Bao gồm: FEN parse, make_move, undo_move, Zobrist hash
 """
-import sys, os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import pytest
-from core.board import Board, START_FEN
+
+from core.board import START_FEN, Board
+from core.move import deserialize_move as uci_to_move
 from core.pieces import Color
-from core.move import encode_move, deserialize_move as uci_to_move, serialize_move as move_to_uci
 
 
 @pytest.fixture
 def board():
     """Bàn cờ mới ở vị trí ban đầu."""
     return Board()
+
 
 @pytest.fixture
 def empty_board():
@@ -29,6 +34,7 @@ def empty_board():
 # 1. FEN PARSING
 # ==============================================================================
 
+
 class TestFenParsing:
     def test_start_fen_side_to_move(self, board):
         """Lượt đầu tiên phải là phe Đỏ."""
@@ -37,42 +43,44 @@ class TestFenParsing:
     def test_start_fen_black_side(self):
         """Parse FEN với lượt của Đen."""
         b = Board()
-        b.set_fen("rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR b - - 0 1")
+        b.set_fen(
+            "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR b - - 0 1"
+        )
         assert b.side_to_move == Color.BLACK
 
     def test_start_fen_piece_positions(self, board):
         """Kiểm tra vị trí các quân cờ ban đầu (theo FEN chuẩn)."""
         # Hàng 0 (Đen): r n b a k a b n r
-        assert board.state[0]  == 'r'  # a0: Xe Đen trái
-        assert board.state[1]  == 'n'  # b0: Mã Đen trái
-        assert board.state[2]  == 'b'  # c0: Tượng Đen trái
-        assert board.state[3]  == 'a'  # d0: Sĩ Đen trái
-        assert board.state[4]  == 'k'  # e0: Tướng Đen
-        assert board.state[5]  == 'a'  # f0: Sĩ Đen phải
-        assert board.state[6]  == 'b'  # g0: Tượng Đen phải
-        assert board.state[7]  == 'n'  # h0: Mã Đen phải
-        assert board.state[8]  == 'r'  # i0: Xe Đen phải
+        assert board.state[0] == "r"  # a0: Xe Đen trái
+        assert board.state[1] == "n"  # b0: Mã Đen trái
+        assert board.state[2] == "b"  # c0: Tượng Đen trái
+        assert board.state[3] == "a"  # d0: Sĩ Đen trái
+        assert board.state[4] == "k"  # e0: Tướng Đen
+        assert board.state[5] == "a"  # f0: Sĩ Đen phải
+        assert board.state[6] == "b"  # g0: Tượng Đen phải
+        assert board.state[7] == "n"  # h0: Mã Đen phải
+        assert board.state[8] == "r"  # i0: Xe Đen phải
         # Hàng 9 (Đỏ): R N B A K A B N R
-        assert board.state[81] == 'R'  # a9
-        assert board.state[82] == 'N'  # b9
-        assert board.state[85] == 'K'  # e9: Tướng Đỏ
-        assert board.state[89] == 'R'  # i9
+        assert board.state[81] == "R"  # a9
+        assert board.state[82] == "N"  # b9
+        assert board.state[85] == "K"  # e9: Tướng Đỏ
+        assert board.state[89] == "R"  # i9
 
     def test_start_fen_empty_squares(self, board):
         """Các ô trống đúng vị trí."""
         # Hàng 1 toàn trống
         for sq in range(9, 18):
-            assert board.state[sq] == '.'
+            assert board.state[sq] == "."
         # Hàng 8 toàn trống
         for sq in range(72, 81):
-            assert board.state[sq] == '.'
+            assert board.state[sq] == "."
 
     def test_start_fen_cannons(self, board):
         """Pháo đặt đúng vị trí b2, h2 (Đen) và b7, h7 (Đỏ)."""
-        assert board.state[2*9 + 1] == 'c'   # b2
-        assert board.state[2*9 + 7] == 'c'   # h2
-        assert board.state[7*9 + 1] == 'C'   # b7
-        assert board.state[7*9 + 7] == 'C'   # h7
+        assert board.state[2 * 9 + 1] == "c"  # b2
+        assert board.state[2 * 9 + 7] == "c"  # h2
+        assert board.state[7 * 9 + 1] == "C"  # b7
+        assert board.state[7 * 9 + 7] == "C"  # h7
 
     def test_set_fen_resets_history(self, board):
         """set_fen phải xóa lịch sử nước đi cũ."""
@@ -95,35 +103,36 @@ class TestFenParsing:
         b = Board()
         # Chỉ có Xe Đỏ ở e5 và 2 Tướng
         b.set_fen("4k4/9/9/9/4R4/9/9/9/9/4K4 w - - 0 1")
-        assert b.state[4*9 + 4] == 'R'   # e4: Xe Đỏ
-        assert b.state[0*9 + 4] == 'k'   # e0: Tướng Đen
-        assert b.state[9*9 + 4] == 'K'   # e9: Tướng Đỏ
-
+        assert b.state[4 * 9 + 4] == "R"  # e4: Xe Đỏ
+        assert b.state[0 * 9 + 4] == "k"  # e0: Tướng Đen
+        assert b.state[9 * 9 + 4] == "K"  # e9: Tướng Đỏ
 
     def test_set_fen_normalizes_variant_piece_tokens(self):
         """set_fen phải chuyển token biến thể về ký hiệu nội bộ."""
         b = Board()
         b.set_fen("4k4/9/9/4H4/4A4/4h4/4a4/9/9/4K4 w - - 0 1")
-        assert b.state[3*9 + 4] == 'N'
-        assert b.state[4*9 + 4] == 'A'
-        assert b.state[5*9 + 4] == 'n'
-        assert b.state[6*9 + 4] == 'a'
+        assert b.state[3 * 9 + 4] == "N"
+        assert b.state[4 * 9 + 4] == "A"
+        assert b.state[5 * 9 + 4] == "n"
+        assert b.state[6 * 9 + 4] == "a"
 
     def test_total_pieces_at_start(self, board):
         """Số lượng quân cờ mỗi loại đúng ở vị trí ban đầu."""
         from collections import Counter
-        counts = Counter(p for p in board.state if p != '.')
-        assert counts['R'] == 2  # 2 Xe Đỏ
-        assert counts['r'] == 2  # 2 Xe Đen
-        assert counts['P'] == 5  # 5 Tốt Đỏ
-        assert counts['p'] == 5  # 5 Tốt Đen
-        assert counts['K'] == 1  # 1 Tướng Đỏ
-        assert counts['k'] == 1  # 1 Tướng Đen
+
+        counts = Counter(p for p in board.state if p != ".")
+        assert counts["R"] == 2  # 2 Xe Đỏ
+        assert counts["r"] == 2  # 2 Xe Đen
+        assert counts["P"] == 5  # 5 Tốt Đỏ
+        assert counts["p"] == 5  # 5 Tốt Đen
+        assert counts["K"] == 1  # 1 Tướng Đỏ
+        assert counts["k"] == 1  # 1 Tướng Đen
 
 
 # ==============================================================================
 # 2. MAKE_MOVE
 # ==============================================================================
+
 
 class TestMakeMove:
     def test_move_updates_piece_position(self, board):
@@ -131,8 +140,8 @@ class TestMakeMove:
         # Pháo Đỏ b7 đi lên b5
         mv = uci_to_move("b7b5")
         board.make_move(mv)
-        assert board.state[7*9 + 1] == '.'   # b7 trống
-        assert board.state[5*9 + 1] == 'C'   # b5 có Pháo Đỏ
+        assert board.state[7 * 9 + 1] == "."  # b7 trống
+        assert board.state[5 * 9 + 1] == "C"  # b5 có Pháo Đỏ
 
     def test_move_switches_side(self, board):
         """Sau mỗi nước đi, lượt phải đổi phe."""
@@ -150,8 +159,8 @@ class TestMakeMove:
         # Xe Đỏ a9 ăn Xe Đen a0
         mv = uci_to_move("a9a0")
         b.make_move(mv)
-        assert b.state[0] == 'R'    # a0 bây giờ là Xe Đỏ
-        assert b.state[9*9] == '.'  # a9 trống
+        assert b.state[0] == "R"  # a0 bây giờ là Xe Đỏ
+        assert b.state[9 * 9] == "."  # a9 trống
 
     def test_capture_recorded_in_history(self, board):
         """Quân bị ăn phải được lưu trong history để undo."""
@@ -159,13 +168,13 @@ class TestMakeMove:
         b.set_fen("r8/9/9/9/9/9/9/9/9/R3K3k w - - 0 1")
         mv = uci_to_move("a9a0")
         b.make_move(mv)
-        assert b.history[-1]['captured'] == 'r'
+        assert b.history[-1]["captured"] == "r"
 
     def test_quiet_move_recorded_in_history(self, board):
         """Nước đi không ăn quân lưu captured = '.'."""
         mv = uci_to_move("b7b5")
         board.make_move(mv)
-        assert board.history[-1]['captured'] == '.'
+        assert board.history[-1]["captured"] == "."
 
     def test_half_move_clock_increments_on_quiet(self, board):
         """Đồng hồ tăng khi không ăn quân."""
@@ -203,6 +212,7 @@ class TestMakeMove:
 # 3. UNDO_MOVE
 # ==============================================================================
 
+
 class TestUndoMove:
     def test_undo_restores_piece_position(self, board):
         """Undo phải đưa quân về vị trí cũ."""
@@ -223,8 +233,8 @@ class TestUndoMove:
         b.set_fen("r8/9/9/9/9/9/9/9/9/R3K3k w - - 0 1")
         b.make_move(uci_to_move("a9a0"))
         b.undo_move()
-        assert b.state[0] == 'r'       # Xe Đen phải còn ở a0
-        assert b.state[9*9] == 'R'     # Xe Đỏ phải về a9
+        assert b.state[0] == "r"  # Xe Đen phải còn ở a0
+        assert b.state[9 * 9] == "R"  # Xe Đỏ phải về a9
 
     def test_undo_restores_half_move_clock(self, board):
         """Undo phải phục hồi đồng hồ về giá trị trước."""
@@ -271,6 +281,7 @@ class TestUndoMove:
 # ==============================================================================
 # 4. ZOBRIST HASHING
 # ==============================================================================
+
 
 class TestZobristHashing:
     def test_same_position_same_hash(self):

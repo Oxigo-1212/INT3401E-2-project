@@ -3,24 +3,33 @@
 Unit tests cho core/rules.py
 Bao gồm: is_in_check, flying_general, get_legal_moves, chiếu bí, hòa, lặp cờ
 """
-import sys, os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-import pytest
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
 from core.board import Board
+from core.move import deserialize_move as uci_to_move
+from core.move import serialize_move as move_to_uci
 from core.move_generator import MoveGenerator
-from core.rules import (
-    is_in_check, flying_general_check, get_legal_moves,
-    check_game_status, is_draw, GameStatus
-)
 from core.pieces import Color
-from core.move import deserialize_move as uci_to_move, serialize_move as move_to_uci
+from core.rules import (
+    GameStatus,
+    check_game_status,
+    flying_general_check,
+    get_legal_moves,
+    is_draw,
+    is_in_check,
+)
 
-def setup(fen, side='w'):
+
+def setup(fen, side="w"):
     b = Board()
     b.set_fen(fen)
     gen = MoveGenerator(b)
     return b, gen
+
 
 def legal_uci_set(b, gen):
     return set(move_to_uci(m) for m in get_legal_moves(b, gen))
@@ -30,10 +39,13 @@ def legal_uci_set(b, gen):
 # 1. IS_IN_CHECK
 # ==============================================================================
 
+
 class TestIsInCheck:
     def test_not_in_check_initial(self):
         """Vị trí ban đầu: cả hai phe đều không bị chiếu."""
-        b, _ = setup("rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 1")
+        b, _ = setup(
+            "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 1"
+        )
         assert not is_in_check(b, Color.RED)
         assert not is_in_check(b, Color.BLACK)
 
@@ -56,7 +68,7 @@ class TestIsInCheck:
         """Tướng bị chiếu bởi Mã."""
         b, _ = setup("4k4/9/9/9/9/9/9/9/3N5/4K4 w - - 0 1")
         # Mã d8 có thể đến e9 (tiến 1 phải 2 = +9+2=11? kiểm tra lại)
-        # Mã ở f8: +9-2=7+2 đến e9? 
+        # Mã ở f8: +9-2=7+2 đến e9?
         # Dùng FEN đơn giản: Mã Đỏ d8 chiếu Tướng Đen e0?
         b2 = Board()
         b2.set_fen("4k4/9/9/9/9/9/9/9/3n5/4K4 b - - 0 1")
@@ -98,6 +110,7 @@ class TestIsInCheck:
 # 2. FLYING GENERAL (LỘ MẶT TƯỚNG)
 # ==============================================================================
 
+
 class TestFlyingGeneral:
     def test_flying_general_detected(self):
         """Phát hiện hai Tướng nhìn thẳng mặt nhau."""
@@ -135,6 +148,7 @@ class TestFlyingGeneral:
 # 3. GET_LEGAL_MOVES - Lọc chiếu
 # ==============================================================================
 
+
 class TestGetLegalMoves:
     def test_must_block_check(self):
         """Khi bị chiếu, chỉ được đi những nước giải chiếu."""
@@ -144,7 +158,9 @@ class TestGetLegalMoves:
         # Mỗi nước đi hợp lệ phải giải chiếu
         for move in legal:
             b.make_move(move)
-            assert not is_in_check(b, Color.RED), f"Nước đi {move_to_uci(move)} không giải chiếu"
+            assert not is_in_check(b, Color.RED), (
+                f"Nước đi {move_to_uci(move)} không giải chiếu"
+            )
             b.undo_move()
 
     def test_pinned_piece_cannot_move(self):
@@ -164,8 +180,9 @@ class TestGetLegalMoves:
                 to_col = uci[2]
                 # Nếu Xe rời cột e thì Tướng sẽ bị chiếu bởi Xe Đen
                 # → không được phép (hàm get_legal_moves phải lọc)
-                assert to_col == 'e' or uci == "e8i9", \
+                assert to_col == "e" or uci == "e8i9", (
                     f"Xe bị ghim nhưng được phép đi: {uci}"
+                )
 
     def test_legal_moves_not_empty_when_not_checkmated(self):
         """Vị trí ban đầu phải có nước đi hợp lệ."""
@@ -190,6 +207,7 @@ class TestGetLegalMoves:
 # ==============================================================================
 # 4. CHECKMATE (CHIẾU BÍ)
 # ==============================================================================
+
 
 class TestCheckmate:
     def test_checkmate_red_loses(self):
@@ -232,6 +250,7 @@ class TestCheckmate:
 # 5. HÒA CỜ
 # ==============================================================================
 
+
 class TestDrawConditions:
     def test_draw_by_60_move_rule(self):
         """Half-move clock >= 120 → hòa."""
@@ -258,11 +277,15 @@ class TestDrawConditions:
         move4 = uci_to_move("h4h2")
 
         # Lần 1
-        b.make_move(move1); b.make_move(move3)
-        b.make_move(move2); b.make_move(move4)  # trở về vị trí ban đầu
+        b.make_move(move1)
+        b.make_move(move3)
+        b.make_move(move2)
+        b.make_move(move4)  # trở về vị trí ban đầu
         # Lần 2
-        b.make_move(move1); b.make_move(move3)
-        b.make_move(move2); b.make_move(move4)  # lặp lần 2
+        b.make_move(move1)
+        b.make_move(move3)
+        b.make_move(move2)
+        b.make_move(move4)  # lặp lần 2
 
         # Bây giờ Zobrist key == initial_key đã xuất hiện 2 lần trong history
         # Lần này là lần thứ 3
@@ -297,6 +320,7 @@ class TestDrawConditions:
 # ==============================================================================
 # 6. EDGE CASES TỔNG HỢP
 # ==============================================================================
+
 
 class TestEdgeCases:
     def test_king_cannot_walk_into_check(self):
@@ -346,9 +370,10 @@ class TestEdgeCases:
             from_sq_val = (move >> 7) & 0x7F
             to_piece = b.state[to_sq_val]
             from_piece = b.state[from_sq_val]
-            if to_piece != '.':
-                assert from_piece.isupper() != to_piece.isupper(), \
+            if to_piece != ".":
+                assert from_piece.isupper() != to_piece.isupper(), (
                     f"Ăn quân cùng phe: {move_to_uci(move)}"
+                )
 
     def test_double_check_only_king_can_move(self):
         """Chiếu đôi: chỉ Tướng được phép di chuyển."""
@@ -357,7 +382,8 @@ class TestEdgeCases:
         b.set_fen("4k4/9/9/9/9/9/9/9/4r4/3rK4 w - - 0 1")
         gen = MoveGenerator(b)
         legal = get_legal_moves(b, gen)
-        king_sq = 9*9 + 4  # e9
+        king_sq = 9 * 9 + 4  # e9
         for move in legal:
-            assert (move >> 7) & 0x7F == king_sq, \
+            assert (move >> 7) & 0x7F == king_sq, (
                 f"Chiếu đôi: chỉ Tướng được đi nhưng có nước: {move_to_uci(move)}"
+            )

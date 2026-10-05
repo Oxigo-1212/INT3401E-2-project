@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import main as engine_main
 from benchmark.implementations.xiangqi_board import XiangqiBoardAdapter
-from core.board import Board, START_FEN
+from core.board import START_FEN, Board
 from ucci import handler as engine_handler
 from ucci.adapter import GoParams, SearchResult
 from ucci.commands import UCCICommand, parse_line
@@ -91,6 +91,7 @@ def test_handler_bench_output_on_startpos(monkeypatch, capsys):
             if info_cb is not None:
                 info_cb(res)
             return res
+
     monkeypatch.setattr(engine_handler, "SearchFacade", FakeSearchFacade)
     handler = UCCIHandler()
     assert handler.handle_line("position startpos") is True
@@ -119,7 +120,9 @@ def test_handler_perft_output_on_startpos(monkeypatch, capsys):
 
     times = iter([10.0, 10.5])
     monkeypatch.setattr(engine_handler.time, "perf_counter", lambda: next(times))
-    monkeypatch.setattr(engine_handler.importlib, "import_module", lambda name: FakePerftModule())
+    monkeypatch.setattr(
+        engine_handler.importlib, "import_module", lambda name: FakePerftModule()
+    )
 
     handler = UCCIHandler()
     assert handler.handle_line("position startpos") is True

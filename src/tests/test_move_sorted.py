@@ -1,16 +1,17 @@
-import sys, os
+import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from bots.engine.algorithm import get_best_move, negmax
+from bots.engine.transposition_table import TT_TABLE, init_tt
 from core.board import Board
 from core.move_generator import MoveGenerator
 from core.rules import get_legal_moves
-from bots.engine.transposition_table import init_tt, TT_TABLE
-from bots.engine.algorithm import get_best_move, negmax
-from core.utils import move_to_str, load_fen
-
+from core.utils import load_fen, move_to_str
 
 # test move sorted
+
 
 def test_move_quality():
     init_tt(1 << 16, TT_TABLE)

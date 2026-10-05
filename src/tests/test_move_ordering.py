@@ -3,9 +3,10 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from core.board import Board
-from core.move import deserialize_move as uci_to_move, deserialize_square as uci_to_sq
 from bots.engine.move_ordering import MoveSorter
+from core.board import Board
+from core.move import deserialize_move as uci_to_move
+from core.move import deserialize_square as uci_to_sq
 
 
 def sq(uci: str) -> int:
@@ -73,23 +74,38 @@ def test_move_sort_prioritizes_captures_killers_then_history() -> None:
     sorter.store_history(history_high, depth=3)
     sorter.store_history(history_low, depth=1)
 
-    moves = [history_low, killer_older, capture_low, history_high, killer_recent, capture_high]
+    moves = [
+        history_low,
+        killer_older,
+        capture_low,
+        history_high,
+        killer_recent,
+        capture_high,
+    ]
 
     sorted_moves = sorter.move_sort(moves, board, depth=2)
 
     assert sorted_moves is moves
-    assert sorted_moves == [capture_high, capture_low, killer_recent, killer_older, history_high, history_low]
+    assert sorted_moves == [
+        capture_high,
+        capture_low,
+        killer_recent,
+        killer_older,
+        history_high,
+        history_low,
+    ]
+
 
 def test_move_sort_prioritizes_tt_move() -> None:
     sorter = MoveSorter()
     board = make_empty_board()
-    
+
     moves = [uci_to_move("a9a8"), uci_to_move("b9b8"), uci_to_move("c9c8")]
     tt_move = uci_to_move("c9c8")
-    
+
     # Without TT move, they might be in any order (here history 0)
     # With TT move, c9c8 should be first
     sorted_moves = sorter.move_sort(moves, board, depth=1, tt_move=tt_move)
-    
+
     assert sorted_moves[0] == tt_move
     assert len(sorted_moves) == 3

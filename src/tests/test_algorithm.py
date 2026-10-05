@@ -6,7 +6,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-import bots.engine.algorithm as algorithm
+from bots.engine import algorithm
 from core.board import Board
 from core.pieces import Color
 from core.rules import GameStatus
@@ -22,6 +22,7 @@ class RecordingBoard(Board):
         self.side_to_move = side_to_move
         self.state = ["."] * 90
         self.moves: list[int] = []
+
     zobrist_key: int = 0
 
     def make_move(self, move: int):
@@ -36,15 +37,21 @@ class RecordingBoard(Board):
 
 def install_search_stubs(monkeypatch, legal_moves, status=GameStatus.Playing):
     monkeypatch.setattr(algorithm, "MoveGenerator", DummyMoveGenerator)
-    monkeypatch.setattr(algorithm, "get_legal_moves", lambda board, generator: list(legal_moves))
+    monkeypatch.setattr(
+        algorithm, "get_legal_moves", lambda board, generator: list(legal_moves)
+    )
     monkeypatch.setattr(algorithm, "check_game_status", lambda board, moves: status)
-    monkeypatch.setattr(algorithm, "probe", lambda key, depth, alpha, beta, tt: (None, False))
-    monkeypatch.setattr(algorithm, "store", lambda key, depth, score, flag, best_move, tt: None)
+    monkeypatch.setattr(
+        algorithm, "probe", lambda key, depth, alpha, beta, tt: (None, False)
+    )
+    monkeypatch.setattr(
+        algorithm, "store", lambda key, depth, score, flag, best_move, tt: None
+    )
     monkeypatch.setattr(algorithm, "is_in_check", lambda board, color: False)
     monkeypatch.setattr(
         algorithm,
         "quiescence_search",
-        lambda board, alpha, beta, *args, **kwargs: float(algorithm.heuristic(board)),
+        lambda board, alpha, beta, *args, **kwargs: float(getattr(algorithm, "heuristic", lambda b: 0)(board)),
     )
 
 
@@ -62,7 +69,7 @@ def test_negmax_searches_one_ply_and_returns_negated_best_score(monkeypatch):
         path = tuple(current_board.moves)
         return scores[path]
 
-    monkeypatch.setattr(algorithm, "heuristic", fake_heuristic)
+    monkeypatch.setattr(algorithm, "heuristic", fake_heuristic, raising=False)
 
     score = algorithm.negmax(board, depth=1, alpha=-math.inf, beta=math.inf)
 
@@ -79,7 +86,9 @@ def test_negmax_searches_one_ply_and_returns_negated_best_score(monkeypatch):
         (Color.BLACK, 11),
     ],
 )
-def test_get_best_move_selects_best_move_for_each_side(monkeypatch, side_to_move, expected_move):
+def test_get_best_move_selects_best_move_for_each_side(
+    monkeypatch, side_to_move, expected_move
+):
     board = RecordingBoard(side_to_move=side_to_move)
     install_search_stubs(monkeypatch, legal_moves=[11, 22], status=GameStatus.Playing)
 

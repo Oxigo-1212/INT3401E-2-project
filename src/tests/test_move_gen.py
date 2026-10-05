@@ -3,30 +3,39 @@
 Unit tests cho core/move_generator.py
 Bao gồm: sinh nước đi từng loại quân, perft, edge cases
 """
-import sys, os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-import pytest
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
 from core.board import Board
+from core.move import deserialize_move as uci_to_move
+from core.move import deserialize_square as uci_to_sq
+from core.move import get_from_sq, get_to_sq
+from core.move import serialize_square as sq_to_uci
 from core.move_generator import MoveGenerator
-from core.move import encode_move, deserialize_move as uci_to_move, deserialize_square as uci_to_sq, serialize_square as sq_to_uci, get_to_sq, get_from_sq
-from core.pieces import Color
 
-def make_gen(fen, side='w'):
+
+def make_gen(fen, side="w"):
     b = Board()
     b.set_fen(fen)
     return b, MoveGenerator(b)
 
+
 def to_uci_set(moves):
     """Chuyển danh sách move int thành set chuỗi UCI để dễ assert."""
     from core.move import move_to_uci
+
     return set(move_to_uci(m) for m in moves)
+
 
 def assert_moves_contain(moves, *expected_ucis):
     """Kiểm tra danh sách nước đi chứa các nước được expect."""
     uci_set = to_uci_set(moves)
     for uci in expected_ucis:
         assert uci in uci_set, f"Thiếu nước đi: {uci} | Có: {sorted(uci_set)}"
+
 
 def assert_moves_not_contain(moves, *forbidden_ucis):
     """Kiểm tra danh sách nước đi KHÔNG chứa các nước bị cấm."""
@@ -38,6 +47,7 @@ def assert_moves_not_contain(moves, *forbidden_ucis):
 # ==============================================================================
 # 1. XE (R) - Đi thẳng ngang/dọc không giới hạn
 # ==============================================================================
+
 
 class TestRookMoves:
     def test_rook_open_file_vertical(self):
@@ -81,6 +91,7 @@ class TestRookMoves:
 # ==============================================================================
 # 2. PHÁO (C) - Đi như Xe nhưng phải có ngòi để ăn
 # ==============================================================================
+
 
 class TestCannonMoves:
     def test_cannon_moves_like_rook_on_empty(self):
@@ -131,13 +142,14 @@ class TestCannonMoves:
 # 3. MÃ (N) - Đi hình chữ L, bị cản chân
 # ==============================================================================
 
+
 class TestHorseMoves:
     def test_horse_at_center_has_8_moves(self):
         """Mã ở giữa bàn cờ có đúng 8 nước đi."""
         b, gen = make_gen("4k4/9/9/9/4N4/9/9/9/9/4K4 w - - 0 1")
         moves = gen.get_pseudo_legal_moves()
         # Tướng Đỏ e9 cũng sinh nước đi → lọc chỉ lấy nước của Mã e4
-        horse_sq = 4*9 + 4  # e4
+        horse_sq = 4 * 9 + 4  # e4
         horse_moves = [m for m in moves if get_from_sq(m) == horse_sq]
         assert len(horse_moves) == 8
 
@@ -147,7 +159,7 @@ class TestHorseMoves:
         b, gen = make_gen("4k4/9/9/9/4N4/4P4/9/9/9/4K4 w - - 0 1")
         # Tốt Đỏ ở e5 cản chân lên → Mã không đi được d3, f3
         moves = gen.get_pseudo_legal_moves()
-        horse_moves = [m for m in moves if get_from_sq(m) == 4*9+4]
+        horse_moves = [m for m in moves if get_from_sq(m) == 4 * 9 + 4]
         horse_uci = to_uci_set(horse_moves)
         # Chân lên là e5 (sq=5*9+4=49), cản hướng tiến 2 lên
         assert "e4d3" not in horse_uci
@@ -156,20 +168,26 @@ class TestHorseMoves:
     def test_horse_at_corner(self):
         """Mã ở góc bàn cờ chỉ có 2 nước đi hợp lệ."""
         b, gen = make_gen("k8/9/9/9/9/9/9/9/9/N3K4 w - - 0 1")
-        horse_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == 9*9]
+        horse_moves = [
+            m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == 9 * 9
+        ]
         assert len(horse_moves) == 2
 
     def test_horse_cannot_capture_own_piece(self):
         """Mã không được đứng lên ô có quân mình."""
         b, gen = make_gen("4k4/9/9/9/4N4/9/3P5/9/9/4K4 w - - 0 1")
         # Tốt Đỏ ở d6, là một trong các ô Mã e4 có thể đến
-        horse_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == 4*9+4]
+        horse_moves = [
+            m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == 4 * 9 + 4
+        ]
         assert_moves_not_contain(horse_moves, "e4d6")
 
     def test_horse_can_capture_enemy(self):
         """Mã được ăn quân đối phương."""
         b, gen = make_gen("4k4/9/9/9/4N4/9/3p5/9/9/4K4 w - - 0 1")
-        horse_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == 4*9+4]
+        horse_moves = [
+            m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == 4 * 9 + 4
+        ]
         assert_moves_contain(horse_moves, "e4d6")
 
 
@@ -177,11 +195,14 @@ class TestHorseMoves:
 # 4. TƯỢNG (B) - Đi chéo 2 ô, không qua sông, check mắt tượng
 # ==============================================================================
 
+
 class TestElephantMoves:
     def test_elephant_cannot_cross_river(self):
         """Tượng Đỏ không được qua sông (hàng 0-4)."""
         b, gen = make_gen("4k4/9/9/9/9/9/9/4B4/9/4K4 w - - 0 1")
-        elephant_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == 7*9+4]
+        elephant_moves = [
+            m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == 7 * 9 + 4
+        ]
         uci_set = to_uci_set(elephant_moves)
         for uci in uci_set:
             to_sq = uci_to_sq(uci[2:])
@@ -191,7 +212,9 @@ class TestElephantMoves:
     def test_black_elephant_cannot_cross_river(self):
         """Tượng Đen không được qua sông (hàng 5-9)."""
         b, gen = make_gen("4k4/9/4b4/9/9/9/9/9/9/4K4 b - - 0 1")
-        elephant_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == 2*9+4]
+        elephant_moves = [
+            m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == 2 * 9 + 4
+        ]
         uci_set = to_uci_set(elephant_moves)
         for uci in uci_set:
             to_sq = uci_to_sq(uci[2:])
@@ -203,13 +226,17 @@ class TestElephantMoves:
         # Tượng e7, mắt hướng trên-trái là d8 bị chặn
         b, gen = make_gen("4k4/9/9/9/9/9/9/4B4/3P5/4K4 w - - 0 1")
         # d8 (hàng 8, cột 3) = sq 8*9+3=75 có Tốt Đỏ
-        elephant_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == 7*9+4]
+        elephant_moves = [
+            m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == 7 * 9 + 4
+        ]
         assert_moves_not_contain(elephant_moves, "e7c9")  # hướng trên-trái
 
     def test_elephant_max_4_moves(self):
         """Tượng không bị cản tối đa 4 nước đi."""
         b, gen = make_gen("4k4/9/9/9/9/9/4B4/9/9/4K4 w - - 0 1")
-        elephant_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == 6*9+4]
+        elephant_moves = [
+            m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == 6 * 9 + 4
+        ]
         assert len(elephant_moves) <= 4
 
 
@@ -217,35 +244,46 @@ class TestElephantMoves:
 # 5. SĨ (A) - Đi chéo 1 ô trong cung
 # ==============================================================================
 
+
 class TestAdvisorMoves:
     def test_advisor_stays_in_palace(self):
         """Sĩ không được ra ngoài cung."""
         b, gen = make_gen("4k4/9/9/9/9/9/9/9/9/3AK4 w - - 0 1")
-        advisor_sq = 9*9 + 3  # d9
-        advisor_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == advisor_sq]
+        advisor_sq = 9 * 9 + 3  # d9
+        advisor_moves = [
+            m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == advisor_sq
+        ]
         red_palace = {66, 67, 68, 75, 76, 77, 84, 85, 86}
         for mv in advisor_moves:
-            assert get_to_sq(mv) in red_palace, f"Sĩ ra ngoài cung: {sq_to_uci(get_to_sq(mv))}"
+            assert get_to_sq(mv) in red_palace, (
+                f"Sĩ ra ngoài cung: {sq_to_uci(get_to_sq(mv))}"
+            )
 
     def test_advisor_at_center_has_4_moves(self):
         """Sĩ ở giữa cung (e8) có đúng 4 nước đi."""
         b, gen = make_gen("4k4/9/9/9/9/9/9/9/4A4/4K4 w - - 0 1")
-        advisor_sq = 8*9 + 4  # e8
-        advisor_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == advisor_sq]
+        advisor_sq = 8 * 9 + 4  # e8
+        advisor_moves = [
+            m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == advisor_sq
+        ]
         assert len(advisor_moves) == 4
 
     def test_advisor_at_corner_has_1_move(self):
         """Sĩ ở góc cung chỉ có 1 nước đi (về giữa)."""
         b, gen = make_gen("4k4/9/9/9/9/9/9/9/9/3AK4 w - - 0 1")
-        advisor_sq = 9*9 + 3  # d9 (góc cung Đỏ)
-        advisor_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == advisor_sq]
+        advisor_sq = 9 * 9 + 3  # d9 (góc cung Đỏ)
+        advisor_moves = [
+            m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == advisor_sq
+        ]
         assert len(advisor_moves) == 1
 
     def test_black_advisor_stays_in_palace(self):
         """Sĩ Đen không ra ngoài cung Đen."""
         b, gen = make_gen("3ak4/9/9/9/9/9/9/9/9/4K4 b - - 0 1")
-        advisor_sq = 0*9 + 3  # d0
-        advisor_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == advisor_sq]
+        advisor_sq = 0 * 9 + 3  # d0
+        advisor_moves = [
+            m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == advisor_sq
+        ]
         black_palace = {3, 4, 5, 12, 13, 14, 21, 22, 23}
         for mv in advisor_moves:
             assert get_to_sq(mv) in black_palace
@@ -255,12 +293,15 @@ class TestAdvisorMoves:
 # 6. TƯỚNG (K) - Đi thẳng 1 ô trong cung
 # ==============================================================================
 
+
 class TestKingMoves:
     def test_king_stays_in_palace(self):
         """Tướng không được ra ngoài cung."""
         b, gen = make_gen("4k4/9/9/9/9/9/9/9/9/4K4 w - - 0 1")
-        king_sq = 9*9 + 4  # e9
-        king_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == king_sq]
+        king_sq = 9 * 9 + 4  # e9
+        king_moves = [
+            m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == king_sq
+        ]
         red_palace = {66, 67, 68, 75, 76, 77, 84, 85, 86}
         for mv in king_moves:
             assert get_to_sq(mv) in red_palace
@@ -268,15 +309,19 @@ class TestKingMoves:
     def test_king_at_center_has_4_moves(self):
         """Tướng ở giữa cung (e8) có 4 nước đi."""
         b, gen = make_gen("4k4/9/9/9/9/9/9/9/4K4/9 w - - 0 1")
-        king_sq = 8*9 + 4  # e8
-        king_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == king_sq]
+        king_sq = 8 * 9 + 4  # e8
+        king_moves = [
+            m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == king_sq
+        ]
         assert len(king_moves) == 4
 
     def test_king_cannot_move_diagonally(self):
         """Tướng không được đi chéo."""
         b, gen = make_gen("4k4/9/9/9/9/9/9/9/9/4K4 w - - 0 1")
-        king_sq = 9*9 + 4
-        king_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == king_sq]
+        king_sq = 9 * 9 + 4
+        king_moves = [
+            m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == king_sq
+        ]
         for mv in king_moves:
             frm_r, frm_c = divmod(get_from_sq(mv), 9)
             to_r, to_c = divmod(get_to_sq(mv), 9)
@@ -286,8 +331,10 @@ class TestKingMoves:
     def test_king_blocked_by_own_piece(self):
         """Tướng không được đi vào ô có quân mình."""
         b, gen = make_gen("4k4/9/9/9/9/9/9/9/4A4/4K4 w - - 0 1")
-        king_sq = 9*9 + 4
-        king_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == king_sq]
+        king_sq = 9 * 9 + 4
+        king_moves = [
+            m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == king_sq
+        ]
         assert_moves_not_contain(king_moves, "e9e8")
 
 
@@ -295,51 +342,64 @@ class TestKingMoves:
 # 7. TỐT (P) - Tiến thẳng, qua sông thì thêm ngang
 # ==============================================================================
 
+
 class TestPawnMoves:
     def test_red_pawn_before_river_only_advances(self):
         """Tốt Đỏ chưa qua sông chỉ được tiến."""
         b, gen = make_gen("4k4/9/9/9/9/9/4P4/9/9/4K4 w - - 0 1")
-        pawn_sq = 6*9 + 4  # e6
-        pawn_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == pawn_sq]
+        pawn_sq = 6 * 9 + 4  # e6
+        pawn_moves = [
+            m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == pawn_sq
+        ]
         assert len(pawn_moves) == 1
         assert_moves_contain(pawn_moves, "e6e5")  # chỉ tiến 1 ô
 
     def test_red_pawn_after_river_can_move_sideways(self):
         """Tốt Đỏ qua sông được đi ngang."""
         b, gen = make_gen("4k4/9/9/9/4P4/9/9/9/9/4K4 w - - 0 1")
-        pawn_sq = 4*9 + 4  # e4
-        pawn_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == pawn_sq]
+        pawn_sq = 4 * 9 + 4  # e4
+        pawn_moves = [
+            m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == pawn_sq
+        ]
         assert len(pawn_moves) == 3  # tiến + trái + phải
         assert_moves_contain(pawn_moves, "e4e3", "e4d4", "e4f4")
 
     def test_red_pawn_cannot_retreat(self):
         """Tốt Đỏ không được đi lùi."""
         b, gen = make_gen("4k4/9/9/9/4P4/9/9/9/9/4K4 w - - 0 1")
-        pawn_sq = 4*9 + 4
-        pawn_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == pawn_sq]
+        pawn_sq = 4 * 9 + 4
+        pawn_moves = [
+            m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == pawn_sq
+        ]
         assert_moves_not_contain(pawn_moves, "e4e5")
 
     def test_black_pawn_advances_downward(self):
         """Tốt Đen tiến xuống (tăng hàng)."""
         b, gen = make_gen("4k4/9/9/4p4/9/9/9/9/9/4K4 b - - 0 1")
-        pawn_sq = 3*9 + 4  # e3
-        pawn_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == pawn_sq]
+        pawn_sq = 3 * 9 + 4  # e3
+        pawn_moves = [
+            m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == pawn_sq
+        ]
         assert_moves_contain(pawn_moves, "e3e4")
         assert_moves_not_contain(pawn_moves, "e3e2")
 
     def test_black_pawn_after_river_can_move_sideways(self):
         """Tốt Đen qua sông được đi ngang."""
         b, gen = make_gen("4k4/9/9/9/9/4p4/9/9/9/4K4 b - - 0 1")
-        pawn_sq = 5*9 + 4  # e5
-        pawn_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == pawn_sq]
+        pawn_sq = 5 * 9 + 4  # e5
+        pawn_moves = [
+            m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == pawn_sq
+        ]
         assert len(pawn_moves) == 3
         assert_moves_contain(pawn_moves, "e5e6", "e5d5", "e5f5")
 
     def test_pawn_at_board_edge_no_sideways_wrap(self):
         """Tốt qua sông ở biên bàn không được đi tràn sang hàng khác."""
         b, gen = make_gen("4k4/9/9/9/P8/9/9/9/9/4K4 w - - 0 1")
-        pawn_sq = 4*9 + 0  # a4
-        pawn_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == pawn_sq]
+        pawn_sq = 4 * 9 + 0  # a4
+        pawn_moves = [
+            m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == pawn_sq
+        ]
         uci_set = to_uci_set(pawn_moves)
         # Không được đi sang cột i (tràn hàng)
         assert "a4i4" not in uci_set
@@ -347,8 +407,10 @@ class TestPawnMoves:
     def test_pawn_can_capture_enemy(self):
         """Tốt ăn được quân đối phương."""
         b, gen = make_gen("4k4/9/9/9/4Pp3/9/9/9/9/4K4 w - - 0 1")
-        pawn_sq = 4*9 + 4  # e4 Tốt Đỏ
-        pawn_moves = [m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == pawn_sq]
+        pawn_sq = 4 * 9 + 4  # e4 Tốt Đỏ
+        pawn_moves = [
+            m for m in gen.get_pseudo_legal_moves() if get_from_sq(m) == pawn_sq
+        ]
         assert_moves_contain(pawn_moves, "e4f4")  # ăn Tốt Đen ở f4
 
 
@@ -356,9 +418,11 @@ class TestPawnMoves:
 # 8. PERFT TEST - Đếm số node theo độ sâu
 # ==============================================================================
 
+
 def perft(board, gen, depth):
     """Đếm số lá (leaf nodes) ở độ sâu cho trước."""
     from core.rules import get_legal_moves
+
     if depth == 0:
         return 1
     moves = get_legal_moves(board, gen)
@@ -369,11 +433,13 @@ def perft(board, gen, depth):
         board.undo_move()
     return count
 
+
 class TestPerft:
     """
     Perft từ vị trí ban đầu cờ tướng.
     Số liệu tham chiếu từ: https://www.chessprogramming.org/Xiangqi
     """
+
     def test_perft_depth_1(self):
         """Depth 1: 44 nước đi hợp lệ từ vị trí ban đầu."""
         b = Board()

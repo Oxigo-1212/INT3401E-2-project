@@ -3,7 +3,6 @@ import sys
 import threading
 import time
 
-
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from core.board import Board
@@ -12,7 +11,12 @@ from core.pieces import Color
 from ucci.adapter import SearchResult
 from ucci.commands import UCCICommand, parse_line
 from ucci.handler import UCCIHandler
-from ucci.utils import move_to_protocol, protocol_to_move, protocol_to_sq, sq_to_protocol
+from ucci.utils import (
+    move_to_protocol,
+    protocol_to_move,
+    protocol_to_sq,
+    sq_to_protocol,
+)
 
 
 def test_parse_line_parses_uci_position_go_and_setoption():
@@ -23,7 +27,9 @@ def test_parse_line_parses_uci_position_go_and_setoption():
     assert setoption.setoption.name == "Hash"
     assert setoption.setoption.value == "128"
 
-    position = parse_line("position fen r8/9/9/9/9/9/9/9/9/R3K3k w - - 0 1 moves a0a9 b2b4")
+    position = parse_line(
+        "position fen r8/9/9/9/9/9/9/9/9/R3K3k w - - 0 1 moves a0a9 b2b4"
+    )
     assert position is not None
     assert position.command == UCCICommand.POSITION
     assert position.position is not None
@@ -157,18 +163,21 @@ def test_handler_ucci_handshake(capsys):
 
     output = capsys.readouterr().out
     assert "id name BTL Xiangqi" in output
-    assert "option name UCI_Variant type combo default xiangqi var xiangqi" not in output
+    assert (
+        "option name UCI_Variant type combo default xiangqi var xiangqi" not in output
+    )
     assert "ucciok" in output
 
 
-
 def test_legacy_uci_shim_exports_protocol_modules():
-    from ucci.engine import run_ucci
     from uci.engine import run_uci as legacy_run
     from uci.handler import UCIHandler as legacy_handler
 
+    from ucci.engine import run_ucci
+
     assert legacy_run is run_ucci
     assert legacy_handler is UCCIHandler
+
 
 def test_handler_stop_aborts_running_search(capsys):
     handler = UCCIHandler()
